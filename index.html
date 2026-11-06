@@ -50,12 +50,17 @@
 </head>
 <body class="h-full w-full m-0 p-0 bg-md-surface text-md-on-surface font-sans antialiased flex flex-col justify-center items-center">
 
-<script>
-<!-- Pulsante di aggiornamento verde stile Material 3 -->
-<button onclick="forzaAggiornamento()" class="w-full h-14 bg-[#1b6d37] hover:bg-[#145229] active:bg-[#0e3b1d] text-white font-medium rounded-full shadow-sm transition-all duration-200 flex items-center justify-center gap-2 text-base px-6 active:scale-95">
-    <span class="material-symbols-outlined text-xl">refresh</span>
-    <span class="tracking-wide">Forza Aggiornamento PWA</span>
-</button>
+<!-- Sezione Minimale: Controllo Versione e "Cosa c'è di nuovo" -->
+<div class="w-full max-w-sm mx-auto mb-4 flex items-center justify-between bg-white/80 backdrop-blur-md border border-md-outline-variant/40 rounded-2xl p-3 shadow-sm">
+    <div class="flex items-center gap-2">
+        <button onclick="forzaAggiornamento()" class="w-9 h-9 bg-md-primary/10 hover:bg-md-primary/20 text-md-primary rounded-full flex items-center justify-center transition-all active:scale-90" title="Ricarica App">
+            <span class="material-symbols-outlined text-lg">refresh</span>
+        </button>
+        <div class="flex flex-col text-left">
+            <span class="text-xs font-bold text-md-on-surface">Versione App: <span id="appVersionLabel">v1.0.2</span></span>
+            <span class="text-[10px] text-md-outline">Tocca l'icona per pulire la cache</span>
+        </div>
+    </div>
 
 <script>
 function forzaAggiornamento() {
@@ -77,21 +82,7 @@ function forzaAggiornamento() {
 }
 </script>
 
-    <!-- Material 3 Surface Card -->
-    <main class="w-full max-w-sm mx-auto p-6">
-<!-- Sezione Minimale: Controllo Versione e "Cosa c'è di nuovo" -->
-<div class="w-full max-w-sm mx-auto mb-4 flex items-center justify-between bg-white/80 backdrop-blur-md border border-md-outline-variant/40 rounded-2xl p-3 shadow-sm">
-    <div class="flex items-center gap-2">
-        <button onclick="forzaAggiornamento()" class="w-9 h-9 bg-md-primary/10 hover:bg-md-primary/20 text-md-primary rounded-full flex items-center justify-center transition-all active:scale-90" title="Ricarica App">
-            <span class="material-symbols-outlined text-lg">refresh</span>
-        </button>
-        <div class="flex flex-col text-left">
-            <span class="text-xs font-bold text-md-on-surface">Versione App: <span id="appVersionLabel">v9.0</span></span>
-            <span class="text-[10px] text-md-outline">Tocca l'icona per pulire la cache</span>
-        </div>
-    </div>
-    
-    <!-- Pulsante "Cosa c'è di nuovo" minimale -->
+<!-- Pulsante "Cosa c'è di nuovo" minimale -->
     <button onclick="apriWhatsNew()" class="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 font-medium rounded-full text-xs flex items-center gap-1 transition-all active:scale-95 shadow-xs">
         <span class="material-symbols-outlined text-sm text-amber-600">auto_awesome</span>
         <span>Novità</span>
@@ -108,16 +99,39 @@ function forzaAggiornamento() {
             </button>
         </div>
         
-<div class="space-y-4 text-xs text-slate-600 leading-relaxed mb-6">
-    <!-- Icona e Testo Material Design 3 -->
-    <div class="flex items-start gap-3">
-        <span class="material-symbols-outlined text-md-primary text-xl mt-0.5">palette</span>
-        <div>
-            <b class="text-slate-900 block">Material Design 3 (v9.0)</b>
-            Interfaccia grafica completamente rinnovata con nuovi colori, componenti arrotondati e migliore fruibilità.
+        <div class="space-y-4 text-xs text-slate-600 leading-relaxed mb-6">
+            <div class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-md-primary text-xl mt-0.5">palette</span>
+                <div>
+                    <b class="text-slate-900 block">Design Material 3</b>
+                    Interfaccia moderna con bottoni arrotondati, colori aggiornati e migliore supporto touch.
+                </div>
+            </div>
+            <div class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-md-primary text-xl mt-0.5">sync font</span>
+                <div>
+                    <b class="text-slate-900 block">Bypass Cache iOS</b>
+                    Aggiunto tasto di ricarica rapida e controllo automatico versione su GitHub Pages.
+                </div>
+            </div>
         </div>
+
+        <button onclick="chiudiWhatsNew()" class="w-full h-11 bg-md-primary text-white font-medium rounded-full text-sm">
+            Ho capito
+        </button>
     </div>
-    
+</div>
+
+<script>
+function apriWhatsNew() {
+    document.getElementById('whatsNewModalIndex').classList.remove('hidden');
+}
+function chiudiWhatsNew() {
+    document.getElementById('whatsNewModalIndex').classList.add('hidden');
+}
+</script>
+
+        
     <!-- Icona e Testo Nuovo Sistema Notifiche -->
     <div class="flex items-start gap-3">
         <span class="material-symbols-outlined text-md-primary text-xl mt-0.5">notifications_active</span>
