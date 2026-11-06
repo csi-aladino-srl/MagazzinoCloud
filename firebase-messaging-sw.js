@@ -29,7 +29,7 @@ messaging.onBackgroundMessage((payload) => {
             tag: 'magazzino-notifica-unica',
             // Cattura dinamicamente l'URL passato da Firebase (con un fallback di sicurezza)
             data: {
-                url: payload.data.url || 'warehouse.html'
+                url: payload.data.url || '/'
             }
         };
         self.registration.showNotification(title, options);
@@ -40,8 +40,8 @@ messaging.onBackgroundMessage((payload) => {
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
     
-    // Legge l'URL dinamico salvato nella notifica
-    const targetUrl = event.notification.data?.url || '/';
+    // Usa l'URL nei dati o forza warehouse.html come percorso assoluto dell'host
+    const targetUrl = event.notification.data?.url || `${self.location.origin}/warehouse.html`;
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
