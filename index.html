@@ -96,7 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="material-symbols-outlined text-lg">refresh</span>
         </button>
         <div class="flex flex-col text-left">
-            <span class="text-xs font-bold text-md-on-surface">Versione App: <span id="appVersionLabel">v1.0.3</span></span>
+            <span class="text-xs font-bold text-md-on-surface">Versione App: <span id="appVersionLabel">v9.0</span></span>
             <span class="text-[10px] text-md-outline">Tocca l'icona per pulire la cache</span>
         </div>
     </div>
@@ -118,22 +118,34 @@ document.addEventListener('DOMContentLoaded', () => {
             </button>
         </div>
         
-        <div class="space-y-4 text-xs text-slate-600 leading-relaxed mb-6">
-            <div class="flex items-start gap-3">
-                <span class="material-symbols-outlined text-md-primary text-xl mt-0.5">palette</span>
-                <div>
-                    <b class="text-slate-900 block">Design Material 3</b>
-                    Interfaccia moderna con bottoni arrotondati, colori aggiornati e migliore supporto touch.
-                </div>
-            </div>
-            <div class="flex items-start gap-3">
-                <span class="material-symbols-outlined text-md-primary text-xl mt-0.5">sync font</span>
-                <div>
-                    <b class="text-slate-900 block">Bypass Cache iOS</b>
-                    Aggiunto tasto di ricarica rapida e controllo automatico versione su GitHub Pages.
-                </div>
-            </div>
+<div class="space-y-4 text-xs text-slate-600 leading-relaxed mb-6">
+    <!-- Icona e Testo Material Design 3 -->
+    <div class="flex items-start gap-3">
+        <span class="material-symbols-outlined text-md-primary text-xl mt-0.5">palette</span>
+        <div>
+            <b class="text-slate-900 block">Material Design 3 (v9.0)</b>
+            Interfaccia grafica completamente rinnovata con nuovi colori, componenti arrotondati e migliore fruibilità.
         </div>
+    </div>
+    
+    <!-- Icona e Testo Nuovo Sistema Notifiche -->
+    <div class="flex items-start gap-3">
+        <span class="material-symbols-outlined text-md-primary text-xl mt-0.5">notifications_active</span>
+        <div>
+            <b class="text-slate-900 block">Nuovo Sistema Notifiche</b>
+            Integrazione avanzata per la gestione ed erogazione tempestiva degli avvisi di magazzino.
+        </div>
+    </div>
+    
+    <!-- Icona e Testo Reattività e Velocità -->
+    <div class="flex items-start gap-3">
+        <span class="material-symbols-outlined text-md-primary text-xl mt-0.5">bolt</span>
+        <div>
+            <b class="text-slate-900 block">Reattività e Prestazioni</b>
+            Migliorata la velocità complessiva dell'applicazione e la risposta alle interazioni touch.
+        </div>
+    </div>
+</div>
 
         <button onclick="chiudiWhatsNew()" class="w-full h-11 bg-md-primary text-white font-medium rounded-full text-sm">
             Ho capito
@@ -203,7 +215,7 @@ function chiudiWhatsNew() {
 // Registrazione Service Worker con controllo aggiornamenti
 // Registrazione Service Worker con controllo aggiornamenti forzato
 if ('serviceWorker' in navigator) {
-    const APP_VERSION = '1.0.1'; // Incrementa questo numero ogni volta che fai modifiche su GitHub!
+    const APP_VERSION = '9.0'; // Incrementa questo numero ogni volta che fai modifiche su GitHub!
 
     navigator.serviceWorker.register('firebase-messaging-sw.js?v=' + APP_VERSION, { updateViaCache: 'none' })
         .then((registration) => {
