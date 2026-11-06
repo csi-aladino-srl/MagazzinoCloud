@@ -62,13 +62,13 @@
             </h1>
             
             <p id="subText" class="text-sm font-normal text-md-on-surface-variant mb-8 px-2 leading-relaxed">
-                Per proseguire è necessario abilitare le notifiche.
+                Premi il pulsante per abilitare le notifiche ed accedere al magazzino.
             </p>
 
             <!-- Material 3 Button -->
             <button id="mainBtn" onclick="attivaNotificheERedirect()" class="w-full h-14 bg-md-primary hover:bg-md-primary/90 active:bg-md-primary/80 text-md-on-primary font-medium rounded-full shadow-sm transition-all duration-200 flex items-center justify-center gap-2 text-base px-6 active:scale-98">
                 <span id="btnIcon" class="material-symbols-outlined text-xl">notifications</span>
-                <span id="btnText" class="tracking-wide">Abilita Notifiche</span>
+                <span id="btnText" class="tracking-wide">Abilita Notifiche e Accedi</span>
             </button>
         </div>
     </main>
@@ -101,57 +101,58 @@
         // Registrazione Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('firebase-messaging-sw.js')
-                .then(() => console.log("Service Worker registrato."))
-                .catch(err => console.warn("Errore Service Worker:", err));
+                .then(() => console.log("Service Worker registrato con successo."))
+                .catch(err => console.warn("Errore registrazione Service Worker:", err));
         }
 
-// Controllo stato iniziale dell'interfaccia (senza redirect automatico)
-function controllaStatoNotifiche() {
-    const btnText = document.getElementById('btnText');
-    const btnIcon = document.getElementById('btnIcon');
-    const subText = document.getElementById('subText');
-    const statusIcon = document.getElementById('statusIcon');
-    const iconBg = document.getElementById('iconBg');
+        // Aggiorna l'interfaccia se le notifiche sono già state autorizzate
+        function controllaStatoNotifiche() {
+            const btnText = document.getElementById('btnText');
+            const btnIcon = document.getElementById('btnIcon');
+            const subText = document.getElementById('subText');
+            const statusIcon = document.getElementById('statusIcon');
+            const iconBg = document.getElementById('iconBg');
 
-    if ('Notification' in window && Notification.permission === 'granted') {
-        if (btnText) btnText.innerText = "Conferma e Accedi";
-        if (btnIcon) btnIcon.innerText = "arrow_forward";
-        if (subText) subText.innerText = "Clicca per aggiornare il token ed accedere.";
-        if (statusIcon) statusIcon.innerText = "notifications_active";
-    }
-}
-
-document.addEventListener('DOMContentLoaded', controllaStatoNotifiche);
-
-// Gestione clic: registra il token FCM prima di reindirizzare
-window.attivaNotificheERedirect = async function() {
-    const targetUrl = "warehouse.html";
-
-    try {
-        if ('Notification' in window) {
-            // Richiede il permesso se non ancora concesso
-            const permission = await Notification.requestPermission();
-            
-            if (permission === 'granted') {
-                if (messaging) {
-                    const registration = await navigator.serviceWorker.ready;
-                    const token = await getToken(messaging, { 
-                        vapidKey: vapidKey,
-                        serviceWorkerRegistration: registration 
-                    });
-                    console.log("FCM Token registrato:", token);
+            if ('Notification' in window && Notification.permission === 'granted') {
+                if (btnText) btnText.innerText = "Accedi al Magazzino";
+                if (btnIcon) btnIcon.innerText = "arrow_forward";
+                if (subText) subText.innerText = "Notifiche già abilitate. Clicca per accedere.";
+                if (statusIcon) statusIcon.innerText = "check_circle";
+                if (iconBg) {
+                    iconBg.className = "w-20 h-20 bg-md-primary text-md-on-primary rounded-full flex items-center justify-center mb-6 transition-all duration-300";
                 }
-            } else {
-                alert("Permesso notifiche negato. Abilitalo nelle Impostazioni di iOS.");
             }
         }
-    } catch (err) {
-        console.error("Errore durante la registrazione del token:", err);
-    } finally {
-        // Reindirizza solo dopo l'esecuzione del codice
-        window.location.href = targetUrl;
-    }
-};
+
+        document.addEventListener('DOMContentLoaded', controllaStatoNotifiche);
+
+        // Procedura di richiesta notifiche, estrazione token e reindirizzamento
+        window.attivaNotificheERedirect = async function() {
+            const targetUrl = "warehouse.html";
+
+            try {
+                if ('Notification' in window) {
+                    const permission = await Notification.requestPermission();
+                    if (permission === 'granted') {
+                        if (messaging) {
+                            const registration = await navigator.serviceWorker.ready;
+                            const token = await getToken(messaging, { 
+                                vapidKey: vapidKey,
+                                serviceWorkerRegistration: registration 
+                            });
+                            console.log("FCM Token generato:", token);
+                        }
+                    } else {
+                        alert("Notifiche non autorizzate. Potrai attivarle successivamente dalle impostazioni.");
+                    }
+                }
+            } catch (err) {
+                console.error("Errore durante l'attivazione delle notifiche:", err);
+            } finally {
+                // Reindirizzamento al file locale salvato sull'host
+                window.location.href = targetUrl;
+            }
+        };
     </script>
 </body>
 </html>
