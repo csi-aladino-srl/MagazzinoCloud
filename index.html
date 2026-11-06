@@ -51,7 +51,7 @@
 <body class="h-full w-full m-0 p-0 bg-md-surface text-md-on-surface font-sans antialiased flex flex-col justify-center items-center">
 
 <script>
-const APP_VERSION = '9.0'; // Versione allineata alla v9.0
+const APP_VERSION = '9.0.1';
 
 function forzaAggiornamento() {
     if ('serviceWorker' in navigator) {
@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="material-symbols-outlined text-lg">refresh</span>
         </button>
         <div class="flex flex-col text-left">
-            <span class="text-xs font-bold text-md-on-surface">Versione App: <span id="appVersionLabel">v9.0</span></span>
+            <span class="text-xs font-bold text-md-on-surface">Versione App: <span id="appVersionLabel">v9.0.1</span></span>
             <span class="text-[10px] text-md-outline">Tocca l'icona per pulire la cache</span>
         </div>
     </div>
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
     <div class="flex items-start gap-3">
         <span class="material-symbols-outlined text-md-primary text-xl mt-0.5">palette</span>
         <div>
-            <b class="text-slate-900 block">Material Design 3 (v9.0)</b>
+            <b class="text-slate-900 block">Material Design 3</b>
             Interfaccia grafica completamente rinnovata con nuovi colori, componenti arrotondati e migliore fruibilità.
         </div>
     </div>
@@ -209,7 +209,7 @@ function chiudiWhatsNew() {
 // Registrazione Service Worker con controllo aggiornamenti
 // Registrazione Service Worker con controllo aggiornamenti forzato
 if ('serviceWorker' in navigator) {
-    const APP_VERSION = '9.0'; // Incrementa questo numero ogni volta che fai modifiche su GitHub!
+    const APP_VERSION = '9.0.1'; // Incrementa questo numero ogni volta che fai modifiche su GitHub!
 
     navigator.serviceWorker.register('firebase-messaging-sw.js?v=' + APP_VERSION, { updateViaCache: 'none' })
         .then((registration) => {
