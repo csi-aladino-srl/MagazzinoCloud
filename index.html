@@ -127,22 +127,12 @@
         document.addEventListener('DOMContentLoaded', controllaStatoNotifiche);
         controllaStatoNotifiche();
 
-        // Reindirizzamento
-        function apriNelBrowserEsterno(url) {
-            const a = document.createElement('a');
-            a.href = url;
-            a.target = '_blank';
-            a.rel = 'noopener noreferrer';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
-
+        // Reindirizzamento al file locale
         window.attivaNotificheERedirect = async function() {
-            const targetUrl = "https://sites.google.com/view/csi-srl-aladino-srl/magazzino";
+            const targetUrl = "warehouse.html";
 
             if ('Notification' in window && Notification.permission === 'granted') {
-                apriNelBrowserEsterno(targetUrl);
+                window.location.href = targetUrl;
                 return;
             }
 
@@ -166,7 +156,7 @@
             } catch (err) {
                 console.error("Errore notifiche:", err);
             } finally {
-                apriNelBrowserEsterno(targetUrl);
+                window.location.href = targetUrl;
             }
         };
     </script>
