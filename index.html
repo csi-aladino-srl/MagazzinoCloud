@@ -51,35 +51,30 @@
 <body class="h-full w-full m-0 p-0 bg-md-surface text-md-on-surface font-sans antialiased flex flex-col justify-center items-center">
 
 <script>
-<script>
-const APP_VERSION = '9.0'; // Versione allineata alla v9.0
+<!-- Pulsante di aggiornamento verde stile Material 3 -->
+<button onclick="forzaAggiornamento()" class="w-full h-14 bg-[#1b6d37] hover:bg-[#145229] active:bg-[#0e3b1d] text-white font-medium rounded-full shadow-sm transition-all duration-200 flex items-center justify-center gap-2 text-base px-6 active:scale-95">
+    <span class="material-symbols-outlined text-xl">refresh</span>
+    <span class="tracking-wide">Forza Aggiornamento PWA</span>
+</button>
 
+<script>
 function forzaAggiornamento() {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then((registrations) => {
-            for(let registration of registrations) {
-                registration.unregister(); // Rimuove il vecchio Service Worker
+            for (let registration of registrations) {
+                registration.unregister();
             }
-            // Svuota le cache locali e ricarica forzando il recupero dal server
             caches.keys().then((names) => {
                 for (let name of names) {
                     caches.delete(name);
                 }
-                window.location.reload(true); // Ricarica forzata
+                window.location.reload(true);
             });
         });
     } else {
         window.location.reload(true);
     }
 }
-
-// --- REFRESH AUTOMATICO ALL'AVVIO (UNA SOLA VOLTA PER SESSIONE) ---
-document.addEventListener('DOMContentLoaded', () => {
-    if (!sessionStorage.getItem('cache_refreshed_session')) {
-        sessionStorage.setItem('cache_refreshed_session', 'true');
-        forzaAggiornamento();
-    }
-});
 </script>
 
     <!-- Material 3 Surface Card -->
