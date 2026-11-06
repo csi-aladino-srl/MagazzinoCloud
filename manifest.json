@@ -1,10 +1,11 @@
 {
-  "name": "Gestione Magazzino Cloud",
+  "name": "Magazzino Cloud",
   "short_name": "Magazzino",
-  "start_url": "./warehouse.html",
+  "description": "Applicazione Gestione Magazzino",
+  "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#f9fafb",
-  "theme_color": "#16a34a",
+  "background_color": "#f7fbf3",
+  "theme_color": "#1b6d37",
   "icons": [
     {
       "src": "icon-192.png",
