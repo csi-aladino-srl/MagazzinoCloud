@@ -92,6 +92,7 @@
         const app = initializeApp(firebaseConfig);
         let messaging = null;
 
+
         try {
             messaging = getMessaging(app);
         } catch (e) {
@@ -99,11 +100,28 @@
         }
 
         // Registrazione Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('firebase-messaging-sw.js')
-                .then(() => console.log("Service Worker registrato con successo."))
-                .catch(err => console.warn("Errore registrazione Service Worker:", err));
-        }
+// Registrazione Service Worker con controllo aggiornamenti
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('firebase-messaging-sw.js', { updateViaCache: 'none' })
+        .then((registration) => {
+            console.log("Service Worker registrato con successo.");
+            // Forza il controllo di nuove versioni sul server ad ogni avvio
+            registration.update();
+            
+            registration.onupdatefound = () => {
+                const installingWorker = registration.installing;
+                installingWorker.onstatechange = () => {
+                    if (installingWorker.state === 'installed') {
+                        if (navigator.serviceWorker.controller) {
+                            // Ricarica automaticamente la pagina con la nuova versione
+                            window.location.reload();
+                        }
+                    }
+                };
+            };
+        })
+        .catch(err => console.warn("Errore registrazione Service Worker:", err));
+}        
 
         // Aggiorna l'interfaccia se le notifiche sono già state autorizzate
         function controllaStatoNotifiche() {

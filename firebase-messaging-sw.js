@@ -11,6 +11,14 @@ firebase.initializeApp({
     measurementId: "G-KM84BW8EPH"
 });
 
+self.addEventListener('install', (event) => {
+    self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+    event.waitUntil(clients.claim());
+});
+
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
