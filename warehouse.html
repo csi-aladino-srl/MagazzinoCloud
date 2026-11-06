@@ -311,17 +311,6 @@
                     </p>
                 </div>
             </div>
-            <div class="flex items-start gap-4">
-                <div class="w-12 h-12 rounded-2xl icon-theme flex items-center justify-center text-xl shrink-0 shadow-xs">
-                    <i class="fa-solid fa-comments"></i>
-                </div>
-                <div>
-                    <h3 class="text-base font-bold text-slate-900 dark:text-white">Chat Interna tra Operatori</h3>
-                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
-                        Comunica in tempo reale con gli altri operatori direttamente dall'applicazione per coordinare il lavoro in magazzino.
-                    </p>
-                </div>
-            </div>
         </div>
         <div class="mt-8 pt-4 border-t border-slate-100 dark:border-slate-800 shrink-0">
             <button onclick="ui.closeModal('whatsNewModal')" class="w-full btn-theme py-4 rounded-2xl font-bold text-base shadow-md transition-transform active:scale-95 text-center">
@@ -390,11 +379,6 @@
 
                 <!-- Header Right Actions -->
                 <div class="flex items-center gap-2 shrink-0">
-                    <!-- Pulsante Chat -->
-<button onclick="chatLogic.openChatModal()" class="flex items-center justify-center w-11 h-11 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl transition-colors relative" title="Chat Lista">
-    <i class="fa-solid fa-comments text-lg"></i>
-    <span id="chatBadge" class="hidden absolute -top-1 -right-1 px-1.5 min-w-[20px] h-5 bg-blue-600 text-white rounded-full text-[10px] font-bold items-center justify-center shadow-xs"></span>
-</button>
 
                     <!-- Pulsante Nuovo Prodotto (Desktop) -->
                     <button onclick="ui.openProductModal()" class="hidden md:flex items-center gap-2 btn-theme px-4 py-2.5 rounded-2xl font-bold shadow-sm transition-transform active:scale-95 text-sm">
