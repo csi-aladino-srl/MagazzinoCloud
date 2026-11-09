@@ -2885,10 +2885,10 @@ renderLocationChips: () => {
         }
 
         if (isActive && isInv) {
-            // Quando la scheda è attiva IN MODALITÀ INVENTARIO, trasforma il chip nel tasto "Scarica PDF Ubicazione"
+            // Quando la scheda è attiva IN MODALITÀ INVENTARIO, trasforma il chip nel tasto BLU "Scarica PDF Ubicazione"
             chipsHtml += `
                 <button onclick="window.exportLocationPDF('${ui.escapeHtml(loc)}')" 
-                        class="shrink-0 px-4 py-2 text-xs font-mono transition-all flex items-center gap-2 ${borderShape} bg-red-600 hover:bg-red-700 text-white font-bold shadow-md active:scale-95"
+                        class="shrink-0 px-4 py-2 text-xs font-mono transition-all flex items-center gap-2 ${borderShape} bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md active:scale-95"
                         title="Tocca per scaricare il PDF dell'inventario per ${ui.escapeHtml(loc)} (Oppure riseleziona per deselezionare)">
                     <i class="fa-solid fa-file-pdf text-sm animate-pulse"></i>
                     <span>Scarica PDF ${ui.escapeHtml(loc)}</span>
