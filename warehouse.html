@@ -15,6 +15,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 
+<!-- jsPDF e jsPDF-AutoTable per esportazione PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
     <script>
 	let unsubChat = null;
 	let chatMessages = [];
@@ -2051,170 +2055,347 @@
             }
         };
 
-        window.excelLogic = {
-            exportExcel: () => {
-                if (products.length === 0) return ui.toast("Nessun prodotto da esportare.", "error");
+window.exportLocationPDF = async function(locationName) {
+    if (!locationName || locationName === 'Tutte') return;
 
-                const isInv = isCurrentListInventory();
-                const listName = globalLists.find(l => l.id === currentListId)?.name || 'Export';
-                
-                let ws, wb;
-                wb = XLSX.utils.book_new();
+    // Filtra i prodotti dell'ubicazione selezionata
+    const locationProducts = products.filter(p => {
+        const loc = p.location ? p.location.toUpperCase() : 'SENZA UBICAZIONE';
+        return loc === locationName.toUpperCase();
+    }).sort((a, b) => (a.code || '').localeCompare(b.code || ''));
 
-                const dataToExport = products.map(p => {
-                    const currentStock = Number(p.stock || 0);
-                    const origStock = (p.originalStock !== undefined && p.originalStock !== null && p.originalStock !== '') ? Number(p.originalStock) : currentStock;
-                    const deltaVal = currentStock - origStock;
-                    
-                    let deltaText = "0";
-                    if (deltaVal > 0) deltaText = `+${deltaVal}`;
-                    else if (deltaVal < 0) deltaText = `${deltaVal}`;
+    if (locationProducts.length === 0) {
+        return ui.toast("Nessun prodotto trovato per questa ubicazione", "error");
+    }
 
-                    const rowData = {
-                        "Codice Prodotto": p.code || '',
-                        "Codice Originale": p.originalCode || '',
-                        "Ubicazione Attuale": p.location || '',
-                        "Ubicazione Originale": p.originalLocation || '',
-                        "Marchio": p.brand || '',
-                        "Marchio Originale": p.originalBrand !== undefined ? p.originalBrand : '',
-                        "Giacenza Attuale": currentStock,
-                        "Giacenza Originale": origStock
-                    };
+    ui.toast("Generazione PDF in corso...", "info");
 
-                    if (isInv) {
-                        rowData["DELTA (Differenza)"] = deltaText;
-                        rowData["CONSOLIDATO (Si/No)"] = p.isInventoryLocked ? "SI" : "NO";
-                    }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
 
-                    rowData["Descrizione"] = p.description || '';
-                    rowData["Descrizione Originale"] = p.originalDescription !== undefined ? p.originalDescription : '';
-                    rowData["Note"] = p.note || '';
-                    rowData["Nota Originale"] = p.originalNote !== undefined ? p.originalNote : '';
+    let fontName = 'helvetica';
+    let useUnicodeSymbols = false;
 
-                    return rowData;
-                });
+    // Tentativo di caricamento Noto Sans con fallback automatico sicuro
+    try {
+        function arrayBufferToBase64(buffer) {
+            let binary = '';
+            let bytes = new Uint8Array(buffer);
+            let len = bytes.byteLength;
+            for (let i = 0; i < len; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return window.btoa(binary);
+        }
 
-                ws = XLSX.utils.json_to_sheet(dataToExport);
+        const fontRegularUrl = 'https://cdn.jsdelivr.net/gh/google/fonts@main/apache/notosans/NotoSans-Regular.ttf';
+        const fontBoldUrl = 'https://cdn.jsdelivr.net/gh/google/fonts@main/apache/notosans/NotoSans-Bold.ttf';
 
-                XLSX.utils.book_append_sheet(wb, ws, isInv ? "Inventario" : "Magazzino");
+        const [regRes, boldRes] = await Promise.all([
+            fetch(fontRegularUrl),
+            fetch(fontBoldUrl)
+        ]);
 
-                const prefix = isInv ? 'Inventario' : 'Magazzino';
-                const fileName = `${prefix}_${listName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${new Date().toISOString().split('T')[0]}.xlsx`;
+        if (regRes.ok && boldRes.ok) {
+            const regBuffer = await regRes.arrayBuffer();
+            const boldBuffer = await boldRes.arrayBuffer();
 
-                XLSX.writeFile(wb, fileName);
-                auditLogic.logAction("Esportazione Excel", `Esportata lista '${listName}' (${products.length} prodotti)`);
-                ui.closeModal('settingsModal');
-                ui.toast("Esportazione completata", "success");
+            doc.addFileToVFS('NotoSans-Regular.ttf', arrayBufferToBase64(regBuffer));
+            doc.addFileToVFS('NotoSans-Bold.ttf', arrayBufferToBase64(boldBuffer));
+
+            doc.addFont('NotoSans-Regular.ttf', 'NotoSans', 'normal');
+            doc.addFont('NotoSans-Bold.ttf', 'NotoSans', 'bold');
+
+            fontName = 'NotoSans';
+            useUnicodeSymbols = true;
+        }
+    } catch (e) {
+        console.warn("Impossibile caricare Noto Sans da CDN, utilizzo i font standard:", e);
+        fontName = 'helvetica';
+        useUnicodeSymbols = false;
+    }
+
+    // 1. Titolo grande dell'ubicazione in alto a sinistra
+    doc.setFontSize(22);
+    doc.setFont(fontName, "bold");
+    doc.setTextColor(30, 41, 59); // Slate-800
+    doc.text(`Ubicazione: ${locationName.toUpperCase()}`, 14, 20);
+
+    // 2. Data odierna in alto a destra
+    const todayStr = new Date().toLocaleDateString('it-IT', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+    doc.setFontSize(11);
+    doc.setFont(fontName, "normal");
+    doc.setTextColor(100, 116, 139); // Slate-500
+    doc.text(`Data: ${todayStr}`, 196, 20, { align: 'right' });
+
+    // 3. Intestazione Tabella PDF
+    const tableHead = [[
+        "Codice articolo",
+        "Descrizione articolo",
+        "Giacenza Inv.",
+        "Ubicazione Inv.",
+        "Delta",
+        "Stato"
+    ]];
+
+    // 4. Mappatura Dati Tabella
+    const tableData = locationProducts.map(p => {
+        const stockVal = (p.stock !== undefined && p.stock !== '' && !isNaN(Number(p.stock))) ? Number(p.stock) : 0;
+        const origStockVal = (p.originalStock !== undefined && p.originalStock !== null && p.originalStock !== '' && !isNaN(Number(p.originalStock))) ? Number(p.originalStock) : stockVal;
+        
+        const deltaVal = stockVal - origStockVal;
+        let deltaText = deltaVal > 0 ? `+${deltaVal}` : `${deltaVal}`;
+
+        const isLocked = p.isInventoryLocked === true;
+        
+        let statusSymbol = '?';
+        if (isLocked) {
+            if (useUnicodeSymbols) {
+                statusSymbol = (deltaVal === 0) ? '✔' : '✖';
+            } else {
+                statusSymbol = (deltaVal === 0) ? 'OK' : 'X';
+            }
+        }
+
+        return [
+            p.code || '-',
+            p.description || '-',
+            stockVal.toString(),
+            p.location || '-',
+            deltaText,
+            statusSymbol
+        ];
+    });
+
+    try {
+        doc.autoTable({
+            startY: 28,
+            head: tableHead,
+            body: tableData,
+            theme: 'striped',
+            styles: {
+                font: fontName,
             },
-            
-            importExcel: (event) => {
-                const file = event.target.files[0];
-                if (!file) return;
-
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    try {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                        const json = XLSX.utils.sheet_to_json(worksheet);
-
-                        if (json.length === 0) return ui.toast("Il file Excel è vuoto.", "error");
-
-                        document.getElementById('fullLoader').classList.remove('hidden', 'opacity-0');
-                        document.getElementById('loaderText').innerText = "Importazione in corso (450 prodotti per blocco)...";
-                        ui.closeModal('settingsModal');
-
-                        const BATCH_LIMIT = 450;
-                        let addedCount = 0, updatedCount = 0;
-                        const totalRows = json.length;
-
-                        for (let i = 0; i < totalRows; i += BATCH_LIMIT) {
-                            const batch = writeBatch(db);
-                            const chunk = json.slice(i, i + BATCH_LIMIT);
-
-                            const currentProgress = Math.min(i + BATCH_LIMIT, totalRows);
-                            document.getElementById('loaderText').innerText = `Elaborazione: ${currentProgress} di ${totalRows} prodotti...`;
-
-                            for (const row of chunk) {
-                                const normalizedRow = {};
-                                Object.keys(row).forEach(k => { normalizedRow[k.trim().toLowerCase()] = row[k]; });
-
-                                const getVal = (...keys) => {
-                                    for (const k of keys) {
-                                        if (normalizedRow[k] !== undefined && normalizedRow[k] !== null) return normalizedRow[k];
-                                    }
-                                    return '';
-                                };
-
-                                const code = getVal("codice prodotto", "codice articolo", "codice", "code", "articolo", "art");
-                                const originalCode = getVal("codice originale", "original code") || code;
-                                const location = getVal("ubicazione attuale", "ubicazione", "location", "loc", "scaffale") || 'GENERALE';
-                                const originalLocation = getVal("ubicazione originale", "original location") || location;
-                                const description = getVal("descrizione", "description", "desc");
-                                const originalDescription = getVal("descrizione originale", "original description") || description;
-                                const brand = getVal("marchio", "brand", "marca");
-                                const originalBrand = getVal("marchio originale", "original brand") || brand;
-                                const note = getVal("note", "annotazioni");
-                                const originalNote = getVal("nota originale", "original note") || note;
-                                const stockNum = Number(getVal("giacenza attuale", "giacenzaattuale", "giacenza", "quantità", "stock", "qty") || 0);
-                                const origStockNum = getVal("giacenza originale", "original stock") !== '' ? Number(getVal("giacenza originale", "original stock")) : null;
-
-                                const isConsolidatedRaw = getVal("consolidato (si/no)", "consolidato", "isinventorylocked", "locked").toString().trim().toUpperCase();
-                                const isInventoryLocked = (isConsolidatedRaw === "SI" || isConsolidatedRaw === "SÌ" || isConsolidatedRaw === "TRUE" || isConsolidatedRaw === "1");
-
-                                if (code) {
-                                    const codeStr = code.toString().trim();
-                                    const existingProduct = products.find(p => p.code && p.code.toString().trim().toLowerCase() === codeStr.toLowerCase() && p.listId === currentListId);
-                                    
-                                    let finalOrigStock = origStockNum !== null ? origStockNum : stockNum;
-
-                                    let itemData = {
-                                        listId: currentListId,
-                                        code: codeStr,
-                                        originalCode: originalCode.toString().trim(),
-                                        location: location.toString().trim().toUpperCase(),
-                                        originalLocation: originalLocation.toString().trim().toUpperCase(),
-                                        description: description.toString().trim(),
-                                        originalDescription: originalDescription.toString().trim(),
-                                        brand: brand.toString().trim(),
-                                        originalBrand: originalBrand.toString().trim(),
-                                        note: note.toString().trim(),
-                                        originalNote: originalNote.toString().trim(),
-                                        stock: stockNum,
-                                        originalStock: finalOrigStock,
-                                        isInventoryLocked: isInventoryLocked,
-                                        timestamp: new Date().toISOString()
-                                    };
-
-                                    if (existingProduct) {
-                                        batch.update(doc(db, 'artifacts', appId, 'public', 'data', 'products', existingProduct.id), itemData);
-                                        updatedCount++;
-                                    } else {
-                                        batch.set(doc(collection(db, 'artifacts', appId, 'public', 'data', 'products')), itemData);
-                                        addedCount++;
-                                    }
-                                }
-                            }
-                            await batch.commit();
-                        }
-
-                        auditLogic.logAction("Importazione Excel", `Importati ${addedCount} nuovi prodotti e aggiornati ${updatedCount}`);
-                        document.getElementById('fullLoader').classList.add('opacity-0');
-                        setTimeout(() => document.getElementById('fullLoader').classList.add('hidden'), 300);
-                        ui.toast(`Importazione completata: ${addedCount} aggiunti, ${updatedCount} aggiornati.`, "success");
-                        event.target.value = '';
-                    } catch (error) {
-                        console.error(error);
-                        document.getElementById('fullLoader').classList.add('opacity-0');
-                        setTimeout(() => document.getElementById('fullLoader').classList.add('hidden'), 300);
-                        ui.toast("Errore durante la lettura del file Excel.", "error");
-                        event.target.value = '';
+            headStyles: {
+                fillColor: [0, 97, 164], // Blu Inventario
+                textColor: 255,
+                fontSize: 9,
+                fontStyle: 'bold',
+                halign: 'center'
+            },
+            bodyStyles: {
+                fontSize: 8.5,
+                textColor: 40
+            },
+            columnStyles: {
+                0: { fontStyle: 'bold', cellWidth: 35 },
+                1: { cellWidth: 'auto' },
+                2: { halign: 'center', fontStyle: 'bold', cellWidth: 25 },
+                3: { halign: 'center', cellWidth: 28 },
+                4: { halign: 'center', fontStyle: 'bold', cellWidth: 20 },
+                5: { halign: 'center', fontStyle: 'bold', fontSize: 11, cellWidth: 18 }
+            },
+            didParseCell: function(data) {
+                if (data.section === 'body' && data.column.index === 5) {
+                    const val = data.cell.raw;
+                    if (val === '✔' || val === 'OK') {
+                        data.cell.styles.textColor = [16, 185, 129]; // Verde
+                    } else if (val === '✖' || val === 'X') {
+                        data.cell.styles.textColor = [239, 68, 68]; // Rosso
+                    } else if (val === '?') {
+                        data.cell.styles.textColor = [245, 158, 11]; // Arancione
                     }
-                };
-                reader.readAsArrayBuffer(file);
+                }
+                if (data.section === 'body' && data.column.index === 4) {
+                    const val = data.cell.raw;
+                    if (val.startsWith('+')) data.cell.styles.textColor = [16, 185, 129];
+                    else if (val.startsWith('-') && val !== '0') data.cell.styles.textColor = [239, 68, 68];
+                }
+            }
+        });
+    } catch (tableErr) {
+        console.error("Errore durante la generazione della tabella PDF:", tableErr);
+    }
+
+    // Salvataggio sicuro del file PDF
+    try {
+        const cleanLoc = locationName.replace(/[^a-z0-9]/gi, '_').toUpperCase();
+        doc.save(`Inventario_${cleanLoc}_${todayStr.replace(/\//g, '-')}.pdf`);
+        ui.toast(`PDF generato per ubicazione ${locationName}`, "success");
+    } catch (saveErr) {
+        console.error("Errore durante il salvataggio del file PDF:", saveErr);
+        ui.toast("Errore durante il salvataggio del PDF", "error");
+    }
+};
+
+// 2. Definizione corretta dell'oggetto excelLogic
+window.excelLogic = {
+    exportExcel: () => {
+        if (products.length === 0) return ui.toast("Nessun prodotto da esportare.", "error");
+
+        const isInv = isCurrentListInventory();
+        const listName = globalLists.find(l => l.id === currentListId)?.name || 'Export';
+        
+        let ws, wb;
+        wb = XLSX.utils.book_new();
+
+        const dataToExport = products.map(p => {
+            const currentStock = Number(p.stock || 0);
+            const origStock = (p.originalStock !== undefined && p.originalStock !== null && p.originalStock !== '') ? Number(p.originalStock) : currentStock;
+            const deltaVal = currentStock - origStock;
+            
+            let deltaText = "0";
+            if (deltaVal > 0) deltaText = `+${deltaVal}`;
+            else if (deltaVal < 0) deltaText = `${deltaVal}`;
+
+            const rowData = {
+                "Codice Prodotto": p.code || '',
+                "Codice Originale": p.originalCode || '',
+                "Ubicazione Attuale": p.location || '',
+                "Ubicazione Originale": p.originalLocation || '',
+                "Marchio": p.brand || '',
+                "Marchio Originale": p.originalBrand !== undefined ? p.originalBrand : '',
+                "Giacenza Attuale": currentStock,
+                "Giacenza Originale": origStock
+            };
+
+            if (isInv) {
+                rowData["DELTA (Differenza)"] = deltaText;
+                rowData["CONSOLIDATO (Si/No)"] = p.isInventoryLocked ? "SI" : "NO";
+            }
+
+            rowData["Descrizione"] = p.description || '';
+            rowData["Descrizione Originale"] = p.originalDescription !== undefined ? p.originalDescription : '';
+            rowData["Note"] = p.note || '';
+            rowData["Nota Originale"] = p.originalNote !== undefined ? p.originalNote : '';
+
+            return rowData;
+        });
+
+        ws = XLSX.utils.json_to_sheet(dataToExport);
+        XLSX.utils.book_append_sheet(wb, ws, isInv ? "Inventario" : "Magazzino");
+
+        const prefix = isInv ? 'Inventario' : 'Magazzino';
+        const fileName = `${prefix}_${listName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+        XLSX.writeFile(wb, fileName);
+        auditLogic.logAction("Esportazione Excel", `Esportata lista '${listName}' (${products.length} prodotti)`);
+        ui.closeModal('settingsModal');
+        ui.toast("Esportazione completata", "success");
+    },
+    
+    importExcel: (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(worksheet);
+
+                if (json.length === 0) return ui.toast("Il file Excel è vuoto.", "error");
+
+                document.getElementById('fullLoader').classList.remove('hidden', 'opacity-0');
+                document.getElementById('loaderText').innerText = "Importazione in corso (450 prodotti per blocco)...";
+                ui.closeModal('settingsModal');
+
+                const BATCH_LIMIT = 450;
+                let addedCount = 0, updatedCount = 0;
+                const totalRows = json.length;
+
+                for (let i = 0; i < totalRows; i += BATCH_LIMIT) {
+                    const batch = writeBatch(db);
+                    const chunk = json.slice(i, i + BATCH_LIMIT);
+
+                    const currentProgress = Math.min(i + BATCH_LIMIT, totalRows);
+                    document.getElementById('loaderText').innerText = `Elaborazione: ${currentProgress} di ${totalRows} prodotti...`;
+
+                    for (const row of chunk) {
+                        const normalizedRow = {};
+                        Object.keys(row).forEach(k => { normalizedRow[k.trim().toLowerCase()] = row[k]; });
+
+                        const getVal = (...keys) => {
+                            for (const k of keys) {
+                                if (normalizedRow[k] !== undefined && normalizedRow[k] !== null) return normalizedRow[k];
+                            }
+                            return '';
+                        };
+
+                        const code = getVal("codice prodotto", "codice articolo", "codice", "code", "articolo", "art");
+                        const originalCode = getVal("codice originale", "original code") || code;
+                        const location = getVal("ubicazione attuale", "ubicazione", "location", "loc", "scaffale") || 'GENERALE';
+                        const originalLocation = getVal("ubicazione originale", "original location") || location;
+                        const description = getVal("descrizione", "description", "desc");
+                        const originalDescription = getVal("descrizione originale", "original description") || description;
+                        const brand = getVal("marchio", "brand", "marca");
+                        const originalBrand = getVal("marchio originale", "original brand") || brand;
+                        const note = getVal("note", "annotazioni");
+                        const originalNote = getVal("nota originale", "original note") || note;
+                        const stockNum = Number(getVal("giacenza attuale", "giacenzaattuale", "giacenza", "quantità", "stock", "qty") || 0);
+                        const origStockNum = getVal("giacenza originale", "original stock") !== '' ? Number(getVal("giacenza originale", "original stock")) : null;
+
+                        const isConsolidatedRaw = getVal("consolidato (si/no)", "consolidato", "isinventorylocked", "locked").toString().trim().toUpperCase();
+                        const isInventoryLocked = (isConsolidatedRaw === "SI" || isConsolidatedRaw === "SÌ" || isConsolidatedRaw === "TRUE" || isConsolidatedRaw === "1");
+
+                        if (code) {
+                            const codeStr = code.toString().trim();
+                            const existingProduct = products.find(p => p.code && p.code.toString().trim().toLowerCase() === codeStr.toLowerCase() && p.listId === currentListId);
+                            
+                            let finalOrigStock = origStockNum !== null ? origStockNum : stockNum;
+
+                            let itemData = {
+                                listId: currentListId,
+                                code: codeStr,
+                                originalCode: originalCode.toString().trim(),
+                                location: location.toString().trim().toUpperCase(),
+                                originalLocation: originalLocation.toString().trim().toUpperCase(),
+                                description: description.toString().trim(),
+                                originalDescription: originalDescription.toString().trim(),
+                                brand: brand.toString().trim(),
+                                originalBrand: originalBrand.toString().trim(),
+                                note: note.toString().trim(),
+                                originalNote: originalNote.toString().trim(),
+                                stock: stockNum,
+                                originalStock: finalOrigStock,
+                                isInventoryLocked: isInventoryLocked,
+                                timestamp: new Date().toISOString()
+                            };
+
+                            if (existingProduct) {
+                                batch.update(doc(db, 'artifacts', appId, 'public', 'data', 'products', existingProduct.id), itemData);
+                                updatedCount++;
+                            } else {
+                                batch.set(doc(collection(db, 'artifacts', appId, 'public', 'data', 'products')), itemData);
+                                addedCount++;
+                            }
+                        }
+                    }
+                    await batch.commit();
+                }
+
+                auditLogic.logAction("Importazione Excel", `Importati ${addedCount} nuovi prodotti e aggiornati ${updatedCount}`);
+                document.getElementById('fullLoader').classList.add('opacity-0');
+                setTimeout(() => document.getElementById('fullLoader').classList.add('hidden'), 300);
+                ui.toast(`Importazione completata: ${addedCount} aggiunti, ${updatedCount} aggiornati.`, "success");
+                event.target.value = '';
+            } catch (error) {
+                console.error(error);
+                document.getElementById('fullLoader').classList.add('opacity-0');
+                setTimeout(() => document.getElementById('fullLoader').classList.add('hidden'), 300);
+                ui.toast("Errore durante la lettura del file Excel.", "error");
+                event.target.value = '';
             }
         };
+        reader.readAsArrayBuffer(file);
+    }
+};
 
         window.ui = {
             toast: (msg, type='info') => {
@@ -2666,7 +2847,7 @@
                 container.innerHTML = skeletonHtml;
             },
 
-            renderLocationChips: () => {
+renderLocationChips: () => {
     const chipsContainer = document.getElementById('locationChipsContainer');
     const allLocations = [...new Set(products.map(p => p.location ? p.location.toUpperCase() : 'SENZA UBICAZIONE'))].sort(compareLocations);
     const isInv = isCurrentListInventory();
@@ -2676,18 +2857,16 @@
         return;
     }
 
-    // Colori di sfondo attivo/inattivo conforme allo stile della tua immagine
     const activeBtnClass = isInv 
-        ? 'bg-blue-600 text-white font-bold' 
-        : 'bg-emerald-600 text-white font-bold';
+        ? 'bg-blue-600 text-white font-bold shadow-xs' 
+        : 'bg-emerald-600 text-white font-bold shadow-xs';
     const inactiveBtnClass = isInv 
         ? 'bg-blue-100 text-blue-900 hover:bg-blue-200 dark:bg-blue-950/60 dark:text-blue-200 dark:hover:bg-blue-900/80 font-semibold' 
         : 'bg-emerald-100 text-emerald-900 hover:bg-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-200 dark:hover:bg-emerald-900/80 font-semibold';
 
-    const totalItems = allLocations.length + 1; // +1 per l'opzione "Tutte"
-
-    // Tasto "Tutte Ubicazioni" (primo elemento del gruppo)
     const isAllActive = selectedLocationFilter === null;
+
+    // Tasto "Tutte Ubicazioni"
     let chipsHtml = `
         <button onclick="ui.setLocationFilter(null)" 
                 class="shrink-0 px-4 py-2 text-xs font-mono transition-all flex items-center gap-1.5 rounded-l-full rounded-r-md ${isAllActive ? activeBtnClass : inactiveBtnClass}">
@@ -2696,29 +2875,43 @@
         </button>
     `;
 
-    // Ciclo delle varie ubicazioni
+    // Pulsanti Ubicazioni
     allLocations.forEach((loc, index) => {
         const isActive = selectedLocationFilter === loc;
         const isLast = index === allLocations.length - 1;
 
-        // Gestione raggio bordi nativo Material 3 Segmented
         let borderShape = 'rounded-md';
         if (isLast) {
             borderShape = 'rounded-r-full rounded-l-md';
         }
 
-        chipsHtml += `
-            <button onclick="ui.setLocationFilter('${ui.escapeHtml(loc)}')" 
-                    class="shrink-0 px-4 py-2 text-xs font-mono transition-all flex items-center gap-1.5 ${borderShape} ${isActive ? activeBtnClass : inactiveBtnClass}">
-                ${isActive ? '<i class="fa-solid fa-check text-[11px]"></i>' : ''}
-                <span>${ui.escapeHtml(loc)}</span>
-            </button>
-        `;
+        if (isActive && isInv) {
+            // Quando la scheda è attiva IN MODALITÀ INVENTARIO, trasforma il chip nel tasto "Scarica PDF Ubicazione"
+            chipsHtml += `
+                <button onclick="window.exportLocationPDF('${ui.escapeHtml(loc)}')" 
+                        class="shrink-0 px-4 py-2 text-xs font-mono transition-all flex items-center gap-2 ${borderShape} bg-red-600 hover:bg-red-700 text-white font-bold shadow-md active:scale-95"
+                        title="Tocca per scaricare il PDF dell'inventario per ${ui.escapeHtml(loc)} (Oppure riseleziona per deselezionare)">
+                    <i class="fa-solid fa-file-pdf text-sm animate-pulse"></i>
+                    <span>Scarica PDF ${ui.escapeHtml(loc)}</span>
+                    <span onclick="event.stopPropagation(); ui.setLocationFilter('${ui.escapeHtml(loc)}');" class="ml-1 opacity-70 hover:opacity-100 p-0.5" title="Deseleziona ubicazione">
+                        <i class="fa-solid fa-xmark"></i>
+                    </span>
+                </button>
+            `;
+        } else {
+            // Chip standard per le ubicazioni inattive o in modalità normale
+            chipsHtml += `
+                <button onclick="ui.setLocationFilter('${ui.escapeHtml(loc)}')" 
+                        class="shrink-0 px-4 py-2 text-xs font-mono transition-all flex items-center gap-1.5 ${borderShape} ${isActive ? activeBtnClass : inactiveBtnClass}">
+                    ${isActive ? '<i class="fa-solid fa-check text-[11px]"></i>' : ''}
+                    <span>${ui.escapeHtml(loc)}</span>
+                </button>
+            `;
+        }
     });
 
     chipsContainer.innerHTML = chipsHtml;
 },
-
             renderProducts: () => {
                 ui.renderLocationChips();
 
