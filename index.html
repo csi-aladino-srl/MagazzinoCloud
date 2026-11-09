@@ -51,7 +51,7 @@
 <body class="h-full w-full m-0 p-0 bg-md-surface text-md-on-surface font-sans antialiased flex flex-col justify-center items-center">
 
 <script>
-const APP_VERSION = '9.0.1';
+const APP_VERSION = '9.1';
 
 function forzaAggiornamento() {
     if ('serviceWorker' in navigator) {
@@ -90,7 +90,6 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="material-symbols-outlined text-lg">refresh</span>
         </button>
         <div class="flex flex-col text-left">
-            <span class="text-xs font-bold text-md-on-surface">Versione App: <span id="appVersionLabel">v9.0.1</span></span>
             <span class="text-[10px] text-md-outline">Tocca l'icona per pulire la cache</span>
         </div>
     </div>
@@ -112,32 +111,20 @@ document.addEventListener('DOMContentLoaded', () => {
             </button>
         </div>
         
-<div class="space-y-4 text-xs text-slate-600 leading-relaxed mb-6">
-    <!-- Icona e Testo Material Design 3 -->
-    <div class="flex items-start gap-3">
-        <span class="material-symbols-outlined text-md-primary text-xl mt-0.5">palette</span>
-        <div>
-            <b class="text-slate-900 block">Material Design 3</b>
-            Interfaccia grafica completamente rinnovata con nuovi colori, componenti arrotondati e migliore fruibilità.
+        <div class="space-y-4 text-xs text-slate-600 leading-relaxed mb-6">
+            <!-- Nuova Funzionalità: Esportazione PDF Ubicazione -->
+            <div class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-md-primary text-xl mt-0.5">picture_as_pdf</span>
+                <div>
+                    <b class="text-slate-900 block">Esportazione PDF Ubicazione</b>
+                    Scarica il report PDF dell'inventario direttamente cliccando sul chip dell'ubicazione attiva, completo di giacenze e ubicazioni inventariate, delta e stato di verifica.
+                </div>
+            </div>
         </div>
-    </div>
-    
-    <!-- Icona e Testo Nuovo Sistema Notifiche -->
-    <div class="flex items-start gap-3">
-        <span class="material-symbols-outlined text-md-primary text-xl mt-0.5">notifications_active</span>
-        <div>
-            <b class="text-slate-900 block">Nuovo Sistema Notifiche</b>
-            Integrazione avanzata per la gestione ed erogazione tempestiva degli avvisi di magazzino.
-        </div>
-    </div>
-    
-    <!-- Icona e Testo Reattività e Velocità -->
-    <div class="flex items-start gap-3">
-        <span class="material-symbols-outlined text-md-primary text-xl mt-0.5">bolt</span>
-        <div>
-            <b class="text-slate-900 block">Reattività e Prestazioni</b>
-            Migliorata la velocità complessiva dell'applicazione e la risposta alle interazioni touch.
-        </div>
+
+        <button onclick="chiudiWhatsNew()" class="w-full h-11 bg-md-primary text-white font-medium rounded-full text-sm">
+            Ho capito
+        </button>
     </div>
 </div>
 
