@@ -386,6 +386,15 @@
                         <button id="filterConsolidated" class="filter-btn hidden shrink-0 px-4 py-2 rounded-full text-xs font-bold bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors" onclick="ui.setFilter('consolidated')">
                             <i class="fa-solid fa-check-double mr-1"></i> Consolidati (<span id="countConsolidated">0</span>)
                         </button>
+<!-- Tasto Switch Vista Scaffale / Lista (Visibile solo in Inventario) -->
+<div id="shelfViewToggleContainer" class="hidden items-center gap-1 bg-slate-200 dark:bg-slate-800 p-1 rounded-2xl">
+    <button id="btnViewList" onclick="ui.switchMainView('list')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-700 text-blue-600 shadow-xs flex items-center gap-1.5">
+        <i class="fa-solid fa-list"></i> Lista
+    </button>
+    <button id="btnViewShelf" onclick="ui.switchMainView('shelf')" class="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 flex items-center gap-1.5">
+        <i class="fa-solid fa-cubes-stacked"></i> Scaffale 2D
+    </button>
+</div>
                     </div>
 
                     <div class="flex items-center gap-2 shrink-0 text-xs font-bold text-slate-500">
@@ -434,6 +443,95 @@
 
         <main class="flex-1 overflow-y-auto w-full bg-slate-100/60 dark:bg-slate-950 pb-48 md:pb-24 relative" id="mainContainer">
             <div class="max-w-7xl mx-auto p-3 sm:p-5 pb-24" id="productsList"></div>
+<!-- Vista Grafica Scaffale Reale 2D (Modalità Inventario) -->
+<div id="shelfViewContainer" class="hidden max-w-7xl mx-auto p-4 flex flex-col gap-5">
+    
+    <!-- Barra Navigazione Scaffali & Gestione Misure cm -->
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-sm flex flex-wrap items-center justify-between gap-4">
+        
+        <!-- Frecce Scorrimento Scaffali (es. 1A, 1B, 2A...) -->
+        <div class="flex items-center gap-3">
+            <button onclick="shelfViewLogic.prevShelf()" class="w-12 h-12 bg-blue-100 hover:bg-blue-200 dark:bg-blue-950 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-2xl flex items-center justify-center text-lg font-bold transition-all active:scale-95 shadow-xs">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <div class="text-center px-3">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Scaffale Selezionato</span>
+                <h2 id="currentShelfTitle" class="text-2xl font-black text-blue-600 dark:text-blue-400 font-mono">SCAFFALE 1A</h2>
+            </div>
+            <button onclick="shelfViewLogic.nextShelf()" class="w-12 h-12 bg-blue-100 hover:bg-blue-200 dark:bg-blue-950 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-2xl flex items-center justify-center text-lg font-bold transition-all active:scale-95 shadow-xs">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <!-- Legenda Stato Inventario -->
+        <div class="flex items-center gap-4 text-xs font-bold bg-slate-50 dark:bg-slate-800/50 px-4 py-2 rounded-2xl border border-slate-200 dark:border-slate-700">
+            <div class="flex items-center gap-1.5">
+                <span class="w-3.5 h-3.5 rounded-md bg-emerald-500 border border-emerald-600 shadow-xs"></span>
+                <span class="text-slate-700 dark:text-slate-300">Inventariato</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <span class="w-3.5 h-3.5 rounded-md bg-red-500 border border-red-600 shadow-xs"></span>
+                <span class="text-slate-700 dark:text-slate-300">Da Inventariare</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <span class="w-3.5 h-3.5 rounded-md bg-slate-300 dark:bg-slate-700"></span>
+                <span class="text-slate-400">Vuoto</span>
+            </div>
+        </div>
+
+        <!-- Pulsante Impostazione Misure Scaffale in cm -->
+<!-- Pulsante Impostazione Misure Scaffale in cm (Protetto per Leonardo C.) -->
+<button onclick="shelfViewLogic.checkOpenDimensionsModal()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold flex items-center gap-2 shadow-xs transition-transform active:scale-95">
+    <i class="fa-solid fa-ruler-combined"></i> Misure & Profondità (cm)
+</button>
+    </div>
+
+    <!-- Area Visualizzazione Scaffale Metallico Industriale 2D -->
+    <div class="bg-slate-100/80 dark:bg-slate-950 border border-slate-300/80 dark:border-slate-800 rounded-4xl p-6 sm:p-10 shadow-inner overflow-x-auto flex justify-center items-end min-h-[500px]">
+        <div id="shelfVisualContainer" class="relative transition-all duration-300"></div>
+    </div>
+</div>
+
+<!-- Modale Impostazione Misure Scaffale in Centimetri (cm) -->
+<div id="shelfDimensionsModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[95] hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-200">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-4xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
+        <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950/50">
+            <h3 class="text-base font-bold text-slate-900 dark:text-white" id="modalShelfTitle">Imposta Misure Scaffale</h3>
+            <button onclick="ui.closeModal('shelfDimensionsModal')" class="w-9 h-9 rounded-full bg-slate-200/60 dark:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="p-6 flex flex-col gap-4 max-h-[75vh] overflow-y-auto">
+            <div class="grid grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Larghezza (cm)</label>
+                    <input type="number" id="shelfWidthCm" class="w-full m3-input bg-slate-50 dark:bg-slate-800 text-center font-bold" placeholder="100">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Altezza (cm)</label>
+                    <input type="number" id="shelfHeightCm" class="w-full m3-input bg-slate-50 dark:bg-slate-800 text-center font-bold" placeholder="200">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold uppercase text-slate-500 mb-1">Profondità (cm)</label>
+                    <input type="number" id="shelfDepthCm" class="w-full m3-input bg-slate-50 dark:bg-slate-800 text-center font-bold" placeholder="50">
+                </div>
+            </div>
+
+            <div class="border-t border-slate-100 dark:border-slate-800 pt-3">
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Numero di Ripiani / Livelli Altezze (es. 0, 1, 2...)</label>
+                <input type="number" id="shelfLevelsCount" min="1" max="10" class="w-full m3-input bg-slate-50 dark:bg-slate-800 text-center font-bold mb-3" oninput="shelfViewLogic.generateLevelHeightInputs(null, null)">
+                
+                <div id="levelHeightsContainer" class="space-y-2"></div>
+            </div>
+        </div>
+        <div class="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 flex justify-end gap-3">
+            <button onclick="ui.closeModal('shelfDimensionsModal')" class="px-5 py-2.5 font-bold text-slate-600 dark:text-slate-400 bg-slate-200 dark:bg-slate-800 rounded-2xl text-xs">Annulla</button>
+            <button onclick="shelfViewLogic.saveShelfDimensions()" class="px-6 py-2.5 font-bold text-white btn-theme rounded-2xl text-xs shadow-md">
+                <i class="fa-solid fa-floppy-disk"></i> Salva Misure
+            </button>
+        </div>
+    </div>
+</div>
         </main>
     </div>
 
@@ -1372,36 +1470,51 @@
         window.switchList = switchList;
 
         function updateListUI() {
-            const list = getCurrentList();
-            if (list) {
-                document.getElementById('currentListName').innerText = list.name;
-                const invBadge = document.getElementById('inventoryBadge');
-                const expDesc = document.getElementById('exportDescriptionText');
-                const progContainer = document.getElementById('inventoryProgressBarContainer');
-                const filterConsolidatedBtn = document.getElementById('filterConsolidated');
+    const list = getCurrentList();
+    if (list) {
+        document.getElementById('currentListName').innerText = list.name;
+        const invBadge = document.getElementById('inventoryBadge');
+        const expDesc = document.getElementById('exportDescriptionText');
+        const progContainer = document.getElementById('inventoryProgressBarContainer');
+        const filterConsolidatedBtn = document.getElementById('filterConsolidated');
+        const shelfToggle = document.getElementById('shelfViewToggleContainer');
 
-                if (list.isInventory) {
-                    document.body.classList.add('is-inventory');
-                    if (invBadge) invBadge.classList.remove('hidden');
-                    if (expDesc) expDesc.innerText = "Esporta inventario con colonna DELTA";
-                    if (progContainer) progContainer.classList.remove('hidden');
-                    if (progContainer) progContainer.classList.add('flex');
-                    if (filterConsolidatedBtn) filterConsolidatedBtn.classList.remove('hidden');
-                } else {
-                    document.body.classList.remove('is-inventory');
-                    if (invBadge) invBadge.classList.add('hidden');
-                    if (expDesc) expDesc.innerText = "Scarica la lista corrente";
-                    if (progContainer) progContainer.classList.add('hidden');
-                    if (progContainer) progContainer.classList.remove('flex');
-                    if (filterConsolidatedBtn) {
-                        filterConsolidatedBtn.classList.add('hidden');
-                        if (activeFilter === 'consolidated') {
-                            ui.setFilter('all');
-                        }
-                    }
+        if (list.isInventory) {
+            document.body.classList.add('is-inventory');
+            if (invBadge) invBadge.classList.remove('hidden');
+            if (expDesc) expDesc.innerText = "Esporta inventario con colonna DELTA";
+            if (progContainer) {
+                progContainer.classList.remove('hidden');
+                progContainer.classList.add('flex');
+            }
+            if (filterConsolidatedBtn) filterConsolidatedBtn.classList.remove('hidden');
+            if (shelfToggle) {
+                shelfToggle.classList.remove('hidden');
+                shelfToggle.classList.add('flex');
+            }
+        } else {
+            document.body.classList.remove('is-inventory');
+            if (invBadge) invBadge.classList.add('hidden');
+            if (expDesc) expDesc.innerText = "Scarica la lista corrente";
+            if (progContainer) {
+                progContainer.classList.add('hidden');
+                progContainer.classList.remove('flex');
+            }
+            if (filterConsolidatedBtn) {
+                filterConsolidatedBtn.classList.add('hidden');
+                if (activeFilter === 'consolidated') {
+                    ui.setFilter('all');
                 }
             }
+            if (shelfToggle) {
+                shelfToggle.classList.add('hidden');
+                shelfToggle.classList.remove('flex');
+            }
+            // Se ci trovavamo nella vista scaffale, torna alla lista
+            ui.switchMainView('list');
         }
+    }
+}
 
         window.dbLogic = {
 consolidateModifiedToOriginals: async () => {
@@ -1845,38 +1958,43 @@ consolidateModifiedToOriginals: async () => {
             },
 
             bulkUpdateStock: async () => {
-                const val = document.getElementById('bulkStockInput').value.trim();
-                if (val === '' || isNaN(Number(val))) return ui.toast("Inserisci una giacenza valida", "error");
-                const newStock = Number(val);
-                if (selectedProductIds.size === 0) return;
+    const val = document.getElementById('bulkStockInput').value.trim();
+    if (val === '' || isNaN(Number(val))) return ui.toast("Inserisci una giacenza valida", "error");
+    const newStock = Number(val);
+    if (selectedProductIds.size === 0) return;
 
-                ui.closeModal('bulkStockModal');
-                ui.toast("Aggiornamento giacenze...", "info");
+    ui.closeModal('bulkStockModal');
+    ui.toast("Aggiornamento giacenze...", "info");
 
-                try {
-                    const idsArray = Array.from(selectedProductIds);
-                    const BATCH_LIMIT = 500;
-                    for (let i = 0; i < idsArray.length; i += BATCH_LIMIT) {
-                        const batch = writeBatch(db);
-                        const chunk = idsArray.slice(i, i + BATCH_LIMIT);
-                        chunk.forEach(prodId => {
-                            const item = products.find(p => p.id === prodId);
-                            if (item) {
-                                let finalOrigStock = item.originalStock !== undefined && item.originalStock !== null ? item.originalStock : item.stock;
-                                batch.update(doc(db, 'artifacts', appId, 'public', 'data', 'products', prodId), {
-                                    stock: newStock,
-                                    originalStock: finalOrigStock,
-                                    isInventoryLocked: true
-                                });
-                            }
-                        });
-                        await batch.commit();
-                    }
-                    auditLogic.logAction("Modifica Massiva Quantità", `Impostata giacenza ${newStock} per ${selectedProductIds.size} prodotti`);
-                    ui.toast("Giacenze aggiornate", "success");
-                    ui.renderProducts();
-                } catch (e) { console.error(e); }
-            },
+    const nowIso = new Date().toISOString();
+    const operator = currentUserOperator || 'Operatore';
+
+    try {
+        const idsArray = Array.from(selectedProductIds);
+        const BATCH_LIMIT = 500;
+        for (let i = 0; i < idsArray.length; i += BATCH_LIMIT) {
+            const batch = writeBatch(db);
+            const chunk = idsArray.slice(i, i + BATCH_LIMIT);
+            chunk.forEach(prodId => {
+                const item = products.find(p => p.id === prodId);
+                if (item) {
+                    let finalOrigStock = item.originalStock !== undefined && item.originalStock !== null ? item.originalStock : item.stock;
+                    batch.update(doc(db, 'artifacts', appId, 'public', 'data', 'products', prodId), {
+                        stock: newStock,
+                        originalStock: finalOrigStock,
+                        isInventoryLocked: true,
+                        consolidatedAt: nowIso,
+                        consolidatedBy: operator
+                    });
+                }
+            });
+            await batch.commit();
+        }
+        auditLogic.logAction("Modifica Massiva Quantità", `Impostata giacenza ${newStock} per ${selectedProductIds.size} prodotti da ${operator}`);
+        ui.toast("Giacenze aggiornate", "success");
+        ui.renderProducts();
+    } catch (e) { console.error(e); }
+},
 
             bulkUpdateNote: async () => {
                 const newNote = document.getElementById('bulkNoteInput').value.trim();
@@ -2000,44 +2118,58 @@ consolidateModifiedToOriginals: async () => {
             },
 
             confirmAndLockStock: async (id) => {
-                const item = products.find(p => p.id === id);
-                if (!item) return;
+    const item = products.find(p => p.id === id);
+    if (!item) return;
 
-                const stockNum = Number(item.stock !== undefined ? item.stock : 0);
-                let finalOrigStock = item.originalStock !== undefined && item.originalStock !== null ? item.originalStock : stockNum;
+    const stockNum = Number(item.stock !== undefined ? item.stock : 0);
+    let finalOrigStock = item.originalStock !== undefined && item.originalStock !== null ? item.originalStock : stockNum;
+    const nowIso = new Date().toISOString();
+    const operator = currentUserOperator || 'Operatore';
 
-                item.isInventoryLocked = true;
-                ui.refreshProductRowDOM(id);
+    item.isInventoryLocked = true;
+    item.consolidatedAt = nowIso;
+    item.consolidatedBy = operator;
+    ui.refreshProductRowDOM(id);
 
-                try {
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), {
-                        stock: stockNum,
-                        originalStock: finalOrigStock,
-                        isInventoryLocked: true
-                    });
-                    auditLogic.logAction("Consolida Inventario", `Consolidato prodotto [${item.code}]: Conteggiato ${stockNum}`);
-                    ui.toast("Quantità confermata e salvata", "success");
-                } catch (e) {
-                    console.error(e);
-                    ui.toast("Errore di salvataggio (offline/connessione)", "error");
-                }
-            },
+    try {
+        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), {
+            stock: stockNum,
+            originalStock: finalOrigStock,
+            isInventoryLocked: true,
+            consolidatedAt: nowIso,
+            consolidatedBy: operator
+        });
+        auditLogic.logAction("Consolida Inventario", `Consolidato prodotto [${item.code}]: Conteggiato ${stockNum} da ${operator}`);
+        ui.toast("Quantità confermata e salvata", "success");
+    } catch (e) {
+        console.error(e);
+        ui.toast("Errore di salvataggio (offline/connessione)", "error");
+    }
+},
 
             unlockStock: (id) => {
-                ui.showConfirm("Sblocca per modifica", "Vuoi sbloccare questo articolo per modificarne nuovamente la quantità?", async () => {
-                    const item = products.find(p => p.id === id);
-                    if (!item) return;
-                    item.isInventoryLocked = false;
-                    ui.refreshProductRowDOM(id);
-                    try {
-                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), {
-                            isInventoryLocked: false
-                        });
-                        auditLogic.logAction("Sblocco Inventario", `Sbloccato prodotto [${item.code}] per nuova modifica`);
-                        ui.toast("Articolo sbloccato", "info");
-                    } catch(e) { console.error(e); }
+    const performUnlock = async () => {
+        ui.showConfirm("Sblocca per modifica", "Vuoi sbloccare questo articolo per modificarne nuovamente la quantità?", async () => {
+            const item = products.find(p => p.id === id);
+            if (!item) return;
+            item.isInventoryLocked = false;
+            ui.renderProducts();
+            try {
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), {
+                    isInventoryLocked: false
                 });
-            },
+                auditLogic.logAction("Sblocco Inventario", `Sbloccato prodotto [${item.code}] per nuova modifica da ${currentUserOperator}`);
+                ui.toast("Articolo sbloccato", "info");
+            } catch(e) { console.error(e); }
+        });
+    };
+
+    if (currentUserOperator === 'Leonardo C.') {
+        performUnlock();
+    } else {
+        ui.requestAdminPassword(performUnlock);
+    }
+},
 
             quickUpdateBrand: async (id, newBrandVal) => {
                 const brandStr = (newBrandVal || '').trim();
@@ -2448,6 +2580,51 @@ window.excelLogic = {
 };
 
         window.ui = {
+switchMainView: (viewMode) => {
+                const listContainer = document.getElementById('productsList');
+                const shelfContainer = document.getElementById('shelfViewContainer');
+                const btnList = document.getElementById('btnViewList');
+                const btnShelf = document.getElementById('btnViewShelf');
+                
+                // Elementi da disattivare nella visualizzazione scaffale
+                const filterButtons = document.querySelectorAll('.filter-btn, #locationChipsContainer button, #selectAllCheckbox');
+
+                if (viewMode === 'shelf') {
+                    if (listContainer) listContainer.classList.add('hidden');
+                    if (shelfContainer) shelfContainer.classList.remove('hidden');
+
+                    if (btnShelf) {
+                        btnShelf.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-700 text-blue-600 shadow-xs flex items-center gap-1.5";
+                    }
+                    if (btnList) {
+                        btnList.className = "px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 flex items-center gap-1.5";
+                    }
+
+                    // Disabilita filtri superiori e chip
+                    filterButtons.forEach(el => {
+                        el.classList.add('opacity-50', 'pointer-events-none');
+                    });
+
+                    if (window.shelfViewLogic && typeof window.shelfViewLogic.renderShelf === 'function') {
+                        window.shelfViewLogic.renderShelf();
+                    }
+                } else {
+                    if (shelfContainer) shelfContainer.classList.add('hidden');
+                    if (listContainer) listContainer.classList.remove('hidden');
+
+                    if (btnList) {
+                        btnList.className = "px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-700 text-blue-600 shadow-xs flex items-center gap-1.5";
+                    }
+                    if (btnShelf) {
+                        btnShelf.className = "px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 flex items-center gap-1.5";
+                    }
+
+                    // Riabilita filtri superiori e chip
+                    filterButtons.forEach(el => {
+                        el.classList.remove('opacity-50', 'pointer-events-none');
+                    });
+                }
+            },
             toast: (msg, type='info') => {
                 const isInv = isCurrentListInventory();
                 const colors = { 
@@ -2814,9 +2991,9 @@ window.excelLogic = {
             },
 
             setLocationFilter: (loc) => {
-                selectedLocationFilter = (selectedLocationFilter === loc) ? null : loc;
-                currentPage = 1;
-                ui.renderProducts();
+                selectedLocationFilter = loc;
+    currentPage = 1;
+    ui.renderProducts();
             },
 
             changePage: (newPage) => {
@@ -2920,70 +3097,63 @@ window.excelLogic = {
             },
 
 renderLocationChips: () => {
-    const chipsContainer = document.getElementById('locationChipsContainer');
-    const allLocations = [...new Set(products.map(p => p.location ? p.location.toUpperCase() : 'SENZA UBICAZIONE'))].sort(compareLocations);
-    const isInv = isCurrentListInventory();
+                const chipsContainer = document.getElementById('locationChipsContainer');
+                const allLocations = [...new Set(products.map(p => p.location ? p.location.toUpperCase() : 'SENZA UBICAZIONE'))].sort(compareLocations);
+                const isInv = isCurrentListInventory();
 
-    if (allLocations.length <= 1 && allLocations[0] === 'SENZA UBICAZIONE') {
-        chipsContainer.innerHTML = '';
-        return;
-    }
+                if (allLocations.length <= 1 && allLocations[0] === 'SENZA UBICAZIONE') {
+                    chipsContainer.innerHTML = '';
+                    return;
+                }
 
-    const activeBtnClass = isInv 
-        ? 'bg-blue-600 text-white font-bold shadow-xs' 
-        : 'bg-emerald-600 text-white font-bold shadow-xs';
-    const inactiveBtnClass = isInv 
-        ? 'bg-blue-100 text-blue-900 hover:bg-blue-200 dark:bg-blue-950/60 dark:text-blue-200 dark:hover:bg-blue-900/80 font-semibold' 
-        : 'bg-emerald-100 text-emerald-900 hover:bg-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-200 dark:hover:bg-emerald-900/80 font-semibold';
+                const activeBtnClass = isInv 
+                    ? 'bg-blue-600 text-white font-bold shadow-xs' 
+                    : 'bg-emerald-600 text-white font-bold shadow-xs';
+                const inactiveBtnClass = isInv 
+                    ? 'bg-blue-100 text-blue-900 hover:bg-blue-200 dark:bg-blue-950/60 dark:text-blue-200 dark:hover:bg-blue-900/80 font-semibold' 
+                    : 'bg-emerald-100 text-emerald-900 hover:bg-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-200 dark:hover:bg-emerald-900/80 font-semibold';
 
-    const isAllActive = selectedLocationFilter === null;
+                const isAllActive = selectedLocationFilter === null;
 
-    // Tasto "Tutte Ubicazioni"
-    let chipsHtml = `
-        <button onclick="ui.setLocationFilter(null)" 
-                class="shrink-0 px-4 py-2 text-xs font-mono transition-all flex items-center gap-1.5 rounded-l-full rounded-r-md ${isAllActive ? activeBtnClass : inactiveBtnClass}">
-            ${isAllActive ? '<i class="fa-solid fa-check text-[11px]"></i>' : ''}
-            <span>Tutte</span>
-        </button>
-    `;
+                let chipsHtml = `
+                    <button onclick="ui.setLocationFilter(null)" 
+                            class="shrink-0 px-4 py-2 text-xs font-mono transition-all flex items-center gap-1.5 rounded-l-full rounded-r-md ${isAllActive ? activeBtnClass : inactiveBtnClass}">
+                        ${isAllActive ? '<i class="fa-solid fa-check text-[11px]"></i>' : ''}
+                        <span>Tutte</span>
+                    </button>
+                `;
 
-    // Pulsanti Ubicazioni
-    allLocations.forEach((loc, index) => {
-        const isActive = selectedLocationFilter === loc;
-        const isLast = index === allLocations.length - 1;
+                allLocations.forEach((loc, index) => {
+                    const isActive = selectedLocationFilter === loc;
+                    const isLast = index === allLocations.length - 1;
+                    const borderShape = isLast ? 'rounded-r-full rounded-l-md' : 'rounded-md';
 
-        let borderShape = 'rounded-md';
-        if (isLast) {
-            borderShape = 'rounded-r-full rounded-l-md';
-        }
+                    if (isActive && isInv) {
+                        chipsHtml += `
+                            <div class="shrink-0 text-xs font-mono transition-all inline-flex items-center ${borderShape} bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md">
+                                <button onclick="window.exportLocationPDF('${ui.escapeHtml(loc)}')" class="px-3 py-2 flex items-center gap-1.5" title="Scarica PDF dell'ubicazione">
+                                    <i class="fa-solid fa-file-pdf animate-pulse"></i>
+                                    <span>PDF ${ui.escapeHtml(loc)}</span>
+                                </button>
+                                <button onclick="ui.setLocationFilter(null)" class="pr-3 pl-1 py-2 opacity-80 hover:opacity-100 flex items-center" title="Deseleziona ubicazione">
+                                    <i class="fa-solid fa-xmark text-sm"></i>
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        chipsHtml += `
+                            <button onclick="ui.setLocationFilter('${ui.escapeHtml(loc)}')" 
+                                    class="shrink-0 px-4 py-2 text-xs font-mono transition-all flex items-center gap-1.5 ${borderShape} ${isActive ? activeBtnClass : inactiveBtnClass}">
+                                ${isActive ? '<i class="fa-solid fa-check text-[11px]"></i>' : ''}
+                                <span>${ui.escapeHtml(loc)}</span>
+                            </button>
+                        `;
+                    }
+                });
 
-        if (isActive && isInv) {
-            // Quando la scheda è attiva IN MODALITÀ INVENTARIO, trasforma il chip nel tasto BLU "Scarica PDF Ubicazione"
-            chipsHtml += `
-                <button onclick="window.exportLocationPDF('${ui.escapeHtml(loc)}')" 
-                        class="shrink-0 px-4 py-2 text-xs font-mono transition-all flex items-center gap-2 ${borderShape} bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md active:scale-95"
-                        title="Tocca per scaricare il PDF dell'inventario per ${ui.escapeHtml(loc)} (Oppure riseleziona per deselezionare)">
-                    <i class="fa-solid fa-file-pdf text-sm animate-pulse"></i>
-                    <span>Scarica PDF ${ui.escapeHtml(loc)}</span>
-                    <span onclick="event.stopPropagation(); ui.setLocationFilter('${ui.escapeHtml(loc)}');" class="ml-1 opacity-70 hover:opacity-100 p-0.5" title="Deseleziona ubicazione">
-                        <i class="fa-solid fa-xmark"></i>
-                    </span>
-                </button>
-            `;
-        } else {
-            // Chip standard per le ubicazioni inattive o in modalità normale
-            chipsHtml += `
-                <button onclick="ui.setLocationFilter('${ui.escapeHtml(loc)}')" 
-                        class="shrink-0 px-4 py-2 text-xs font-mono transition-all flex items-center gap-1.5 ${borderShape} ${isActive ? activeBtnClass : inactiveBtnClass}">
-                    ${isActive ? '<i class="fa-solid fa-check text-[11px]"></i>' : ''}
-                    <span>${ui.escapeHtml(loc)}</span>
-                </button>
-            `;
-        }
-    });
+                chipsContainer.innerHTML = chipsHtml;
+            },
 
-    chipsContainer.innerHTML = chipsHtml;
-},
             renderProducts: () => {
                 ui.renderLocationChips();
 
@@ -3202,51 +3372,68 @@ if (btnConsolidate) {
                             else deltaBadge = `<span class="px-2 py-0.5 text-xs font-bold rounded-full bg-slate-100 text-slate-600 border border-slate-300">0</span>`;
                         }
 
-                        let inventoryStepperWidget = '';
-                        if (isLocked) {
-                            inventoryStepperWidget = `
-                                <div class="flex items-center justify-between bg-emerald-50 dark:bg-emerald-950/30 border-2 border-emerald-500 rounded-2xl p-2 shadow-xs w-full sm:w-auto sm:min-w-[200px]">
-                                    <div class="flex items-center gap-2">
-                                        <div class="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold text-sm">
-                                            <i class="fa-solid fa-check"></i>
-                                        </div>
-                                        <div class="flex flex-col">
-                                            <span class="text-[9px] font-bold text-emerald-800 dark:text-emerald-400 uppercase leading-none tracking-wider">CONSOLIDATO</span>
-                                            <div class="flex items-center gap-1.5 mt-0.5">
-                                                <span class="text-base font-black text-emerald-950 dark:text-white leading-none">${stockVal}</span>
-                                                ${deltaBadge}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <button onclick="dbLogic.unlockStock('${item.id}')" class="px-3 py-1.5 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-xs border border-emerald-300 flex items-center gap-1 shadow-xs hover:bg-slate-50 transition-colors" title="Modifica valore consolidato">
-                                        <i class="fa-solid fa-pen text-blue-600"></i> Modifica
-                                    </button>
-                                </div>
-                            `;
-                        } else {
-                            inventoryStepperWidget = `
-                                <div class="flex items-center gap-2 w-full sm:w-auto">
-                                    <div class="flex items-center bg-blue-50 dark:bg-blue-950/30 border-2 border-blue-400 dark:border-blue-600 rounded-2xl p-1 shadow-xs gap-1.5 flex-1 sm:w-[220px]">
-                                        <button onclick="dbLogic.quickUpdateStock('${item.id}', ${stockVal - 1})" class="w-10 h-10 bg-white dark:bg-slate-800 text-blue-700 dark:text-blue-300 rounded-xl font-black text-xl flex items-center justify-center border border-blue-200 dark:border-blue-800 active:scale-95 transition-transform shadow-xs shrink-0">
-                                            −
-                                        </button>
-                                        <div class="flex-1 flex flex-col items-center justify-center px-1 cursor-pointer py-1 bg-white/70 dark:bg-slate-800/70 rounded-xl border border-blue-100 dark:border-blue-900 h-10" onclick="ui.openManualStockModal('${item.id}')" title="Tocca per digitare a mano">
-                                            <div class="flex items-center gap-1">
-                                                <span class="text-lg font-black text-blue-950 dark:text-white leading-none underline decoration-dotted">${stockVal}</span>
-                                                ${deltaBadge}
-                                            </div>
-                                        </div>
-                                        <button onclick="dbLogic.quickUpdateStock('${item.id}', ${stockVal + 1})" class="w-10 h-10 bg-blue-600 text-white rounded-xl font-black text-xl flex items-center justify-center active:scale-95 transition-transform shadow-xs shrink-0">
-                                            +
-                                        </button>
-                                    </div>
-                                    <button onclick="dbLogic.confirmAndLockStock('${item.id}')" class="w-11 h-11 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-lg flex items-center justify-center active:scale-95 transition-transform shadow-xs shrink-0" title="Conferma e Salva (Consolida)">
-                                        <i class="fa-solid fa-check"></i>
-                                    </button>
-                                </div>
-                            `;
-                        }
+                        let dateStr = '';
+let opStr = '';
+if (isLocked) {
+    if (item.consolidatedAt) {
+        const d = new Date(item.consolidatedAt);
+        dateStr = !isNaN(d.getTime()) ? d.toLocaleString('it-IT', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+    }
+    if (item.consolidatedBy) {
+        opStr = item.consolidatedBy;
+    }
+}
 
+let inventoryStepperWidget = '';
+if (isLocked) {
+    inventoryStepperWidget = `
+        <div class="flex flex-col items-start gap-2 my-1">
+            <div class="w-full sm:w-64 bg-emerald-50 dark:bg-emerald-950/30 border-2 border-emerald-500 rounded-2xl p-3 shadow-xs flex flex-col gap-2">
+                <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                            <i class="fa-solid fa-check"></i>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-[9px] font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider">CONSOLIDATO</span>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-base font-black text-emerald-950 dark:text-white">${stockVal}</span>
+                                ${deltaBadge}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                ${isLocked && (dateStr || opStr) ? `
+                    <div class="flex flex-col gap-0.5 text-[10px] text-emerald-900 dark:text-emerald-300 font-medium bg-emerald-100/80 dark:bg-emerald-900/40 px-2.5 py-1.5 rounded-xl border border-emerald-200/60 dark:border-emerald-800/50">
+                        ${opStr ? `<span class="truncate">Op: <b>${ui.escapeHtml(opStr)}</b></span>` : ''}
+                        ${dateStr ? `<span class="truncate">Data: <b>${dateStr}</b></span>` : ''}
+                    </div>
+                ` : ''}
+            </div>
+            <button onclick="dbLogic.unlockStock('${item.id}')" class="px-3.5 py-1.5 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-xs border border-slate-300 dark:border-slate-700 flex items-center gap-1.5 shadow-xs hover:bg-slate-50 transition-colors">
+                <i class="fa-solid fa-pen text-blue-600 text-xs"></i> Modifica
+            </button>
+        </div>
+    `;
+} else {
+    inventoryStepperWidget = `
+        <div class="flex items-center gap-2 w-full sm:w-auto my-1">
+            <div class="flex items-center bg-blue-50 dark:bg-blue-950/30 border-2 border-blue-400 dark:border-blue-600 rounded-2xl p-1 shadow-xs gap-1.5 flex-1 sm:w-[220px]">
+                <button onclick="dbLogic.quickUpdateStock('${item.id}', ${stockVal - 1})" class="w-10 h-10 bg-white dark:bg-slate-800 text-blue-700 dark:text-blue-300 rounded-xl font-black text-xl flex items-center justify-center border border-blue-200 dark:border-blue-800 shrink-0">−</button>
+                <div class="flex-1 flex flex-col items-center justify-center px-1 cursor-pointer py-1 bg-white/70 dark:bg-slate-800/70 rounded-xl border border-blue-100 dark:border-blue-900 h-10" onclick="ui.openManualStockModal('${item.id}')">
+                    <div class="flex items-center gap-1">
+                        <span class="text-lg font-black text-blue-950 dark:text-white leading-none underline decoration-dotted">${stockVal}</span>
+                        ${deltaBadge}
+                    </div>
+                </div>
+                <button onclick="dbLogic.quickUpdateStock('${item.id}', ${stockVal + 1})" class="w-10 h-10 bg-blue-600 text-white rounded-xl font-black text-xl flex items-center justify-center shrink-0">+</button>
+            </div>
+            <button onclick="dbLogic.confirmAndLockStock('${item.id}')" class="w-11 h-11 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-lg flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-check"></i>
+            </button>
+        </div>
+    `;
+}
                         const standardStockWidget = `
                             <div class="relative inline-block shrink-0">
                                 <button onclick="ui.openQuickEdit(this)" class="inline-flex items-center gap-1.5 px-3.5 py-1 text-sm font-bold rounded-2xl border ${stockBadgeClass} hover:border-blue-500 transition-all cursor-pointer" title="Modifica rapida quantità">
@@ -3531,7 +3718,245 @@ if (btnConsolidate) {
             }
         }
 
-        bootApp();
+// Stato Configurazione Scaffale (Fisso/Impostabile)
+let shelfConfig = {
+    currentShelfNumber: 1,
+    numCols: 4,      // Es. A, B, C, D
+    maxLevel: 4      // Livello più alto (es. fino a 4 -> 1A4, 1B4...)
+};
+
+// Gestione Scaffali e Dimensioni Personalizzate in Centimetri (Con conteggio ripiani coerente)
+window.shelfViewLogic = {
+    currentShelfIndex: 0,
+    availableShelves: [],
+
+    getDetectedShelves: () => {
+        const shelfCodes = new Set();
+        products.forEach(p => {
+            if (p.location && p.location.length >= 2) {
+                const prefix = p.location.substring(0, 2).toUpperCase();
+                if (/^[0-9][A-Z]/.test(prefix)) {
+                    shelfCodes.add(prefix);
+                }
+            }
+        });
+        const list = Array.from(shelfCodes).sort();
+        return list.length > 0 ? list : ['1A', '1B'];
+    },
+
+    getShelfDimensions: (shelfCode) => {
+        const saved = localStorage.getItem(`whm_shelf_dims_${shelfCode}`);
+        if (saved) {
+            try { return JSON.parse(saved); } catch(e){}
+        }
+        return {
+            widthCm: 120,
+            heightCm: 200,
+            depthCm: 50,
+            maxLevel: 4,
+            levelHeights: { 0: 30, 1: 40, 2: 40, 3: 40, 4: 50 }
+        };
+    },
+
+    checkOpenDimensionsModal: () => {
+        ui.requestAdminPassword(() => {
+            shelfViewLogic.openDimensionsModal();
+        });
+    },
+
+    openDimensionsModal: () => {
+        const shelves = shelfViewLogic.getDetectedShelves();
+        const currentCode = shelves[shelfViewLogic.currentShelfIndex] || '1A';
+        const dims = shelfViewLogic.getShelfDimensions(currentCode);
+
+        let maxFoundLevel = dims.maxLevel || 4;
+        products.forEach(p => {
+            if (p.location) {
+                const locUpper = p.location.toUpperCase().trim();
+                if (locUpper.startsWith(currentCode)) {
+                    const suffix = locUpper.substring(currentCode.length);
+                    const lvlNum = parseInt(suffix, 10);
+                    if (!isNaN(lvlNum) && lvlNum > maxFoundLevel) {
+                        maxFoundLevel = lvlNum;
+                    }
+                }
+            }
+        });
+
+        const effectiveMaxLevel = Math.max(dims.maxLevel, maxFoundLevel);
+        const totalRipiani = effectiveMaxLevel + 1; // Il numero totale di ripiani corrisponde a maxLevel + 1
+
+        document.getElementById('modalShelfTitle').innerText = `Misure Scaffale ${currentCode}`;
+        document.getElementById('shelfWidthCm').value = dims.widthCm;
+        document.getElementById('shelfHeightCm').value = dims.heightCm;
+        document.getElementById('shelfDepthCm').value = dims.depthCm;
+        document.getElementById('shelfLevelsCount').value = totalRipiani;
+
+        shelfViewLogic.generateLevelHeightInputs(totalRipiani, dims.levelHeights);
+        ui.openModal('shelfDimensionsModal');
+    },
+
+    generateLevelHeightInputs: (totalRipianiCount = null, existingHeights = null) => {
+        const totalCount = totalRipianiCount !== null ? totalRipianiCount : (parseInt(document.getElementById('shelfLevelsCount').value, 10) || 5);
+        const container = document.getElementById('levelHeightsContainer');
+        if (!container) return;
+        let html = '';
+
+        const maxLvl = Math.max(0, totalCount - 1);
+
+        // Genera i campi partendo dal livello più alto in cima fino a 0 in basso
+        for (let i = maxLvl; i >= 0; i--) {
+            const defaultH = existingHeights && existingHeights[i] !== undefined ? existingHeights[i] : 40;
+            const label = (i === 0) ? "Ripiano Terra (0) Altezza (cm)" : `Ripiano ${i} Altezza (cm)`;
+            html += `
+                <div class="flex items-center justify-between gap-3 bg-slate-100 dark:bg-slate-800 p-2 rounded-xl">
+                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300">${label}</span>
+                    <input type="number" id="levelH_${i}" value="${defaultH}" class="w-24 m3-input bg-white dark:bg-slate-900 text-center font-bold text-xs py-1.5">
+                </div>
+            `;
+        }
+        container.innerHTML = html;
+    },
+
+    saveShelfDimensions: () => {
+        const shelves = shelfViewLogic.getDetectedShelves();
+        const currentCode = shelves[shelfViewLogic.currentShelfIndex] || '1A';
+
+        const widthCm = parseFloat(document.getElementById('shelfWidthCm').value) || 120;
+        const heightCm = parseFloat(document.getElementById('shelfHeightCm').value) || 200;
+        const depthCm = parseFloat(document.getElementById('shelfDepthCm').value) || 50;
+        const totalRipiani = parseInt(document.getElementById('shelfLevelsCount').value, 10) || 5;
+        const maxLevel = Math.max(0, totalRipiani - 1);
+
+        const levelHeights = {};
+        for (let i = 0; i <= maxLevel; i++) {
+            const input = document.getElementById(`levelH_${i}`);
+            levelHeights[i] = input ? (parseFloat(input.value) || 40) : 40;
+        }
+
+        const dimsData = { widthCm, heightCm, depthCm, maxLevel, levelHeights };
+        localStorage.setItem(`whm_shelf_dims_${currentCode}`, JSON.stringify(dimsData));
+
+        ui.closeModal('shelfDimensionsModal');
+        ui.toast(`Misure dello scaffale ${currentCode} salvate!`, "success");
+        shelfViewLogic.renderShelf();
+    },
+
+    prevShelf: () => {
+        if (shelfViewLogic.currentShelfIndex > 0) {
+            shelfViewLogic.currentShelfIndex--;
+            shelfViewLogic.renderShelf();
+        }
+    },
+
+    nextShelf: () => {
+        const shelves = shelfViewLogic.getDetectedShelves();
+        if (shelfViewLogic.currentShelfIndex < shelves.length - 1) {
+            shelfViewLogic.currentShelfIndex++;
+            shelfViewLogic.renderShelf();
+        }
+    },
+
+    renderShelf: () => {
+        const container = document.getElementById('shelfVisualContainer');
+        const title = document.getElementById('currentShelfTitle');
+        if (!container || !title) return;
+
+        const shelves = shelfViewLogic.getDetectedShelves();
+        if (shelfViewLogic.currentShelfIndex >= shelves.length) shelfViewLogic.currentShelfIndex = 0;
+        
+        const currentShelfCode = shelves[shelfViewLogic.currentShelfIndex];
+        title.innerText = `SCAFFALE ${currentShelfCode}`;
+
+        const dims = shelfViewLogic.getShelfDimensions(currentShelfCode);
+
+        let maxFoundLevel = dims.maxLevel || 4;
+        products.forEach(p => {
+            if (p.location) {
+                const locUpper = p.location.toUpperCase().trim();
+                if (locUpper.startsWith(currentShelfCode)) {
+                    const suffix = locUpper.substring(currentShelfCode.length);
+                    const lvlNum = parseInt(suffix, 10);
+                    if (!isNaN(lvlNum) && lvlNum > maxFoundLevel) {
+                        maxFoundLevel = lvlNum;
+                    }
+                }
+            }
+        });
+
+        const effectiveMaxLevel = Math.max(dims.maxLevel, maxFoundLevel);
+        const totalLevels = effectiveMaxLevel + 1;
+
+        const minHeightPerLevel = 75; 
+        const calculatedMinHeight = totalLevels * minHeightPerLevel + 120;
+        const scaleFactor = 2.4;
+        const pixelWidth = Math.max(300, Math.min(dims.widthCm * scaleFactor, 850));
+        const pixelHeight = Math.max(calculatedMinHeight, dims.heightCm * scaleFactor);
+
+        let shelfHtml = `
+            <div class="relative bg-slate-900/10 dark:bg-slate-950 p-4 rounded-xl border-4 border-slate-700 dark:border-slate-600 shadow-2xl flex flex-col justify-between"
+                 style="width: ${pixelWidth}px; height: ${pixelHeight}px; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);">
+                
+                <div class="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-slate-600 via-slate-400 to-slate-700 border-r border-slate-800 z-20 flex flex-col justify-between py-2 items-center">
+                    ${Array.from({length: Math.max(12, totalLevels * 2)}).map(() => `<div class="w-1.5 h-1.5 rounded-full bg-slate-900/80"></div>`).join('')}
+                </div>
+                <div class="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-slate-600 via-slate-400 to-slate-700 border-l border-slate-800 z-20 flex flex-col justify-between py-2 items-center">
+                    ${Array.from({length: Math.max(12, totalLevels * 2)}).map(() => `<div class="w-1.5 h-1.5 rounded-full bg-slate-900/80"></div>`).join('')}
+                </div>
+
+                <div class="absolute -top-7 left-0 right-0 text-center text-[11px] font-mono font-bold text-slate-500">
+                    L: ${dims.widthCm}cm × H: ${dims.heightCm}cm × P: ${dims.depthCm}cm (Ripiani: ${totalLevels})
+                </div>
+
+                <div class="flex flex-col justify-between h-full w-full px-4 py-2 relative z-10 gap-2">
+        `;
+
+        for (let lvl = effectiveMaxLevel; lvl >= 0; lvl--) {
+            const locCode = `${currentShelfCode}${lvl}`;
+            const locProducts = products.filter(p => (p.location ? p.location.toUpperCase().trim() : '') === locCode);
+            
+            let cellBg = "bg-slate-800/80 hover:bg-slate-700 text-slate-400 border-slate-600";
+            let statusIcon = "";
+            let itemCountText = "";
+
+            if (locProducts.length > 0) {
+                const isAllLocked = locProducts.every(p => p.isInventoryLocked === true);
+                if (isAllLocked) {
+                    cellBg = "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-400 shadow-lg active:scale-98";
+                    statusIcon = `<i class="fa-solid fa-circle-check text-white text-base"></i>`;
+                } else {
+                    cellBg = "bg-red-600 hover:bg-red-500 text-white border-red-400 shadow-lg active:scale-98 animate-pulse";
+                    statusIcon = `<i class="fa-solid fa-circle-exclamation text-white text-base"></i>`;
+                }
+                itemCountText = `<span class="text-[10px] font-extrabold mt-0.5 bg-black/30 px-2 py-0.5 rounded-full">${locProducts.length} Art.</span>`;
+            }
+
+            const levelH = dims.levelHeights[lvl] || 40;
+
+            shelfHtml += `
+                <div class="w-full flex flex-col justify-end" style="flex: ${levelH}; min-height: 65px;">
+                    <button onclick="ui.switchMainView('list'); ui.setLocationFilter('${locCode}');"
+                            class="w-full h-full rounded-lg border-2 flex flex-col items-center justify-center p-1 transition-all ${cellBg} relative group shadow-sm">
+                        <span class="font-mono font-black text-sm sm:text-base tracking-wider drop-shadow-md leading-tight">${locCode}</span>
+                        <div class="flex items-center gap-1.5 mt-0.5">
+                            ${statusIcon}
+                            ${itemCountText}
+                        </div>
+                    </button>
+                    <div class="w-full h-2.5 bg-gradient-to-b from-slate-400 via-slate-300 to-slate-600 border-t border-b border-slate-500 shadow-md shrink-0"></div>
+                </div>
+            `;
+        }
+
+        shelfHtml += `
+                </div>
+            </div>
+        `;
+
+        container.innerHTML = shelfHtml;
+    }
+};
+bootApp();
     </script>
 
 <!-- ================================================================= -->
