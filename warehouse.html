@@ -2321,10 +2321,11 @@ window.exportLocationPDF = async function(locationName) {
         "Descrizione articolo",
         "Giacenza Inv.",
         "Delta",
-        "Stato"
+        "Stato",
+	"Operatore"
     ]];
 
-    // 4. Mappatura Dati Tabella (rimosso il valore dell'ubicazione)
+// 4. Mappatura Dati Tabella
     const tableData = locationProducts.map(p => {
         const stockVal = (p.stock !== undefined && p.stock !== '' && !isNaN(Number(p.stock))) ? Number(p.stock) : 0;
         const origStockVal = (p.originalStock !== undefined && p.originalStock !== null && p.originalStock !== '' && !isNaN(Number(p.originalStock))) ? Number(p.originalStock) : stockVal;
@@ -2343,12 +2344,15 @@ window.exportLocationPDF = async function(locationName) {
             }
         }
 
+        const operatorName = (p.isInventoryLocked && p.consolidatedBy) ? p.consolidatedBy : '-';
+
         return [
             p.code || '-',
             p.description || '-',
             stockVal.toString(),
             deltaText,
-            statusSymbol
+            statusSymbol,
+            operatorName
         ];
     });
 
@@ -2373,11 +2377,12 @@ window.exportLocationPDF = async function(locationName) {
                 textColor: 40
             },
             columnStyles: {
-                0: { fontStyle: 'bold', cellWidth: 40 },
+                0: { fontStyle: 'bold', cellWidth: 35 },
                 1: { cellWidth: 'auto' },
-                2: { halign: 'center', fontStyle: 'bold', cellWidth: 28 },
-                3: { halign: 'center', fontStyle: 'bold', cellWidth: 25 },
-                4: { halign: 'center', fontStyle: 'bold', fontSize: 11, cellWidth: 22 }
+                2: { halign: 'center', fontStyle: 'bold', cellWidth: 24 },
+                3: { halign: 'center', fontStyle: 'bold', cellWidth: 22 },
+                4: { halign: 'center', fontStyle: 'bold', fontSize: 11, cellWidth: 18 },
+                5: { halign: 'center', fontSize: 8.5, cellWidth: 30 }
             },
             didParseCell: function(data) {
                 // Indice 4: Colonna Stato
