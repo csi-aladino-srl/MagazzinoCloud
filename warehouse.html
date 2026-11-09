@@ -598,15 +598,18 @@
                 </button>
             </div>
             <div class="p-5 flex flex-col gap-4 overflow-y-auto">
-                <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider mb-2 text-slate-500 dark:text-slate-400 ml-1">Aggiungi nuova nota in evidenza:</label>
-                    <div class="flex gap-2">
-                        <textarea id="newAnnouncementInput" rows="2" class="w-full m3-input bg-slate-50 dark:bg-slate-800 text-sm" placeholder="Scrivi un avviso importante..."></textarea>
-                        <button type="button" onclick="ui.addAnnouncementItem()" class="px-4 btn-theme rounded-2xl font-bold text-sm shrink-0 flex items-center gap-1.5 shadow-sm">
-                            <i class="fa-solid fa-plus"></i> Aggiungi
-                        </button>
-                    </div>
-                </div>
+<div>
+    <label class="block text-xs font-bold uppercase tracking-wider mb-2 text-slate-500 dark:text-slate-400 ml-1">Aggiungi nuova nota in evidenza:</label>
+    <div class="flex flex-col gap-2">
+        <input type="text" id="newAnnouncementTitleInput" class="w-full m3-input bg-slate-50 dark:bg-slate-800 text-sm font-bold" placeholder="Titolo avviso (es. Attenzione, Avviso Magazzino...)">
+        <div class="flex gap-2">
+            <textarea id="newAnnouncementInput" rows="2" class="w-full m3-input bg-slate-50 dark:bg-slate-800 text-sm" placeholder="Scrivi il testo dell'avviso..."></textarea>
+            <button type="button" onclick="ui.addAnnouncementItem()" class="px-4 btn-theme rounded-2xl font-bold text-sm shrink-0 flex items-center gap-1.5 shadow-sm">
+                <i class="fa-solid fa-plus"></i> Aggiungi
+            </button>
+        </div>
+    </div>
+</div>
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-wider mb-2 text-slate-500 dark:text-slate-400 ml-1">Note in evidenza attuali:</label>
                     <div id="announcementsListContainer" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
@@ -1550,21 +1553,23 @@ consolidateModifiedToOriginals: async () => {
             },
 
             saveAnnouncements: async () => {
-                if (!currentListId) return ui.toast("Nessuna lista selezionata", "error");
-                const announcements = [...currentModalAnnouncements];
-                const primaryAnnouncement = announcements.length > 0 ? announcements[0] : '';
-                try {
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'lists', currentListId), {
-                        announcements: announcements,
-                        announcement: primaryAnnouncement
-                    });
-                    ui.closeModal('announcementModal');
-                    ui.toast("Note evidenti aggiornate", "success");
-                } catch (e) {
-                    console.error(e);
-                    ui.toast("Errore salvataggio note", "error");
-                }
-            },
+    if (!currentListId) return ui.toast("Nessuna lista selezionata", "error");
+    const announcements = [...currentModalAnnouncements];
+    const primaryAnnouncement = announcements.length > 0 
+        ? (announcements[0].text || '') 
+        : '';
+    try {
+        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'lists', currentListId), {
+            announcements: announcements,
+            announcement: primaryAnnouncement
+        });
+        ui.closeModal('announcementModal');
+        ui.toast("Note evidenti aggiornate", "success");
+    } catch (e) {
+        console.error(e);
+        ui.toast("Errore salvataggio note", "error");
+    }
+},
 
             deleteList: async (id) => {
                 if (globalLists.length <= 1) {
@@ -2643,29 +2648,45 @@ window.excelLogic = {
             },
 
             openAnnouncementModal: () => {
-                ui.requestAdminPassword(() => {
-                    const currentList = getCurrentList();
-                    if (currentList && Array.isArray(currentList.announcements)) {
-                        currentModalAnnouncements = [...currentList.announcements];
-                    } else if (currentList && currentList.announcement) {
-                        currentModalAnnouncements = [currentList.announcement];
-                    } else {
-                        currentModalAnnouncements = [];
-                    }
-                    ui.renderAnnouncementsModalList();
-                    ui.openModal('announcementModal');
-                });
-            },
+    ui.requestAdminPassword(() => {
+        const currentList = getCurrentList();
+        if (currentList && Array.isArray(currentList.announcements)) {
+            // Normalizzazione dati per supportare oggetti { title, text } o stringhe semplici
+            currentModalAnnouncements = currentList.announcements.map(ann => {
+                if (typeof ann === 'object' && ann !== null) {
+                    return { title: ann.title || '', text: ann.text || '' };
+                }
+                return { title: '', text: ann || '' };
+            });
+        } else if (currentList && currentList.announcement) {
+            currentModalAnnouncements = [{ title: '', text: currentList.announcement }];
+        } else {
+            currentModalAnnouncements = [];
+        }
+        document.getElementById('newAnnouncementTitleInput').value = '';
+        document.getElementById('newAnnouncementInput').value = '';
+        ui.renderAnnouncementsModalList();
+        ui.openModal('announcementModal');
+    });
+},
 
             addAnnouncementItem: () => {
-                const input = document.getElementById('newAnnouncementInput');
-                const val = input.value.trim();
-                if (!val) return;
-                currentModalAnnouncements.push(val);
-                input.value = '';
-                ui.renderAnnouncementsModalList();
-                input.focus();
-            },
+    const titleInput = document.getElementById('newAnnouncementTitleInput');
+    const textInput = document.getElementById('newAnnouncementInput');
+    const titleVal = titleInput.value.trim();
+    const textVal = textInput.value.trim();
+    if (!textVal) return ui.toast("Inserisci almeno il testo dell'avviso", "error");
+
+    currentModalAnnouncements.push({
+        title: titleVal,
+        text: textVal
+    });
+
+    titleInput.value = '';
+    textInput.value = '';
+    ui.renderAnnouncementsModalList();
+    titleInput.focus();
+},
 
             removeAnnouncementItem: (index) => {
                 currentModalAnnouncements.splice(index, 1);
@@ -2673,24 +2694,30 @@ window.excelLogic = {
             },
 
             renderAnnouncementsModalList: () => {
-                const container = document.getElementById('announcementsListContainer');
-                if (!container) return;
-                if (currentModalAnnouncements.length === 0) {
-                    container.innerHTML = `<div class="text-xs text-slate-400 italic p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-center font-medium">Nessuna nota in evidenza inserita.</div>`;
-                    return;
-                }
-                container.innerHTML = currentModalAnnouncements.map((noteText, idx) => `
-                    <div class="flex items-start justify-between gap-3 p-3.5 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 text-sm">
-                        <div class="flex items-start gap-3 min-w-0 flex-1">
-                            <i class="fa-solid fa-bullhorn text-amber-500 mt-0.5 shrink-0"></i>
-                            <span class="text-slate-800 dark:text-slate-200 font-medium whitespace-pre-line break-words text-xs sm:text-sm">${ui.escapeHtml(noteText)}</span>
-                        </div>
-                        <button type="button" onclick="ui.removeAnnouncementItem(${idx})" class="w-8 h-8 rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 flex items-center justify-center shrink-0 transition-colors">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
+    const container = document.getElementById('announcementsListContainer');
+    if (!container) return;
+    if (currentModalAnnouncements.length === 0) {
+        container.innerHTML = `<div class="text-xs text-slate-400 italic p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-center font-medium">Nessuna nota in evidenza inserita.</div>`;
+        return;
+    }
+    container.innerHTML = currentModalAnnouncements.map((note, idx) => {
+        const titleText = note.title || 'Avviso Magazzino';
+        return `
+            <div class="flex items-start justify-between gap-3 p-3.5 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 text-sm">
+                <div class="flex items-start gap-3 min-w-0 flex-1">
+                    <i class="fa-solid fa-bullhorn text-amber-500 mt-0.5 shrink-0"></i>
+                    <div class="min-w-0 flex-1">
+                        <div class="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 leading-none mb-1">${ui.escapeHtml(titleText)}</div>
+                        <div class="text-slate-800 dark:text-slate-200 font-medium whitespace-pre-line break-words text-xs sm:text-sm">${ui.escapeHtml(note.text)}</div>
                     </div>
-                `).join('');
-            },
+                </div>
+                <button type="button" onclick="ui.removeAnnouncementItem(${idx})" class="w-8 h-8 rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 flex items-center justify-center shrink-0 transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        `;
+    }).join('');
+},
 
             renderListManager: () => {
                 const container = document.getElementById('listsContainer');
@@ -2971,22 +2998,26 @@ renderLocationChips: () => {
 
                 let html = '';
 
-                if (announcements.length > 0) {
-                    announcements.forEach(ann => {
-                        html += `
-                        <div class="mb-4 bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent dark:from-amber-950/30 dark:to-transparent border-l-4 border-amber-500 p-4 rounded-3xl shadow-xs flex items-center justify-between gap-3">
-                            <div class="flex items-center gap-3.5 min-w-0 flex-1">
-                                <div onclick="ui.openAnnouncementModal()" class="w-10 h-10 rounded-2xl bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-xs cursor-pointer transition-colors" title="Modifica note in evidenza">
-                                    <i class="fa-solid fa-bullhorn text-lg"></i>
-                                </div>
-                                <div class="min-w-0 flex-1">
-                                    <div class="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 leading-none mb-1">Avviso Magazzino</div>
-                                    <div class="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 whitespace-pre-line leading-snug">${ui.escapeHtml(ann)}</div>
-                                </div>
-                            </div>
-                        </div>`;
-                    });
-                } else {
+if (announcements.length > 0) {
+    announcements.forEach(ann => {
+        const titleText = (typeof ann === 'object' && ann.title) ? ann.title : 'Avviso Magazzino';
+        const bodyText = (typeof ann === 'object') ? (ann.text || '') : ann;
+
+        html += `
+        <div class="mb-4 bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent dark:from-amber-950/30 dark:to-transparent border-l-4 border-amber-500 p-4 rounded-3xl shadow-xs flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3.5 min-w-0 flex-1">
+                <div onclick="ui.openAnnouncementModal()" class="w-10 h-10 rounded-2xl bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-xs cursor-pointer transition-colors" title="Modifica note in evidenza">
+                    <i class="fa-solid fa-bullhorn text-lg"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 leading-none mb-1">${ui.escapeHtml(titleText)}</div>
+                    <div class="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 whitespace-pre-line leading-snug">${ui.escapeHtml(bodyText)}</div>
+                </div>
+            </div>
+        </div>`;
+    });
+}
+else {
                     html += `
                     <div class="mb-4">
                         <button onclick="ui.openAnnouncementModal()" class="w-full py-3 px-4 bg-amber-50/80 hover:bg-amber-100/80 dark:bg-amber-950/20 dark:hover:bg-amber-950/30 border border-dashed border-amber-300/80 dark:border-amber-800/60 rounded-3xl text-amber-800 dark:text-amber-300 text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-xs">
