@@ -51,7 +51,7 @@
 <body class="h-full w-full m-0 p-0 bg-md-surface text-md-on-surface font-sans antialiased flex flex-col justify-center items-center">
 
 <script>
-const APP_VERSION = '9.1';
+const APP_VERSION = '10.0';
 
 function forzaAggiornamento() {
     if ('serviceWorker' in navigator) {
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </button>
         <div class="flex flex-col text-left">
             <!-- Testo con la versione in nero e più grande -->
-            <span id="appVersionDisplay" class="text-sm font-semibold text-slate-900">Versione 9.1</span>
+            <span id="appVersionDisplay" class="text-sm font-semibold text-slate-900">Versione 10.0</span>
             <span class="text-[10px] text-md-outline">Tocca l'icona per pulire la cache</span>
         </div>
     </div>
@@ -114,15 +114,23 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         
         <div class="space-y-4 text-xs text-slate-600 leading-relaxed mb-6">
-            <!-- Nuova Funzionalità: Esportazione PDF Ubicazione -->
-            <div class="flex items-start gap-3">
-                <span class="material-symbols-outlined text-md-primary text-xl mt-0.5">picture_as_pdf</span>
-                <div>
-                    <b class="text-slate-900 block">Esportazione PDF Ubicazione</b>
-                    Scarica il report PDF dell'inventario direttamente cliccando sul chip dell'ubicazione attiva, completo di giacenze e ubicazioni inventariate, delta e stato di verifica.
-                </div>
-            </div>
+    <!-- Novità per l'Inventario -->
+    <div class="flex items-start gap-3">
+        <span class="material-symbols-outlined text-md-primary text-xl mt-0.5">inventory_2</span>
+        <div>
+            <b class="text-slate-900 block">Novità per l'Inventario</b>
+            Introdotte importanti novità e ottimizzazioni per la gestione e il controllo completo dell'inventario.
         </div>
+    </div>
+    <!-- Disposizione degli Scaffali -->
+    <div class="flex items-start gap-3">
+        <span class="material-symbols-outlined text-md-primary text-xl mt-0.5">grid_view</span>
+        <div>
+            <b class="text-slate-900 block">Disposizione degli Scaffali</b>
+            È ora disponibile la nuova funzionalità per visualizzare e organizzare la disposizione degli scaffali all'interno del magazzino.
+        </div>
+    </div>
+</div>
 
         <button onclick="chiudiWhatsNew()" class="w-full h-11 bg-md-primary text-white font-medium rounded-full text-sm">
             Ho capito
