@@ -452,14 +452,15 @@
     <!-- Barra Navigazione Scaffali & Gestione Misure cm -->
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-sm flex flex-wrap items-center justify-between gap-4">
         
-        <!-- Frecce Scorrimento Scaffali (es. 1A, 1B, 2A...) -->
+        <!-- Frecce Scorrimento Scaffali & Menù a Tendina -->
         <div class="flex items-center gap-3">
             <button onclick="shelfViewLogic.prevShelf()" class="w-12 h-12 bg-blue-100 hover:bg-blue-200 dark:bg-blue-950 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-2xl flex items-center justify-center text-lg font-bold transition-all active:scale-95 shadow-xs">
                 <i class="fa-solid fa-chevron-left"></i>
             </button>
-            <div class="text-center px-3">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Scaffale Selezionato</span>
-                <h2 id="currentShelfTitle" class="text-2xl font-black text-blue-600 dark:text-blue-400 font-mono">SCAFFALE 1A</h2>
+            <div class="text-center px-1 flex flex-col items-center">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Scaffale Selezionato</span>
+                <select id="shelfDropdown" onchange="shelfViewLogic.selectShelf(this.value)" class="bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-slate-700 text-blue-600 dark:text-blue-400 font-mono font-bold text-base rounded-xl px-3 py-1.5 focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                </select>
             </div>
             <button onclick="shelfViewLogic.nextShelf()" class="w-12 h-12 bg-blue-100 hover:bg-blue-200 dark:bg-blue-950 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-2xl flex items-center justify-center text-lg font-bold transition-all active:scale-95 shadow-xs">
                 <i class="fa-solid fa-chevron-right"></i>
@@ -2588,8 +2589,8 @@ switchMainView: (viewMode) => {
                 const btnList = document.getElementById('btnViewList');
                 const btnShelf = document.getElementById('btnViewShelf');
                 
-                // Elementi da disattivare nella visualizzazione scaffale
-                const filterButtons = document.querySelectorAll('.filter-btn, #locationChipsContainer button, #selectAllCheckbox');
+                // Elementi da disattivare nella visualizzazione scaffale (Filtri, Chip, Checkbox, Barre di Ricerca, Nuovo Prodotto e Impostazioni)
+                const disabledElements = document.querySelectorAll('.filter-btn, #locationChipsContainer button, #selectAllCheckbox, #searchFieldPC, #searchInputPC, #clearSearchPC, #searchFieldMobile, #searchInputMobile, #clearSearchMobile, button[onclick="ui.openProductModal()"], button[onclick="ui.openSettingsModal()"]');
 
                 if (viewMode === 'shelf') {
                     if (listContainer) listContainer.classList.add('hidden');
@@ -2602,9 +2603,10 @@ switchMainView: (viewMode) => {
                         btnList.className = "px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 flex items-center gap-1.5";
                     }
 
-                    // Disabilita filtri superiori e chip
-                    filterButtons.forEach(el => {
+                    // Disabilita filtri, chip, ricerca, nuovo prodotto e impostazioni
+                    disabledElements.forEach(el => {
                         el.classList.add('opacity-50', 'pointer-events-none');
+                        if(el.tagName === 'INPUT' || el.tagName === 'SELECT') el.disabled = true;
                     });
 
                     if (window.shelfViewLogic && typeof window.shelfViewLogic.renderShelf === 'function') {
@@ -2621,13 +2623,15 @@ switchMainView: (viewMode) => {
                         btnShelf.className = "px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 flex items-center gap-1.5";
                     }
 
-                    // Riabilita filtri superiori e chip
-                    filterButtons.forEach(el => {
+                    // Riabilita filtri, chip, ricerca, nuovo prodotto e impostazioni
+                    disabledElements.forEach(el => {
                         el.classList.remove('opacity-50', 'pointer-events-none');
+                        if(el.tagName === 'INPUT' || el.tagName === 'SELECT') el.disabled = false;
                     });
                 }
-            },
-            toast: (msg, type='info') => {
+            },        
+
+toast: (msg, type='info') => {
                 const isInv = isCurrentListInventory();
                 const colors = { 
                     success: isInv ? 'bg-blue-700 text-white' : 'bg-emerald-700 text-white', 
@@ -3726,7 +3730,8 @@ let shelfConfig = {
     maxLevel: 4      // Livello più alto (es. fino a 4 -> 1A4, 1B4...)
 };
 
-// Gestione Scaffali e Dimensioni Personalizzate in Centimetri (Con conteggio ripiani coerente)
+// Gestione Scaffali e Dimensioni Personalizzate in Centimetri
+// Gestione Scaffali e Dimensioni Personalizzate in Centimetri
 window.shelfViewLogic = {
     currentShelfIndex: 0,
     availableShelves: [],
@@ -3734,15 +3739,28 @@ window.shelfViewLogic = {
     getDetectedShelves: () => {
         const shelfCodes = new Set();
         products.forEach(p => {
-            if (p.location && p.location.length >= 2) {
-                const prefix = p.location.substring(0, 2).toUpperCase();
-                if (/^[0-9][A-Z]/.test(prefix)) {
-                    shelfCodes.add(prefix);
+            if (p.location && p.location !== 'SENZA UBICAZIONE') {
+                const loc = p.location.toUpperCase().trim();
+                const match = loc.match(/^(.*?)\d+$/);
+                if (match && match[1]) {
+                    shelfCodes.add(match[1]);
+                } else if (loc.length >= 2) {
+                    shelfCodes.add(loc.substring(0, 2));
                 }
             }
         });
-        const list = Array.from(shelfCodes).sort();
+        // Utilizza la stessa logica di ordinamento compareLocations usata per le chip
+        const list = Array.from(shelfCodes).sort(compareLocations);
         return list.length > 0 ? list : ['1A', '1B'];
+    },
+
+    selectShelf: (shelfCode) => {
+        const shelves = shelfViewLogic.getDetectedShelves();
+        const index = shelves.indexOf(shelfCode);
+        if (index !== -1) {
+            shelfViewLogic.currentShelfIndex = index;
+            shelfViewLogic.renderShelf();
+        }
     },
 
     getShelfDimensions: (shelfCode) => {
@@ -3785,7 +3803,7 @@ window.shelfViewLogic = {
         });
 
         const effectiveMaxLevel = Math.max(dims.maxLevel, maxFoundLevel);
-        const totalRipiani = effectiveMaxLevel + 1; // Il numero totale di ripiani corrisponde a maxLevel + 1
+        const totalRipiani = effectiveMaxLevel + 1;
 
         document.getElementById('modalShelfTitle').innerText = `Misure Scaffale ${currentCode}`;
         document.getElementById('shelfWidthCm').value = dims.widthCm;
@@ -3805,7 +3823,6 @@ window.shelfViewLogic = {
 
         const maxLvl = Math.max(0, totalCount - 1);
 
-        // Genera i campi partendo dal livello più alto in cima fino a 0 in basso
         for (let i = maxLvl; i >= 0; i--) {
             const defaultH = existingHeights && existingHeights[i] !== undefined ? existingHeights[i] : 40;
             const label = (i === 0) ? "Ripiano Terra (0) Altezza (cm)" : `Ripiano ${i} Altezza (cm)`;
@@ -3860,14 +3877,17 @@ window.shelfViewLogic = {
 
     renderShelf: () => {
         const container = document.getElementById('shelfVisualContainer');
-        const title = document.getElementById('currentShelfTitle');
-        if (!container || !title) return;
+        const shelfDropdown = document.getElementById('shelfDropdown');
+        if (!container) return;
 
         const shelves = shelfViewLogic.getDetectedShelves();
         if (shelfViewLogic.currentShelfIndex >= shelves.length) shelfViewLogic.currentShelfIndex = 0;
         
         const currentShelfCode = shelves[shelfViewLogic.currentShelfIndex];
-        title.innerText = `SCAFFALE ${currentShelfCode}`;
+        
+        if (shelfDropdown) {
+            shelfDropdown.innerHTML = shelves.map(s => `<option value="${s}" ${s === currentShelfCode ? 'selected' : ''}>SCAFFALE ${s}</option>`).join('');
+        }
 
         const dims = shelfViewLogic.getShelfDimensions(currentShelfCode);
 
@@ -3957,6 +3977,7 @@ window.shelfViewLogic = {
         container.innerHTML = shelfHtml;
     }
 };
+
 bootApp();
     </script>
 
