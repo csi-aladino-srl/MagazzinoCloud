@@ -15,9 +15,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 
-<!-- jsPDF e jsPDF-AutoTable per esportazione PDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <!-- jsPDF e jsPDF-AutoTable per esportazione PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 
     <script>
 	let unsubChat = null;
@@ -380,24 +380,24 @@
                         <button id="filterModified" class="filter-btn shrink-0 px-4 py-2 rounded-full text-xs font-bold bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors" onclick="ui.setFilter('modified')">
                             <i class="fa-solid fa-pen-to-square mr-1"></i> Modificati (<span id="countModified">0</span>)
                         </button>
-<button id="btnConsolidateOriginals" class="hidden shrink-0 px-3.5 py-2 rounded-full text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white shadow-xs transition-all flex items-center gap-1.5 active:scale-95" onclick="dbLogic.consolidateModifiedToOriginals()" title="Sovrascrivi i valori originali con le modifiche attuali per tutti i prodotti modificati">
-    <i class="fa-solid fa-wand-magic-sparkles"></i> Salva su Originali
-</button>
+                        <button id="btnConsolidateOriginals" class="hidden shrink-0 px-3.5 py-2 rounded-full text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white shadow-xs transition-all flex items-center gap-1.5 active:scale-95" onclick="dbLogic.consolidateModifiedToOriginals()" title="Sovrascrivi i valori originali con le modifiche attuali per tutti i prodotti modificati">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Salva su Originali
+                        </button>
                         <button id="filterNotes" class="filter-btn shrink-0 px-4 py-2 rounded-full text-xs font-bold bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors" onclick="ui.setFilter('notes')">
                             <i class="fa-solid fa-comment-dots mr-1"></i> Con Note (<span id="countNotes">0</span>)
                         </button>
                         <button id="filterConsolidated" class="filter-btn hidden shrink-0 px-4 py-2 rounded-full text-xs font-bold bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors" onclick="ui.setFilter('consolidated')">
                             <i class="fa-solid fa-check-double mr-1"></i> Consolidati (<span id="countConsolidated">0</span>)
                         </button>
-<!-- Tasto Switch Vista Scaffale / Lista (Visibile solo in Inventario) -->
-<div id="shelfViewToggleContainer" class="hidden items-center gap-1 bg-slate-200 dark:bg-slate-800 p-1 rounded-2xl">
-    <button id="btnViewList" onclick="ui.switchMainView('list')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-700 text-blue-600 shadow-xs flex items-center gap-1.5">
-        <i class="fa-solid fa-list"></i> Lista
-    </button>
-    <button id="btnViewShelf" onclick="ui.switchMainView('shelf')" class="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 flex items-center gap-1.5">
-        <i class="fa-solid fa-cubes-stacked"></i> Scaffale 2D
-    </button>
-</div>
+                        <!-- Tasto Switch Vista Scaffale / Lista (Visibile solo in Inventario) -->
+                        <div id="shelfViewToggleContainer" class="hidden items-center gap-1 bg-slate-200 dark:bg-slate-800 p-1 rounded-2xl">
+                            <button id="btnViewList" onclick="ui.switchMainView('list')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-700 text-blue-600 shadow-xs flex items-center gap-1.5">
+                                <i class="fa-solid fa-list"></i> Lista
+                            </button>
+                            <button id="btnViewShelf" onclick="ui.switchMainView('shelf')" class="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 flex items-center gap-1.5">
+                                <i class="fa-solid fa-cubes-stacked"></i> Scaffale 2D
+                            </button>
+                        </div>
                     </div>
 
                     <div class="flex items-center gap-2 shrink-0 text-xs font-bold text-slate-500">
@@ -446,49 +446,49 @@
 
         <main class="flex-1 overflow-y-auto w-full bg-slate-100/60 dark:bg-slate-950 pb-48 md:pb-24 relative" id="mainContainer">
             <div class="max-w-7xl mx-auto p-3 sm:p-5 pb-24" id="productsList"></div>
-<!-- Vista Grafica Scaffale Reale 2D (Modalità Inventario) -->
-<div id="shelfViewContainer" class="hidden max-w-7xl mx-auto p-4 flex flex-col gap-5">
+            <!-- Vista Grafica Scaffale Reale 2D (Modalità Inventario) -->
+            <div id="shelfViewContainer" class="hidden max-w-7xl mx-auto p-4 flex flex-col gap-5">
     
-    <!-- Barra Navigazione Scaffali & Gestione Misure cm -->
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-sm flex flex-wrap items-center justify-between gap-4">
+            <!-- Barra Navigazione Scaffali & Gestione Misure cm -->
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-sm flex flex-wrap items-center justify-between gap-4">
         
-        <!-- Frecce Scorrimento Scaffali & Menù a Tendina -->
-        <div class="flex items-center gap-3">
-            <button onclick="shelfViewLogic.prevShelf()" class="w-12 h-12 bg-blue-100 hover:bg-blue-200 dark:bg-blue-950 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-2xl flex items-center justify-center text-lg font-bold transition-all active:scale-95 shadow-xs">
-                <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            <div class="text-center px-1 flex flex-col items-center">
-                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Scaffale Selezionato</span>
-                <select id="shelfDropdown" onchange="shelfViewLogic.selectShelf(this.value)" class="bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-slate-700 text-blue-600 dark:text-blue-400 font-mono font-bold text-base rounded-xl px-3 py-1.5 focus:ring-2 focus:ring-blue-500 cursor-pointer">
-                </select>
+            <!-- Frecce Scorrimento Scaffali & Menù a Tendina -->
+            <div class="flex items-center gap-3">
+                <button onclick="shelfViewLogic.prevShelf()" class="w-12 h-12 bg-blue-100 hover:bg-blue-200 dark:bg-blue-950 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-2xl flex items-center justify-center text-lg font-bold transition-all active:scale-95 shadow-xs">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <div class="text-center px-1 flex flex-col items-center">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Scaffale Selezionato</span>
+                    <select id="shelfDropdown" onchange="shelfViewLogic.selectShelf(this.value)" class="bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-slate-700 text-blue-600 dark:text-blue-400 font-mono font-bold text-base rounded-xl px-3 py-1.5 focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                    </select>
+                </div>
+                <button onclick="shelfViewLogic.nextShelf()" class="w-12 h-12 bg-blue-100 hover:bg-blue-200 dark:bg-blue-950 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-2xl flex items-center justify-center text-lg font-bold transition-all active:scale-95 shadow-xs">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
             </div>
-            <button onclick="shelfViewLogic.nextShelf()" class="w-12 h-12 bg-blue-100 hover:bg-blue-200 dark:bg-blue-950 dark:hover:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-2xl flex items-center justify-center text-lg font-bold transition-all active:scale-95 shadow-xs">
-                <i class="fa-solid fa-chevron-right"></i>
+
+            <!-- Legenda Stato Inventario -->
+            <div class="flex items-center gap-4 text-xs font-bold bg-slate-50 dark:bg-slate-800/50 px-4 py-2 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-1.5">
+                    <span class="w-3.5 h-3.5 rounded-md bg-emerald-500 border border-emerald-600 shadow-xs"></span>
+                    <span class="text-slate-700 dark:text-slate-300">Inventariato</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="w-3.5 h-3.5 rounded-md bg-red-500 border border-red-600 shadow-xs"></span>
+                    <span class="text-slate-700 dark:text-slate-300">Da Inventariare</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="w-3.5 h-3.5 rounded-md bg-slate-300 dark:bg-slate-700"></span>
+                    <span class="text-slate-400">Vuoto</span>
+                </div>
+            </div>
+
+            <!-- Pulsante Impostazione Misure Scaffale in cm -->
+            <!-- Pulsante Impostazione Misure Scaffale in cm (Protetto per Leonardo C.) -->
+            <button onclick="shelfViewLogic.checkOpenDimensionsModal()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold flex items-center gap-2 shadow-xs transition-transform active:scale-95">
+                <i class="fa-solid fa-ruler-combined"></i> Misure & Profondità (cm)
             </button>
         </div>
-
-        <!-- Legenda Stato Inventario -->
-        <div class="flex items-center gap-4 text-xs font-bold bg-slate-50 dark:bg-slate-800/50 px-4 py-2 rounded-2xl border border-slate-200 dark:border-slate-700">
-            <div class="flex items-center gap-1.5">
-                <span class="w-3.5 h-3.5 rounded-md bg-emerald-500 border border-emerald-600 shadow-xs"></span>
-                <span class="text-slate-700 dark:text-slate-300">Inventariato</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-                <span class="w-3.5 h-3.5 rounded-md bg-red-500 border border-red-600 shadow-xs"></span>
-                <span class="text-slate-700 dark:text-slate-300">Da Inventariare</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-                <span class="w-3.5 h-3.5 rounded-md bg-slate-300 dark:bg-slate-700"></span>
-                <span class="text-slate-400">Vuoto</span>
-            </div>
-        </div>
-
-        <!-- Pulsante Impostazione Misure Scaffale in cm -->
-<!-- Pulsante Impostazione Misure Scaffale in cm (Protetto per Leonardo C.) -->
-<button onclick="shelfViewLogic.checkOpenDimensionsModal()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold flex items-center gap-2 shadow-xs transition-transform active:scale-95">
-    <i class="fa-solid fa-ruler-combined"></i> Misure & Profondità (cm)
-</button>
-    </div>
 
     <!-- Area Visualizzazione Scaffale Metallico Industriale 2D -->
     <div class="bg-slate-100/80 dark:bg-slate-950 border border-slate-300/80 dark:border-slate-800 rounded-4xl p-6 sm:p-10 shadow-inner overflow-x-auto flex justify-center items-end min-h-[500px]">
@@ -970,7 +970,7 @@
     </div>
 
     <!-- Toast Snackbar Material Design -->
-    <div id="toastContainer" class="fixed top-20 right-4 z-[100] flex flex-col gap-2 pointer-events-none"></div>
+    <div id="toastContainer" class="fixed top-20 right-4 z-[130] flex flex-col gap-2 pointer-events-none"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -1054,6 +1054,12 @@
                 currentUserOperator = selected;
                 document.getElementById('currentOperatorBadge').innerText = selected;
                 document.getElementById('userSelectModal').classList.add('hidden');
+                
+                // --- AGGIUNTA PER RILEVARE ISTANTANEAMENTE IL CAMBIO RUOLO/UTENTE ---
+                updateListUI();
+                ui.renderProducts();
+                // -------------------------------------------------------------------
+
                 ui.toast(`Benvenuto/a, ${selected}!`, "success");
             },
 
@@ -1070,6 +1076,9 @@
 	window.chatLogic = {
     openChatModal: () => {
         const list = getCurrentList();
+        function isAdmin() {
+            return currentUserOperator === 'Leonardo C.' || currentUserOperator === 'Alberto A.';
+        }
         if (!list) return ui.toast("Nessuna lista selezionata", "error");
         
         document.getElementById('chatTitle').innerText = `Chat: ${list.name}`;
@@ -1473,52 +1482,60 @@
         }
         window.switchList = switchList;
 
-        function updateListUI() {
-    const list = getCurrentList();
-    if (list) {
-        document.getElementById('currentListName').innerText = list.name;
-        const invBadge = document.getElementById('inventoryBadge');
-        const expDesc = document.getElementById('exportDescriptionText');
-        const progContainer = document.getElementById('inventoryProgressBarContainer');
-        const filterConsolidatedBtn = document.getElementById('filterConsolidated');
-        const shelfToggle = document.getElementById('shelfViewToggleContainer');
+function updateListUI() {
+            const list = getCurrentList();
+            if (list) {
+                document.getElementById('currentListName').innerText = list.name;
+                const invBadge = document.getElementById('inventoryBadge');
+                const expDesc = document.getElementById('exportDescriptionText');
+                const progContainer = document.getElementById('inventoryProgressBarContainer');
+                const filterConsolidatedBtn = document.getElementById('filterConsolidated');
+                const shelfToggle = document.getElementById('shelfViewToggleContainer');
+                const selectAllLabel = document.getElementById('selectAllCheckbox')?.parentElement;
 
-        if (list.isInventory) {
-            document.body.classList.add('is-inventory');
-            if (invBadge) invBadge.classList.remove('hidden');
-            if (expDesc) expDesc.innerText = "Esporta inventario con colonna DELTA";
-            if (progContainer) {
-                progContainer.classList.remove('hidden');
-                progContainer.classList.add('flex');
-            }
-            if (filterConsolidatedBtn) filterConsolidatedBtn.classList.remove('hidden');
-            if (shelfToggle) {
-                shelfToggle.classList.remove('hidden');
-                shelfToggle.classList.add('flex');
-            }
-        } else {
-            document.body.classList.remove('is-inventory');
-            if (invBadge) invBadge.classList.add('hidden');
-            if (expDesc) expDesc.innerText = "Scarica la lista corrente";
-            if (progContainer) {
-                progContainer.classList.add('hidden');
-                progContainer.classList.remove('flex');
-            }
-            if (filterConsolidatedBtn) {
-                filterConsolidatedBtn.classList.add('hidden');
-                if (activeFilter === 'consolidated') {
-                    ui.setFilter('all');
+                if (list.isInventory) {
+                    document.body.classList.add('is-inventory');
+                    if (invBadge) invBadge.classList.remove('hidden');
+                    if (expDesc) expDesc.innerText = "Esporta inventario con colonna DELTA";
+                    if (progContainer) {
+                        progContainer.classList.remove('hidden');
+                        progContainer.classList.add('flex');
+                    }
+                    if (filterConsolidatedBtn) filterConsolidatedBtn.classList.remove('hidden');
+                    if (shelfToggle) {
+                        shelfToggle.classList.remove('hidden');
+                        shelfToggle.classList.add('flex');
+                    }
+                    // Nasconde o disabilita il checkbox "Seleziona Pagina" in Inventario
+                    if (selectAllLabel) {
+                        selectAllLabel.classList.add('hidden');
+                    }
+                    ui.clearSelection();
+                } else {
+                    document.body.classList.remove('is-inventory');
+                    if (invBadge) invBadge.classList.add('hidden');
+                    if (expDesc) expDesc.innerText = "Scarica la lista corrente";
+                    if (progContainer) {
+                        progContainer.classList.add('hidden');
+                        progContainer.classList.remove('flex');
+                    }
+                    if (filterConsolidatedBtn) {
+                        filterConsolidatedBtn.classList.add('hidden');
+                        if (activeFilter === 'consolidated') {
+                            ui.setFilter('all');
+                        }
+                    }
+                    if (shelfToggle) {
+                        shelfToggle.classList.add('hidden');
+                        shelfToggle.classList.remove('flex');
+                    }
+                    if (selectAllLabel) {
+                        selectAllLabel.classList.remove('hidden');
+                    }
+                    ui.switchMainView('list');
                 }
             }
-            if (shelfToggle) {
-                shelfToggle.classList.add('hidden');
-                shelfToggle.classList.remove('flex');
-            }
-            // Se ci trovavamo nella vista scaffale, torna alla lista
-            ui.switchMainView('list');
         }
-    }
-}
 
         window.dbLogic = {
 consolidateModifiedToOriginals: async () => {
@@ -2260,10 +2277,10 @@ window.exportLocationPDF = async function(locationName) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('p', 'mm', 'a4');
 
-    let fontName = 'helvetica';
+    let fontName = 'helvetica'; // Fallback sicuro predefinito
     let useUnicodeSymbols = false;
 
-    // Tentativo di caricamento Noto Sans con fallback automatico sicuro
+    // Tentativo di caricamento Noto Sans da CDN stabili (jsDelivr)
     try {
         function arrayBufferToBase64(buffer) {
             let binary = '';
@@ -2275,8 +2292,9 @@ window.exportLocationPDF = async function(locationName) {
             return window.btoa(binary);
         }
 
-        const fontRegularUrl = 'https://cdn.jsdelivr.net/gh/google/fonts@main/apache/notosans/NotoSans-Regular.ttf';
-        const fontBoldUrl = 'https://cdn.jsdelivr.net/gh/google/fonts@main/apache/notosans/NotoSans-Bold.ttf';
+        // URL CDN stabili per Noto Sans (.ttf)
+        const fontRegularUrl = 'https://cdn.jsdelivr.net/npm/@vmprint/local-fonts@1.2.1/assets/fonts/NotoSans/NotoSans-Regular.ttf';
+        const fontBoldUrl = 'https://cdn.jsdelivr.net/npm/@vmprint/local-fonts@1.2.1/assets/fonts/NotoSans/NotoSans-Bold.ttf';
 
         const [regRes, boldRes] = await Promise.all([
             fetch(fontRegularUrl),
@@ -2297,7 +2315,7 @@ window.exportLocationPDF = async function(locationName) {
             useUnicodeSymbols = true;
         }
     } catch (e) {
-        console.warn("Impossibile caricare Noto Sans da CDN, utilizzo i font standard:", e);
+        console.warn("Impossibile caricare Noto Sans da CDN, utilizzo il font standard Helvetica:", e);
         fontName = 'helvetica';
         useUnicodeSymbols = false;
     }
@@ -2319,17 +2337,17 @@ window.exportLocationPDF = async function(locationName) {
     doc.setTextColor(100, 116, 139); // Slate-500
     doc.text(`Data: ${todayStr}`, 196, 20, { align: 'right' });
 
-    // 3. Intestazione Tabella PDF (rimossa la colonna Ubicazione Inv.)
+    // 3. Intestazione Tabella PDF
     const tableHead = [[
         "Codice articolo",
         "Descrizione articolo",
         "Giacenza Inv.",
         "Delta",
         "Stato",
-	"Operatore"
+        "Operatore"
     ]];
 
-// 4. Mappatura Dati Tabella
+    // 4. Mappatura Dati Tabella
     const tableData = locationProducts.map(p => {
         const stockVal = (p.stock !== undefined && p.stock !== '' && !isNaN(Number(p.stock))) ? Number(p.stock) : 0;
         const origStockVal = (p.originalStock !== undefined && p.originalStock !== null && p.originalStock !== '' && !isNaN(Number(p.originalStock))) ? Number(p.originalStock) : stockVal;
@@ -2388,8 +2406,7 @@ window.exportLocationPDF = async function(locationName) {
                 4: { halign: 'center', fontStyle: 'bold', fontSize: 11, cellWidth: 18 },
                 5: { halign: 'center', fontSize: 8.5, cellWidth: 30 }
             },
-didParseCell: function(data) {
-                // Indice 4: Colonna Stato
+            didParseCell: function(data) {
                 if (data.section === 'body' && data.column.index === 4) {
                     const val = data.cell.raw;
                     if (val === '✔' || val === 'OK') {
@@ -2488,140 +2505,144 @@ exportExcel: () => {
         ui.toast("Esportazione completata", "success");
     },
     
-importExcel: (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
+    importExcel: (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            try {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                const json = XLSX.utils.sheet_to_json(worksheet);
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const json = XLSX.utils.sheet_to_json(worksheet);
 
-                if (json.length === 0) return ui.toast("Il file Excel è vuoto.", "error");
+                    if (json.length === 0) return ui.toast("Il file Excel è vuoto.", "error");
 
-                document.getElementById('fullLoader').classList.remove('hidden', 'opacity-0');
-                document.getElementById('loaderText').innerText = "Importazione in corso (450 prodotti per blocco)...";
-                ui.closeModal('settingsModal');
+                    document.getElementById('fullLoader').classList.remove('hidden', 'opacity-0');
+                    document.getElementById('loaderText').innerText = "Importazione in corso (450 prodotti per blocco)...";
+                    ui.closeModal('settingsModal');
 
-                const BATCH_LIMIT = 450;
-                let addedCount = 0, updatedCount = 0;
-                const totalRows = json.length;
+                    const BATCH_LIMIT = 450;
+                    let addedCount = 0, updatedCount = 0;
+                    const totalRows = json.length;
 
-                for (let i = 0; i < totalRows; i += BATCH_LIMIT) {
-                    const batch = writeBatch(db);
-                    const chunk = json.slice(i, i + BATCH_LIMIT);
+                    for (let i = 0; i < totalRows; i += BATCH_LIMIT) {
+                        const batch = writeBatch(db);
+                        const chunk = json.slice(i, i + BATCH_LIMIT);
 
-                    const currentProgress = Math.min(i + BATCH_LIMIT, totalRows);
-                    document.getElementById('loaderText').innerText = `Elaborazione: ${currentProgress} di ${totalRows} prodotti...`;
+                        const currentProgress = Math.min(i + BATCH_LIMIT, totalRows);
+                        document.getElementById('loaderText').innerText = `Elaborazione: ${currentProgress} di ${totalRows} prodotti...`;
 
-                    for (const row of chunk) {
-                        const normalizedRow = {};
-                        Object.keys(row).forEach(k => { normalizedRow[k.trim().toLowerCase()] = row[k]; });
+                        for (const row of chunk) {
+                            const normalizedRow = {};
+                            Object.keys(row).forEach(k => { normalizedRow[k.trim().toLowerCase()] = row[k]; });
 
-                        const getVal = (...keys) => {
-                            for (const k of keys) {
-                                if (normalizedRow[k] !== undefined && normalizedRow[k] !== null) return normalizedRow[k];
-                            }
-                            return '';
-                        };
-
-                        const code = getVal("codice prodotto", "codice articolo", "codice", "code", "articolo", "art");
-                        const originalCode = getVal("codice originale", "original code") || code;
-                        const location = getVal("ubicazione attuale", "ubicazione", "location", "loc", "scaffale") || 'GENERALE';
-                        const originalLocation = getVal("ubicazione originale", "original location") || location;
-                        const description = getVal("descrizione", "description", "desc");
-                        const originalDescription = getVal("descrizione originale", "original description") || description;
-                        const brand = getVal("marchio", "brand", "marca");
-                        const originalBrand = getVal("marchio originale", "original brand") || brand;
-                        const note = getVal("note", "annotazioni");
-                        const originalNote = getVal("nota originale", "original note") || note;
-                        const stockNum = Number(getVal("giacenzaattuale", "giacenza attuale", "giacenza", "quantità", "stock", "qty") || 0);
-                        const origStockNum = getVal("giacenza originale", "original stock") !== '' ? Number(getVal("giacenza originale", "original stock")) : null;
-
-                        const isConsolidatedRaw = getVal("consolidato (si/no)", "consolidato", "isinventorylocked", "locked").toString().trim().toUpperCase();
-                        const isInventoryLocked = (isConsolidatedRaw === "SI" || isConsolidatedRaw === "SÌ" || isConsolidatedRaw === "TRUE" || isConsolidatedRaw === "1");
-
-                        // Lettura Operatore, Data e Ora
-                        const operatorVal = getVal("operatore", "consolidatedby", "operatore consolida").toString().trim();
-                        const dateVal = getVal("data consolida", "data", "consolidateddate").toString().trim();
-                        const timeVal = getVal("ora consolida", "ora", "consolidatedtime").toString().trim();
-
-                        let consolidatedIso = null;
-                        if (dateVal) {
-                            try {
-                                const parts = dateVal.split(/[\/\.-]/);
-                                if (parts.length === 3) {
-                                    let day = parts[0].padStart(2, '0');
-                                    let month = parts[1].padStart(2, '0');
-                                    let year = parts[2].length === 2 ? '20' + parts[2] : parts[2];
-                                    let timePart = timeVal || '00:00:00';
-                                    consolidatedIso = new Date(`${year}-${month}-${day}T${timePart}`).toISOString();
+                            const getVal = (...keys) => {
+                                for (const k of keys) {
+                                    if (normalizedRow[k] !== undefined && normalizedRow[k] !== null) return normalizedRow[k];
                                 }
-                            } catch(err) {
-                                console.warn("Errore parsing data consolida:", err);
-                            }
-                        }
-
-                        if (code) {
-                            const codeStr = code.toString().trim();
-                            const existingProduct = products.find(p => p.code && p.code.toString().trim().toLowerCase() === codeStr.toLowerCase() && p.listId === currentListId);
-                            
-                            let finalOrigStock = origStockNum !== null ? origStockNum : stockNum;
-
-                            let itemData = {
-                                listId: currentListId,
-                                code: codeStr,
-                                originalCode: originalCode.toString().trim(),
-                                location: location.toString().trim().toUpperCase(),
-                                originalLocation: originalLocation.toString().trim().toUpperCase(),
-                                description: description.toString().trim(),
-                                originalDescription: originalDescription.toString().trim(),
-                                brand: brand.toString().trim(),
-                                originalBrand: originalBrand.toString().trim(),
-                                note: note.toString().trim(),
-                                originalNote: originalNote.toString().trim(),
-                                stock: stockNum,
-                                originalStock: finalOrigStock,
-                                isInventoryLocked: isInventoryLocked,
-                                consolidatedBy: operatorVal || (existingProduct ? existingProduct.consolidatedBy || '' : ''),
-                                consolidatedAt: consolidatedIso || (existingProduct ? existingProduct.consolidatedAt || null : null),
-                                timestamp: new Date().toISOString()
+                                return '';
                             };
 
-                            if (existingProduct) {
-                                batch.update(doc(db, 'artifacts', appId, 'public', 'data', 'products', existingProduct.id), itemData);
-                                updatedCount++;
-                            } else {
-                                batch.set(doc(collection(db, 'artifacts', appId, 'public', 'data', 'products')), itemData);
-                                addedCount++;
+                            const code = getVal("codice prodotto", "codice articolo", "codice", "code", "articolo", "art");
+                            const originalCode = getVal("codice originale", "original code") || code;
+                            const location = getVal("ubicazione attuale", "ubicazione", "location", "loc", "scaffale") || 'GENERALE';
+                            const originalLocation = getVal("ubicazione originale", "original location") || location;
+                            const description = getVal("descrizione", "description", "desc");
+                            const originalDescription = getVal("descrizione originale", "original description") || description;
+                            const brand = getVal("marchio", "brand", "marca");
+                            const originalBrand = getVal("marchio originale", "original brand") || brand;
+                            const note = getVal("note", "annotazioni");
+                            const originalNote = getVal("nota originale", "original note") || note;
+                            const stockNum = Number(getVal("giacenzaattuale", "giacenza attuale", "giacenza", "quantità", "stock", "qty") || 0);
+                            const origStockNum = getVal("giacenza originale", "original stock") !== '' ? Number(getVal("giacenza originale", "original stock")) : null;
+
+                            const isConsolidatedRaw = getVal("consolidato (si/no)", "consolidato", "isinventorylocked", "locked").toString().trim().toUpperCase();
+                            const isInventoryLocked = (isConsolidatedRaw === "SI" || isConsolidatedRaw === "SÌ" || isConsolidatedRaw === "TRUE" || isConsolidatedRaw === "1");
+
+                            // Lettura Operatore, Data e Ora
+                            const operatorVal = getVal("operatore", "consolidatedby", "operatore consolida").toString().trim();
+                            const dateVal = getVal("data consolida", "data", "consolidateddate").toString().trim();
+                            const timeVal = getVal("ora consolida", "ora", "consolidatedtime").toString().trim();
+
+                            let consolidatedIso = null;
+                            if (dateVal) {
+                                try {
+                                    const parts = dateVal.split(/[\/\.-]/);
+                                    if (parts.length === 3) {
+                                        let day = parts[0].padStart(2, '0');
+                                        let month = parts[1].padStart(2, '0');
+                                        let year = parts[2].length === 2 ? '20' + parts[2] : parts[2];
+                                        let timePart = timeVal || '00:00:00';
+                                        consolidatedIso = new Date(`${year}-${month}-${day}T${timePart}`).toISOString();
+                                    }
+                                } catch(err) {
+                                    console.warn("Errore parsing data consolida:", err);
+                                }
+                            }
+
+                            if (code) {
+                                const codeStr = code.toString().trim();
+                                const existingProduct = products.find(p => p.code && p.code.toString().trim().toLowerCase() === codeStr.toLowerCase() && p.listId === currentListId);
+                                
+                                let finalOrigStock = origStockNum !== null ? origStockNum : stockNum;
+
+                                let itemData = {
+                                    listId: currentListId,
+                                    code: codeStr,
+                                    originalCode: originalCode.toString().trim(),
+                                    location: location.toString().trim().toUpperCase(),
+                                    originalLocation: originalLocation.toString().trim().toUpperCase(),
+                                    description: description.toString().trim(),
+                                    originalDescription: originalDescription.toString().trim(),
+                                    brand: brand.toString().trim(),
+                                    originalBrand: originalBrand.toString().trim(),
+                                    note: note.toString().trim(),
+                                    originalNote: originalNote.toString().trim(),
+                                    stock: stockNum,
+                                    originalStock: finalOrigStock,
+                                    isInventoryLocked: isInventoryLocked,
+                                    consolidatedBy: operatorVal || (existingProduct ? existingProduct.consolidatedBy || '' : ''),
+                                    consolidatedAt: consolidatedIso || (existingProduct ? existingProduct.consolidatedAt || null : null),
+                                    timestamp: new Date().toISOString()
+                                };
+
+                                if (existingProduct) {
+                                    batch.update(doc(db, 'artifacts', appId, 'public', 'data', 'products', existingProduct.id), itemData);
+                                    updatedCount++;
+                                } else {
+                                    batch.set(doc(collection(db, 'artifacts', appId, 'public', 'data', 'products')), itemData);
+                                    addedCount++;
+                                }
                             }
                         }
+                        await batch.commit();
                     }
-                    await batch.commit();
-                }
 
-                auditLogic.logAction("Importazione Excel", `Importati ${addedCount} nuovi prodotti e aggiornati ${updatedCount}`);
-                document.getElementById('fullLoader').classList.add('opacity-0');
-                setTimeout(() => document.getElementById('fullLoader').classList.add('hidden'), 300);
-                ui.toast(`Importazione completata: ${addedCount} aggiunti, ${updatedCount} aggiornati.`, "success");
-                event.target.value = '';
-            } catch (error) {
-                console.error(error);
-                document.getElementById('fullLoader').classList.add('opacity-0');
-                setTimeout(() => document.getElementById('fullLoader').classList.add('hidden'), 300);
-                ui.toast("Errore durante la lettura del file Excel.", "error");
-                event.target.value = '';
-            }
-        };
-        reader.readAsArrayBuffer(file);
-    }
-};
+                    auditLogic.logAction("Importazione Excel", `Importati ${addedCount} nuovi prodotti e aggiornati ${updatedCount}`);
+                    document.getElementById('fullLoader').classList.add('opacity-0');
+                    setTimeout(() => document.getElementById('fullLoader').classList.add('hidden'), 300);
+                    ui.toast(`Importazione completata: ${addedCount} aggiunti, ${updatedCount} aggiornati.`, "success");
+                    event.target.value = '';
+                } catch (error) {
+                    console.error(error);
+                    document.getElementById('fullLoader').classList.add('opacity-0');
+                    setTimeout(() => document.getElementById('fullLoader').classList.add('hidden'), 300);
+                    ui.toast("Errore durante la lettura del file Excel.", "error");
+                    event.target.value = '';
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+    };
+
+        function isAdminUser() {
+            return currentUserOperator === 'Leonardo C.' || currentUserOperator === 'Alberto A.';
+        }
 
         window.ui = {
-switchMainView: (viewMode) => {
+            switchMainView: (viewMode) => {
                 const listContainer = document.getElementById('productsList');
                 const shelfContainer = document.getElementById('shelfViewContainer');
                 const btnList = document.getElementById('btnViewList');
@@ -2974,6 +2995,9 @@ toast: (msg, type='info') => {
             },
 
             openProductModal: (id = null) => {
+                if (isCurrentListInventory() && !isAdminUser()) {
+                    return ui.toast("In modalità Inventario solo gli amministratori possono aggiungere o modificare prodotti.", "error");
+                }
                 document.getElementById('prodId').value = id || '';
 
                 ['origCodeSection', 'origLocSection', 'origDescSection', 'origStockSection', 'origBrandSection', 'origNoteSection'].forEach(sec => {
@@ -3098,6 +3122,9 @@ toast: (msg, type='info') => {
             },
 
             openQuickEdit: (btn) => {
+                if (isCurrentListInventory() && !isAdminUser()) {
+                    return ui.toast("In modalità Inventario solo gli amministratori possono modificare i dati.", "error");
+                }
                 const productRow = btn.closest('.product-item-row');
                 const cardContainer = btn.closest('.location-card-container');
                 const popup = btn.nextElementSibling;
@@ -3198,7 +3225,7 @@ renderLocationChips: () => {
                 chipsContainer.innerHTML = chipsHtml;
             },
 
-            renderProducts: () => {
+renderProducts: () => {
                 ui.renderLocationChips();
 
                 const container = document.getElementById('productsList');
@@ -3212,26 +3239,25 @@ renderLocationChips: () => {
 
                 let html = '';
 
-if (announcements.length > 0) {
-    announcements.forEach(ann => {
-        const titleText = (typeof ann === 'object' && ann.title) ? ann.title : 'Avviso Magazzino';
-        const bodyText = (typeof ann === 'object') ? (ann.text || '') : ann;
+                if (announcements.length > 0) {
+                    announcements.forEach(ann => {
+                        const titleText = (typeof ann === 'object' && ann.title) ? ann.title : 'Avviso Magazzino';
+                        const bodyText = (typeof ann === 'object') ? (ann.text || '') : ann;
 
-        html += `
-        <div class="mb-4 bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent dark:from-amber-950/30 dark:to-transparent border-l-4 border-amber-500 p-4 rounded-3xl shadow-xs flex items-center justify-between gap-3">
-            <div class="flex items-center gap-3.5 min-w-0 flex-1">
-                <div onclick="ui.openAnnouncementModal()" class="w-10 h-10 rounded-2xl bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-xs cursor-pointer transition-colors" title="Modifica note in evidenza">
-                    <i class="fa-solid fa-bullhorn text-lg"></i>
-                </div>
-                <div class="min-w-0 flex-1">
-                    <div class="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 leading-none mb-1">${ui.escapeHtml(titleText)}</div>
-                    <div class="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 whitespace-pre-line leading-snug">${ui.escapeHtml(bodyText)}</div>
-                </div>
-            </div>
-        </div>`;
-    });
-}
-else {
+                        html += `
+                        <div class="mb-4 bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent dark:from-amber-950/30 dark:to-transparent border-l-4 border-amber-500 p-4 rounded-3xl shadow-xs flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-3.5 min-w-0 flex-1">
+                                <div onclick="ui.openAnnouncementModal()" class="w-10 h-10 rounded-2xl bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/80 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0 shadow-xs cursor-pointer transition-colors" title="Modifica note in evidenza">
+                                    <i class="fa-solid fa-bullhorn text-lg"></i>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 leading-none mb-1">${ui.escapeHtml(titleText)}</div>
+                                    <div class="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 whitespace-pre-line leading-snug">${ui.escapeHtml(bodyText)}</div>
+                                </div>
+                            </div>
+                        </div>`;
+                    });
+                } else {
                     html += `
                     <div class="mb-4">
                         <button onclick="ui.openAnnouncementModal()" class="w-full py-3 px-4 bg-amber-50/80 hover:bg-amber-100/80 dark:bg-amber-950/20 dark:hover:bg-amber-950/30 border border-dashed border-amber-300/80 dark:border-amber-800/60 rounded-3xl text-amber-800 dark:text-amber-300 text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-xs">
@@ -3271,23 +3297,22 @@ else {
 
                 document.getElementById('countAll').innerText = products.length;
 
-// Cerca all'interno di ui.renderProducts la riga dove viene aggiornato countModified:
-const modifiedCount = products.filter(isProductModified).length;
-document.getElementById('countModified').innerText = modifiedCount;
+                const modifiedCount = products.filter(isProductModified).length;
+                document.getElementById('countModified').innerText = modifiedCount;
 
-const btnConsolidate = document.getElementById('btnConsolidateOriginals');
-if (btnConsolidate) {
-    const isAdmin = currentUserOperator === 'Leonardo C.' || currentUserOperator === 'Alberto A.';
-    const isModifiedFilterActive = activeFilter === 'modified';
-    
-    if (isAdmin && isModifiedFilterActive && modifiedCount > 0) {
-        btnConsolidate.classList.remove('hidden');
-        btnConsolidate.classList.add('inline-flex');
-    } else {
-        btnConsolidate.classList.add('hidden');
-        btnConsolidate.classList.remove('inline-flex');
-    }
-}             
+                const btnConsolidate = document.getElementById('btnConsolidateOriginals');
+                if (btnConsolidate) {
+                    const isAdmin = isAdminUser();
+                    const isModifiedFilterActive = activeFilter === 'modified';
+                    
+                    if (isAdmin && isModifiedFilterActive && modifiedCount > 0) {
+                        btnConsolidate.classList.remove('hidden');
+                        btnConsolidate.classList.add('inline-flex');
+                    } else {
+                        btnConsolidate.classList.add('hidden');
+                        btnConsolidate.classList.remove('inline-flex');
+                    }
+                }             
 
                 document.getElementById('countNotes').innerText = products.filter(p => p.note && p.note.trim() !== '').length;
                 
@@ -3376,11 +3401,12 @@ if (btnConsolidate) {
                                 <span class="bg-white dark:bg-slate-800 text-slate-500 text-xs font-bold px-2.5 py-1 rounded-full shadow-xs border border-slate-200 dark:border-slate-700">${items.length} Art.</span>
                             </div>
                         </div>
-                        <div class="divide-y divide-slate-100 dark:divide-slate-800/60 overflow-visible">
+                        <div class="overflow-visible">
                     `;
 
-                    items.forEach(item => {
+                    items.forEach((item, itemIndex) => {
                         const isChecked = selectedProductIds.has(item.id);
+                        const canEdit = !isInv || isAdminUser();
                         
                         const itemIsCodeMod = isCodeModified(item);
                         const itemIsLocMod = isLocModified(item);
@@ -3416,82 +3442,83 @@ if (btnConsolidate) {
                         }
 
                         let dateStr = '';
-let opStr = '';
-if (isLocked) {
-    if (item.consolidatedAt) {
-        const d = new Date(item.consolidatedAt);
-        dateStr = !isNaN(d.getTime()) ? d.toLocaleString('it-IT', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
-    }
-    if (item.consolidatedBy) {
-        opStr = item.consolidatedBy;
-    }
-}
+                        let opStr = '';
+                        if (isLocked) {
+                            if (item.consolidatedAt) {
+                                const d = new Date(item.consolidatedAt);
+                                dateStr = !isNaN(d.getTime()) ? d.toLocaleString('it-IT', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+                            }
+                            if (item.consolidatedBy) {
+                                opStr = item.consolidatedBy;
+                            }
+                        }
 
-let inventoryStepperWidget = '';
-if (isLocked) {
-    inventoryStepperWidget = `
-        <div class="flex flex-col items-start gap-2 my-1">
-            <div class="w-full sm:w-64 bg-emerald-50 dark:bg-emerald-950/30 border-2 border-emerald-500 rounded-2xl p-3 shadow-xs flex flex-col gap-2">
-                <div class="flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-2">
-                        <div class="w-7 h-7 rounded-lg bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shrink-0">
-                            <i class="fa-solid fa-check"></i>
-                        </div>
-                        <div class="flex flex-col">
-                            <span class="text-[9px] font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider">CONSOLIDATO</span>
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-base font-black text-emerald-950 dark:text-white">${stockVal}</span>
-                                ${deltaBadge}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                ${isLocked && (dateStr || opStr) ? `
-                    <div class="flex flex-col gap-0.5 text-[10px] text-emerald-900 dark:text-emerald-300 font-medium bg-emerald-100/80 dark:bg-emerald-900/40 px-2.5 py-1.5 rounded-xl border border-emerald-200/60 dark:border-emerald-800/50">
-                        ${opStr ? `<span class="truncate">Op: <b>${ui.escapeHtml(opStr)}</b></span>` : ''}
-                        ${dateStr ? `<span class="truncate">Data: <b>${dateStr}</b></span>` : ''}
-                    </div>
-                ` : ''}
-            </div>
-            <button onclick="dbLogic.unlockStock('${item.id}')" class="px-3.5 py-1.5 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-xs border border-slate-300 dark:border-slate-700 flex items-center gap-1.5 shadow-xs hover:bg-slate-50 transition-colors">
-                <i class="fa-solid fa-pen text-blue-600 text-xs"></i> Modifica
-            </button>
-        </div>
-    `;
-} else {
-    inventoryStepperWidget = `
-        <div class="flex items-center gap-2 w-full sm:w-auto my-1">
-            <div class="flex items-center bg-blue-50 dark:bg-blue-950/30 border-2 border-blue-400 dark:border-blue-600 rounded-2xl p-1 shadow-xs gap-1.5 flex-1 sm:w-[220px]">
-                <button onclick="dbLogic.quickUpdateStock('${item.id}', ${stockVal - 1})" class="w-10 h-10 bg-white dark:bg-slate-800 text-blue-700 dark:text-blue-300 rounded-xl font-black text-xl flex items-center justify-center border border-blue-200 dark:border-blue-800 shrink-0">−</button>
-                <div class="flex-1 flex flex-col items-center justify-center px-1 cursor-pointer py-1 bg-white/70 dark:bg-slate-800/70 rounded-xl border border-blue-100 dark:border-blue-900 h-10" onclick="ui.openManualStockModal('${item.id}')">
-                    <div class="flex items-center gap-1">
-                        <span class="text-lg font-black text-blue-950 dark:text-white leading-none underline decoration-dotted">${stockVal}</span>
-                        ${deltaBadge}
-                    </div>
-                </div>
-                <button onclick="dbLogic.quickUpdateStock('${item.id}', ${stockVal + 1})" class="w-10 h-10 bg-blue-600 text-white rounded-xl font-black text-xl flex items-center justify-center shrink-0">+</button>
-            </div>
-            <button onclick="dbLogic.confirmAndLockStock('${item.id}')" class="w-11 h-11 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-lg flex items-center justify-center shrink-0">
-                <i class="fa-solid fa-check"></i>
-            </button>
-        </div>
-    `;
-}
+                        let inventoryStepperWidget = '';
+                        if (isLocked) {
+                            inventoryStepperWidget = `
+                                <div class="flex flex-col items-start sm:items-end gap-1.5">
+                                    <div class="bg-emerald-50 dark:bg-emerald-950/30 border-2 border-emerald-500 rounded-2xl p-2.5 shadow-xs flex flex-col gap-1.5 w-full sm:w-56">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <div class="flex items-center gap-2">
+                                                <div class="w-6 h-6 rounded-lg bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                                                    <i class="fa-solid fa-check"></i>
+                                                </div>
+                                                <div class="flex flex-col">
+                                                    <span class="text-[9px] font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider leading-none">CONSOLIDATO</span>
+                                                    <div class="flex items-center gap-1.5 mt-0.5">
+                                                        <span class="text-sm font-black text-emerald-950 dark:text-white">${stockVal}</span>
+                                                        ${deltaBadge}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        ${isLocked && (dateStr || opStr) ? `
+                                            <div class="flex flex-col gap-0.5 text-[10px] text-emerald-900 dark:text-emerald-300 font-medium bg-emerald-100/80 dark:bg-emerald-900/40 px-2 py-1 rounded-xl border border-emerald-200/60 dark:border-emerald-800/50">
+                                                ${opStr ? `<span class="truncate">Op: <b>${ui.escapeHtml(opStr)}</b></span>` : ''}
+                                                ${dateStr ? `<span class="truncate">Data: <b>${dateStr}</b></span>` : ''}
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                    <button onclick="dbLogic.unlockStock('${item.id}')" class="px-3 py-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-xs border border-slate-300 dark:border-slate-700 flex items-center gap-1 shadow-xs hover:bg-slate-50 transition-colors">
+                                        <i class="fa-solid fa-pen text-blue-600 text-[10px]"></i> Modifica
+                                    </button>
+                                </div>
+                            `;
+                        } else {
+                            inventoryStepperWidget = `
+                                <div class="flex items-center gap-2">
+                                    <div class="flex items-center bg-blue-50 dark:bg-blue-950/30 border-2 border-blue-400 dark:border-blue-600 rounded-2xl p-1 shadow-xs gap-1">
+                                        <button onclick="dbLogic.quickUpdateStock('${item.id}', ${stockVal - 1})" class="w-9 h-9 bg-white dark:bg-slate-800 text-blue-700 dark:text-blue-300 rounded-xl font-black text-lg flex items-center justify-center border border-blue-200 dark:border-blue-800 shrink-0">−</button>
+                                        <div class="w-14 flex flex-col items-center justify-center px-1 cursor-pointer py-1 bg-white/70 dark:bg-slate-800/70 rounded-xl border border-blue-100 dark:border-blue-900 h-9" onclick="ui.openManualStockModal('${item.id}')">
+                                            <div class="flex items-center gap-1">
+                                                <span class="text-base font-black text-blue-950 dark:text-white leading-none underline decoration-dotted">${stockVal}</span>
+                                                ${deltaBadge}
+                                            </div>
+                                        </div>
+                                        <button onclick="dbLogic.quickUpdateStock('${item.id}', ${stockVal + 1})" class="w-9 h-9 bg-blue-600 text-white rounded-xl font-black text-lg flex items-center justify-center shrink-0">+</button>
+                                    </div>
+                                    <button onclick="dbLogic.confirmAndLockStock('${item.id}')" class="w-10 h-10 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold text-base flex items-center justify-center shrink-0 shadow-xs">
+                                        <i class="fa-solid fa-check"></i>
+                                    </button>
+                                </div>
+                            `;
+                        }
                         const standardStockWidget = `
                             <div class="relative inline-block shrink-0">
-                                <button onclick="ui.openQuickEdit(this)" class="inline-flex items-center gap-1.5 px-3.5 py-1 text-sm font-bold rounded-2xl border ${stockBadgeClass} hover:border-blue-500 transition-all cursor-pointer" title="Modifica rapida quantità">
+                                <button ${canEdit ? 'onclick="ui.openQuickEdit(this)"' : ''} class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-2xl border ${stockBadgeClass} ${canEdit ? 'hover:border-blue-500 cursor-pointer' : 'cursor-default'} transition-all" title="Giacenza quantità">
                                     <i class="fa-solid fa-boxes-stacked opacity-80"></i>
-                                    <span class="text-xs uppercase font-extrabold opacity-75 tracking-wide">Q.TÀ:</span>
+                                    <span class="text-[10px] uppercase font-extrabold opacity-75 tracking-wide">Q.TÀ:</span>
                                     ${itemIsStockMod ? `
                                         <span class="line-through text-red-500 font-extrabold text-xs">${origStockVal}</span>
-                                        <i class="fa-solid fa-arrow-right text-[9px]"></i>
-                                        <span class="text-base font-extrabold text-blue-600 dark:text-blue-400">${stockVal}</span>
+                                        <i class="fa-solid fa-arrow-right text-[8px]"></i>
+                                        <span class="text-sm font-extrabold text-blue-600 dark:text-blue-400">${stockVal}</span>
                                     ` : `
-                                        <span class="text-base font-extrabold">${stockVal}</span>
+                                        <span class="text-sm font-extrabold">${stockVal}</span>
                                     `}
-                                    <i class="fa-solid fa-pen text-[10px] ml-1 opacity-60"></i>
+                                    ${canEdit ? `<i class="fa-solid fa-pen text-[9px] ml-0.5 opacity-60"></i>` : ''}
                                 </button>
                                 
+                                ${canEdit ? `
                                 <div class="hidden absolute left-0 top-full mt-2 z-50 bg-white dark:bg-slate-800 p-4 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 animate-fade-in w-64">
                                     <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Modifica Quantità</div>
                                     <div class="flex items-center gap-2 mb-3">
@@ -3503,60 +3530,66 @@ if (isLocked) {
                                         <button onclick="dbLogic.quickUpdateStock('${item.id}', this.parentElement.previousElementSibling.querySelector('input').value); ui.closeQuickEdit(this);" class="flex-1 btn-theme text-white py-2 rounded-xl text-xs font-bold">Salva</button>
                                         <button onclick="ui.closeQuickEdit(this)" class="px-4 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 py-2 rounded-xl text-xs font-bold">Annulla</button>
                                     </div>
-                                </div>
+                                </div>` : ''}
                             </div>
                         `;
 
+                        // NOTA: Aggiunto esplicitamente "border-b border-slate-200 dark:border-slate-700/80" per una linea netta tra i prodotti
+                        const isLastItem = itemIndex === items.length - 1;
+                        const borderClass = isLastItem ? '' : 'border-b border-slate-200 dark:border-slate-700/80';
+
                         html += `
-                        <div class="product-item-row p-4 sm:p-5 ${isInv ? 'hover:bg-blue-50/30 dark:hover:bg-blue-950/10' : 'hover:bg-emerald-50/20 dark:hover:bg-emerald-950/10'} transition-colors flex items-start gap-3 sm:gap-4 group relative z-1">
+                        <div class="product-item-row p-4 sm:p-5 ${borderClass} ${isInv ? 'hover:bg-blue-50/30 dark:hover:bg-blue-950/10' : 'hover:bg-emerald-50/20 dark:hover:bg-emerald-950/10'} transition-colors flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group relative z-1">
                             
-                            <div class="pt-2 shrink-0">
-                                <input type="checkbox" data-id="${item.id}" ${isChecked ? 'checked' : ''} onchange="ui.toggleProductSelection('${item.id}', this)" class="product-checkbox w-5 h-5 rounded-lg text-blue-600 focus:ring-blue-500 cursor-pointer">
-                            </div>
+                            <!-- Sezione Sinistra: Checkbox + Ubicazione + Info Prodotto -->
+                            <div class="flex items-start sm:items-center gap-3 w-full sm:w-auto flex-1 min-w-0">
+                                ${!isInv ? `
+                                <div class="pt-1 sm:pt-0 shrink-0">
+                                    <input type="checkbox" data-id="${item.id}" ${isChecked ? 'checked' : ''} onchange="ui.toggleProductSelection('${item.id}', this)" class="product-checkbox w-5 h-5 rounded-lg text-blue-600 focus:ring-blue-500 cursor-pointer">
+                                </div>` : ''}
 
-                            <div class="sm:w-40 shrink-0 flex flex-col gap-1 relative">
-                                ${itemIsLocMod ? `
-                                    <div class="flex items-center gap-1.5 text-xs mb-0.5">
-                                        <span class="text-red-400 dark:text-red-500 line-through font-mono opacity-80">${ui.escapeHtml(item.originalLocation)}</span>
-                                        <i class="fa-solid fa-arrow-right text-slate-400 text-[10px]"></i>
-                                    </div>
-                                    <div class="cursor-pointer bg-blue-100 dark:bg-blue-950/50 border-2 border-blue-400 text-blue-800 dark:text-blue-300 font-bold font-mono px-3 py-1.5 rounded-2xl shadow-xs text-center text-sm" onclick="ui.openQuickEdit(this)">
-                                        ${ui.escapeHtml(item.location)}
-                                    </div>
-                                ` : `
-                                    <div class="cursor-pointer bg-slate-100 dark:bg-slate-800/80 border-2 border-transparent hover:border-slate-300 dark:hover:border-slate-700 text-slate-800 dark:text-slate-200 font-bold font-mono px-3 py-2 rounded-2xl text-center text-sm transition-all" onclick="ui.openQuickEdit(this)">
-                                        ${ui.escapeHtml(item.location)}
-                                    </div>
-                                `}
-                                
-                                <div class="hidden absolute top-0 left-0 right-0 z-50 bg-white dark:bg-slate-800 p-3 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 animate-fade-in w-64">
-                                    <div class="flex items-center gap-2 mb-2">
-                                        <input type="text" class="w-full m3-input bg-slate-50 dark:bg-slate-900 uppercase font-mono text-base font-bold text-blue-600" value="${ui.escapeHtml(item.location)}" onkeydown="if(event.key==='Enter') { dbLogic.quickUpdateLocation('${item.id}', this.value); ui.closeQuickEdit(this); }">
-                                        <button onclick="ui.closeQuickEdit(this)" class="w-9 h-9 shrink-0 bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
-                                    </div>
-                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 ml-1">Recenti</div>
-                                    <div class="flex flex-wrap gap-1">
-                                        ${pillsHtml || '<span class="text-xs text-slate-400 italic">Nessuna recente</span>'}
-                                    </div>
+                                <!-- Ubicazione -->
+                                <div class="shrink-0 relative">
+                                    ${itemIsLocMod ? `
+                                        <div class="${canEdit ? 'cursor-pointer' : 'cursor-default'} bg-blue-100 dark:bg-blue-950/50 border-2 border-blue-400 text-blue-800 dark:text-blue-300 font-bold font-mono px-3 py-1.5 rounded-2xl shadow-xs text-center text-xs" ${canEdit ? 'onclick="ui.openQuickEdit(this)"' : ''}>
+                                            ${ui.escapeHtml(item.location)}
+                                        </div>
+                                    ` : `
+                                        <div class="${canEdit ? 'cursor-pointer hover:border-slate-300 dark:hover:border-slate-700' : 'cursor-default'} bg-slate-100 dark:bg-slate-800/80 border-2 border-transparent text-slate-800 dark:text-slate-200 font-bold font-mono px-3 py-2 rounded-2xl text-center text-xs transition-all" ${canEdit ? 'onclick="ui.openQuickEdit(this)"' : ''}>
+                                            ${ui.escapeHtml(item.location)}
+                                        </div>
+                                    `}
+                                    
+                                    ${canEdit ? `
+                                    <div class="hidden absolute top-0 left-0 right-0 z-50 bg-white dark:bg-slate-800 p-3 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 animate-fade-in w-64">
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <input type="text" class="w-full m3-input bg-slate-50 dark:bg-slate-900 uppercase font-mono text-base font-bold text-blue-600" value="${ui.escapeHtml(item.location)}" onkeydown="if(event.key==='Enter') { dbLogic.quickUpdateLocation('${item.id}', this.value); ui.closeQuickEdit(this); }">
+                                            <button onclick="ui.closeQuickEdit(this)" class="w-9 h-9 shrink-0 bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                                        </div>
+                                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 ml-1">Recenti</div>
+                                        <div class="flex flex-wrap gap-1">
+                                            ${pillsHtml || '<span class="text-xs text-slate-400 italic">Nessuna recente</span>'}
+                                        </div>
+                                    </div>` : ''}
                                 </div>
-                            </div>
 
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-start justify-between gap-2">
-                                    <div class="flex items-center gap-2.5 flex-wrap min-w-0">
+                                <!-- Dettagli Testuali (Codice, Brand, Descrizione) -->
+                                <div class="flex flex-col min-w-0 flex-1">
+                                    <div class="flex items-center gap-2 flex-wrap">
                                         
                                         <div class="relative inline-block shrink-0">
-                                            <div class="cursor-pointer hover:text-blue-600 transition-colors flex items-center gap-1.5" onclick="ui.openQuickEdit(this)" title="Clicca per modificare il codice">
+                                            <div class="${canEdit ? 'cursor-pointer hover:text-blue-600' : 'cursor-default'} transition-colors flex items-center gap-1.5" ${canEdit ? 'onclick="ui.openQuickEdit(this)"' : ''} title="${canEdit ? 'Clicca per modificare il codice' : ''}">
                                                 ${itemIsCodeMod ? `
                                                     <span class="text-xs line-through text-red-500 font-bold">${ui.escapeHtml(item.originalCode)}</span>
                                                     <i class="fa-solid fa-arrow-right text-[9px] text-slate-400"></i>
-                                                    <span class="text-base font-bold text-blue-600 dark:text-blue-400">${ui.escapeHtml(item.code)}</span>
+                                                    <span class="text-sm font-bold text-blue-600 dark:text-blue-400">${ui.escapeHtml(item.code)}</span>
                                                 ` : `
-                                                    <h3 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">${ui.escapeHtml(item.code)}</h3>
+                                                    <h3 class="text-sm font-bold text-slate-900 dark:text-white tracking-tight">${ui.escapeHtml(item.code)}</h3>
                                                 `}
-                                                <i class="fa-solid fa-pen text-[10px] opacity-40"></i>
+                                                ${canEdit ? `<i class="fa-solid fa-pen text-[9px] opacity-40"></i>` : ''}
                                             </div>
 
+                                            ${canEdit ? `
                                             <div class="hidden absolute left-0 top-full mt-2 z-50 bg-white dark:bg-slate-800 p-3 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 animate-fade-in w-64">
                                                 <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Modifica Codice Prodotto</div>
                                                 <div class="flex items-center gap-1.5">
@@ -3564,23 +3597,16 @@ if (isLocked) {
                                                     <button onclick="dbLogic.quickUpdateCode('${item.id}', this.previousElementSibling.value); ui.closeQuickEdit(this);" class="w-9 h-9 shrink-0 btn-theme text-white rounded-xl flex items-center justify-center"><i class="fa-solid fa-check text-xs"></i></button>
                                                     <button onclick="ui.closeQuickEdit(this)" class="w-9 h-9 shrink-0 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-xmark text-xs"></i></button>
                                                 </div>
-                                            </div>
+                                            </div>` : ''}
                                         </div>
                                         
                                         <div class="relative inline-block shrink-0">
-                                            <button onclick="ui.openQuickEdit(this)" class="inline-flex items-center gap-1.5 px-3.5 py-1 text-xs font-bold rounded-2xl border ${item.brand ? (itemIsBrandMod ? 'bg-purple-100 text-purple-900 border-purple-300 dark:bg-purple-950/60 dark:text-purple-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700') : 'bg-slate-50 dark:bg-slate-800/80 text-slate-400 dark:text-slate-500 border-dashed border-slate-300 dark:border-slate-700 hover:text-blue-600 hover:border-blue-400'} transition-all shadow-xs cursor-pointer" title="Modifica rapida marchio">
-                                                <i class="fa-solid ${item.brand ? 'fa-tag text-purple-500' : 'fa-plus text-[10px]'}"></i>
-                                                <span class="opacity-75 uppercase text-[10px]"></span>
-                                                ${itemIsBrandMod ? `
-                                                    <span class="line-text line-through text-red-500 mr-1 font-mono">${ui.escapeHtml(item.originalBrand)}</span>
-                                                    <i class="fa-solid fa-arrow-right text-[9px] mr-1"></i>
-                                                    <span class="text-sm font-extrabold">${ui.escapeHtml(item.brand)}</span>
-                                                ` : `
-                                                    <span class="text-sm font-extrabold">${item.brand ? ui.escapeHtml(item.brand) : 'Aggiungi'}</span>
-                                                `}
-                                                <i class="fa-solid fa-pen text-[9px] ml-0.5 opacity-60"></i>
+                                            <button ${canEdit ? 'onclick="ui.openQuickEdit(this)"' : ''} class="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-bold rounded-full border ${item.brand ? (itemIsBrandMod ? 'bg-purple-100 text-purple-900 border-purple-300 dark:bg-purple-950/60 dark:text-purple-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700') : 'bg-slate-50 dark:bg-slate-800/80 text-slate-400 dark:text-slate-500 border-dashed border-slate-300'} transition-all shadow-xs ${canEdit ? 'cursor-pointer hover:text-blue-600 hover:border-blue-400' : 'cursor-default'}" title="Marchio">
+                                                <i class="fa-solid ${item.brand ? 'fa-tag text-purple-500' : 'fa-copyright text-slate-400'} text-[10px]"></i>
+                                                <span class="text-[11px] font-extrabold">${item.brand ? ui.escapeHtml(item.brand) : '-'}</span>
                                             </button>
                                             
+                                            ${canEdit ? `
                                             <div class="hidden absolute left-0 top-full mt-2 z-50 bg-white dark:bg-slate-800 p-3.5 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 animate-fade-in w-60">
                                                 <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Modifica Marchio</div>
                                                 <div class="flex items-center gap-1.5">
@@ -3588,70 +3614,79 @@ if (isLocked) {
                                                     <button onclick="dbLogic.quickUpdateBrand('${item.id}', this.previousElementSibling.value); ui.closeQuickEdit(this);" class="w-9 h-9 shrink-0 btn-theme text-white rounded-xl flex items-center justify-center"><i class="fa-solid fa-check text-xs"></i></button>
                                                     <button onclick="ui.closeQuickEdit(this)" class="w-9 h-9 shrink-0 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center"><i class="fa-solid fa-xmark text-xs"></i></button>
                                                 </div>
-                                            </div>
+                                            </div>` : ''}
                                         </div>
 
-                                        ${isInv ? inventoryStepperWidget : standardStockWidget}
+                                    </div>
 
+                                    <!-- Descrizione -->
+                                    <div class="relative inline-block w-full mt-1">
+                                        <div class="${canEdit ? 'cursor-pointer hover:text-slate-800 dark:hover:text-slate-200' : 'cursor-default'} transition-colors text-xs" ${canEdit ? 'onclick="ui.openQuickEdit(this)"' : ''}>
+                                            ${itemIsDescMod ? `
+                                                <div class="text-[11px] line-through text-red-500 mb-0.5">${ui.escapeHtml(item.originalDescription)}</div>
+                                                <div class="text-blue-700 dark:text-blue-300 font-semibold">${ui.escapeHtml(item.description)}</div>
+                                            ` : `
+                                                <p class="text-slate-500 dark:text-slate-400 text-xs break-words">${ui.escapeHtml(item.description || 'Nessuna descrizione')}</p>
+                                            `}
+                                        </div>
+
+                                        ${canEdit ? `
+                                        <div class="hidden absolute left-0 top-full mt-2 z-50 bg-white dark:bg-slate-800 p-3.5 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 animate-fade-in w-72">
+                                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Modifica Descrizione</div>
+                                            <div class="flex flex-col gap-2.5">
+                                                <textarea rows="2" class="w-full m3-input bg-slate-50 dark:bg-slate-900 text-sm">${ui.escapeHtml(item.description || '')}</textarea>
+                                                <div class="flex gap-2 justify-end">
+                                                    <button onclick="ui.closeQuickEdit(this)" class="px-3.5 py-1.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold">Annulla</button>
+                                                    <button onclick="dbLogic.quickUpdateDescription('${item.id}', this.parentElement.previousElementSibling.value); ui.closeQuickEdit(this);" class="px-4 py-1.5 btn-theme text-white rounded-xl text-xs font-bold shadow-xs">Salva</button>
+                                                </div>
+                                            </div>
+                                        </div>` : ''}
                                     </div>
                                     
-                                    <div class="flex gap-1 shrink-0">
-                                        <button onclick="searchGoogleProduct('${ui.escapeHtml(item.brand || '')}', '${ui.escapeHtml(item.code || '')}')" class="w-8 h-8 rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center" title="Cerca su Google la forma o dettagli"><i class="fa-solid fa-earth-americas"></i></button>
-                                        <button onclick="dbLogic.duplicateProduct('${item.id}')" class="w-8 h-8 rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center" title="Duplica prodotto (Aggiunge -C)"><i class="fa-solid fa-clone"></i></button>
-                                        <button onclick="ui.openProductModal('${item.id}')" class="w-8 h-8 rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center" title="Modifica completa"><i class="fa-solid fa-pen"></i></button>
-                                        <button onclick="dbLogic.deleteProduct('${item.id}')" class="w-8 h-8 rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center" title="Elimina"><i class="fa-solid fa-trash-can"></i></button>
+                                    <!-- Nota -->
+                                    <div class="relative inline-block w-full mt-1">
+                                        ${hasNote ? `
+                                            <div class="p-2 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/40 rounded-xl text-xs text-amber-900 dark:text-amber-300 ${canEdit ? 'cursor-pointer hover:border-amber-400' : 'cursor-default'} transition-colors flex items-center justify-between" ${canEdit ? 'onclick="ui.openQuickEdit(this)"' : ''}>
+                                                <div>
+                                                    <span class="truncate"><i class="fa-solid fa-thumbtack mr-1 opacity-70"></i> ${ui.escapeHtml(item.note)}</span>
+                                                </div>
+                                            </div>
+                                        ` : (canEdit ? `
+                                            <button onclick="ui.openQuickEdit(this)" class="inline-flex items-center gap-1 px-2.5 py-0.5 bg-slate-50 dark:bg-slate-800/50 hover:bg-amber-50 text-slate-400 hover:text-amber-700 rounded-lg text-[11px] border border-dashed border-slate-300 transition-colors mt-0.5">
+                                                <i class="fa-solid fa-plus text-[8px]"></i> Nota
+                                            </button>
+                                        ` : '')}
+                                        ${canEdit ? `
+                                        <div class="hidden absolute left-0 top-full mt-2 z-50 bg-white dark:bg-slate-800 p-3.5 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 animate-fade-in w-72">
+                                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Modifica Nota</div>
+                                            <div class="flex flex-col gap-2.5">
+                                                <input type="text" class="w-full m3-input bg-slate-50 dark:bg-slate-900 text-sm" value="${ui.escapeHtml(item.note || '')}" placeholder="Scrivi una nota..." onkeydown="if(event.key==='Enter') { dbLogic.quickUpdateNote('${item.id}', this.value); ui.closeQuickEdit(this); }">
+                                                <div class="flex gap-2 justify-end">
+                                                    <button onclick="ui.closeQuickEdit(this)" class="px-3.5 py-1.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold">Annulla</button>
+                                                    <button onclick="dbLogic.quickUpdateNote('${item.id}', this.parentElement.previousElementSibling.value); ui.closeQuickEdit(this);" class="px-4 py-1.5 btn-theme text-white rounded-xl text-xs font-bold shadow-xs">Salva</button>
+                                                </div>
+                                            </div>
+                                        </div>` : ''}
                                     </div>
                                 </div>
-                                
-                                <div class="relative inline-block w-full mt-1.5">
-                                    <div class="cursor-pointer hover:text-slate-800 dark:hover:text-slate-200 transition-colors text-sm" onclick="ui.openQuickEdit(this)" title="Clicca per modificare la descrizione">
-                                        ${itemIsDescMod ? `
-                                            <div class="text-xs line-through text-red-500 mb-0.5">${ui.escapeHtml(item.originalDescription)}</div>
-                                            <div class="text-blue-700 dark:text-blue-300 font-semibold">${ui.escapeHtml(item.description)}</div>
-                                        ` : `
-                                            <p class="text-slate-500 dark:text-slate-400 line-clamp-2 text-xs sm:text-sm">${ui.escapeHtml(item.description || 'Nessuna descrizione (clicca per aggiungere)')}</p>
-                                        `}
-                                        <i class="fa-solid fa-pen text-[9px] opacity-40 ml-1"></i>
-                                    </div>
+                            </div>
 
-                                    <div class="hidden absolute left-0 top-full mt-2 z-50 bg-white dark:bg-slate-800 p-3.5 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 animate-fade-in w-72">
-                                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Modifica Descrizione</div>
-                                        <div class="flex flex-col gap-2.5">
-                                            <textarea rows="2" class="w-full m3-input bg-slate-50 dark:bg-slate-900 text-sm">${ui.escapeHtml(item.description || '')}</textarea>
-                                            <div class="flex gap-2 justify-end">
-                                                <button onclick="ui.closeQuickEdit(this)" class="px-3.5 py-1.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold">Annulla</button>
-                                                <button onclick="dbLogic.quickUpdateDescription('${item.id}', this.parentElement.previousElementSibling.value); ui.closeQuickEdit(this);" class="px-4 py-1.5 btn-theme text-white rounded-xl text-xs font-bold shadow-xs">Salva</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                            <!-- Sezione Destra: Stepper / Box Consolidato / Azioni -->
+                            <div class="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100 dark:border-slate-800">
                                 
-                                <div class="relative inline-block w-full mt-2">
-                                    ${hasNote ? `
-                                        <div class="p-2.5 bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/40 rounded-2xl text-xs sm:text-sm text-amber-900 dark:text-amber-300 cursor-pointer hover:border-amber-400 transition-colors flex items-center justify-between" onclick="ui.openQuickEdit(this)" title="Clicca per modificare la nota">
-                                            <div>
-                                                ${itemIsNoteMod ? `
-                                                    <div class="text-xs line-through text-red-500 mb-0.5">${ui.escapeHtml(item.originalNote)}</div>
-                                                ` : ''}
-                                                <span><i class="fa-solid fa-thumbtack mr-1.5 opacity-70"></i> ${ui.escapeHtml(item.note)}</span>
-                                            </div>
-                                            <i class="fa-solid fa-pen text-[9px] opacity-40 ml-2"></i>
-                                        </div>
-                                    ` : `
-                                        <button onclick="ui.openQuickEdit(this)" class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-50 dark:bg-slate-800/50 hover:bg-amber-50 text-slate-400 hover:text-amber-700 rounded-xl text-xs border border-dashed border-slate-300 dark:border-slate-700 transition-colors">
-                                            <i class="fa-solid fa-plus text-[9px]"></i> Aggiungi Nota
-                                        </button>
-                                    `}
-                                    <div class="hidden absolute left-0 top-full mt-2 z-50 bg-white dark:bg-slate-800 p-3.5 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 animate-fade-in w-72">
-                                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Modifica Nota</div>
-                                        <div class="flex flex-col gap-2.5">
-                                            <input type="text" class="w-full m3-input bg-slate-50 dark:bg-slate-900 text-sm" value="${ui.escapeHtml(item.note || '')}" placeholder="Scrivi una nota..." onkeydown="if(event.key==='Enter') { dbLogic.quickUpdateNote('${item.id}', this.value); ui.closeQuickEdit(this); }">
-                                            <div class="flex gap-2 justify-end">
-                                                <button onclick="ui.closeQuickEdit(this)" class="px-3.5 py-1.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold">Annulla</button>
-                                                <button onclick="dbLogic.quickUpdateNote('${item.id}', this.parentElement.previousElementSibling.value); ui.closeQuickEdit(this);" class="px-4 py-1.5 btn-theme text-white rounded-xl text-xs font-bold shadow-xs">Salva</button>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <!-- Widget Quantità / Consolidato -->
+                                <div class="flex items-center">
+                                    ${isInv ? inventoryStepperWidget : standardStockWidget}
+                                </div>
+
+                                <!-- Pulsanti Azioni -->
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <button onclick="searchGoogleProduct('${ui.escapeHtml(item.brand || '')}', '${ui.escapeHtml(item.code || '')}')" class="w-8 h-8 rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center" title="Cerca su Google"><i class="fa-solid fa-earth-americas text-sm"></i></button>
+                                    
+                                    ${canEdit ? `
+                                    <button onclick="ui.openProductModal('${item.id}')" class="w-8 h-8 rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center" title="Modifica completa"><i class="fa-solid fa-pen text-sm"></i></button>
+                                    <button onclick="dbLogic.deleteProduct('${item.id}')" class="w-8 h-8 rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center" title="Elimina"><i class="fa-solid fa-trash-can text-sm"></i></button>
+                                    ` : ''}
                                 </div>
                             </div>
                         </div>
