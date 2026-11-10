@@ -1028,217 +1028,88 @@
         } catch (e) { console.warn(e); }
 
         window.authLogic = {
-            initOperatorDropdown: () => {
-                const userDropdown = document.getElementById('userDropdown');
-                const passSection = document.getElementById('userPasswordSection');
-                userDropdown.addEventListener('change', (e) => {
-                    if (e.target.value === 'Leonardo C.' || e.target.value === 'Alberto A.') {
-                        passSection.classList.remove('hidden');
-                    } else {
-                        passSection.classList.add('hidden');
-                    }
-                });
-            },
-
-            confirmUserSelection: () => {
-                const selected = document.getElementById('userDropdown').value;
-                if (!selected) return ui.toast("Seleziona il tuo nome dal menù", "error");
-
-                if (selected === 'Leonardo C.' || selected === 'Alberto A.') {
-                    const pass = document.getElementById('userPasswordInput').value;
-                    if (pass !== 'csisrl') {
-                        return ui.toast("Password errata per l'amministratore.", "error");
-                    }
-                }
-
-                currentUserOperator = selected;
-                document.getElementById('currentOperatorBadge').innerText = selected;
-                document.getElementById('userSelectModal').classList.add('hidden');
-                
-                // --- AGGIUNTA PER RILEVARE ISTANTANEAMENTE IL CAMBIO RUOLO/UTENTE ---
-                updateListUI();
-                ui.renderProducts();
-                // -------------------------------------------------------------------
-
-                ui.toast(`Benvenuto/a, ${selected}!`, "success");
-            },
-
-            openUserChangeModal: () => {
-                document.getElementById('userDropdown').value = currentUserOperator || '';
-                const passSection = document.getElementById('userPasswordSection');
-                if (currentUserOperator === 'Leonardo C.' || currentUserOperator === 'Alberto A.') passSection.classList.remove('hidden');
-                else passSection.classList.add('hidden');
-                document.getElementById('userPasswordInput').value = '';
-                document.getElementById('userSelectModal').classList.remove('hidden');
-            }
-        };
-
-	window.chatLogic = {
-    openChatModal: () => {
-        const list = getCurrentList();
-        function isAdmin() {
-            return currentUserOperator === 'Leonardo C.' || currentUserOperator === 'Alberto A.';
-        }
-        if (!list) return ui.toast("Nessuna lista selezionata", "error");
-        
-        document.getElementById('chatTitle').innerText = `Chat: ${list.name}`;
-        
-        // Salva il timestamp dell'ultima lettura PRIMA di aggiornarlo, per mostrare il separatore
-        if (currentUserOperator && currentListId) {
-            const savedRead = localStorage.getItem(`whm_last_read_${currentListId}_${currentUserOperator}`) || 0;
-            chatLastReadTimestamp = new Date(savedRead).getTime();
-            
-            const now = new Date().toISOString();
-            localStorage.setItem(`whm_last_read_${currentListId}_${currentUserOperator}`, now);
-            
-            const badge = document.getElementById('chatBadge');
-            if (badge) badge.classList.add('hidden');
-        }
-
-        ui.openModal('chatModal');
-        chatLogic.listenToMessages();
-    },
-
-    listenToMessages: () => {
-        if (!db || !currentListId) return;
-        if (unsubChat) unsubChat();
-
-        const chatRef = collection(db, 'artifacts', appId, 'public', 'data', 'lists', currentListId, 'messages');
-        const qChat = query(chatRef, orderBy('timestamp', 'asc'));
-
-        unsubChat = onSnapshot(qChat, (snapshot) => {
-            chatMessages = [];
-            snapshot.forEach(docSnap => chatMessages.push({ id: docSnap.id, ...docSnap.data() }));
-            
-            chatLogic.renderMessages();
-            chatLogic.checkUnreadBadge();
-        }, (error) => {
-            console.error("Errore snapshot chat:", error);
-        });
-    },
-
-    checkUnreadBadge: () => {
-        if (!currentUserOperator || !currentListId) return;
-        const lastRead = localStorage.getItem(`whm_last_read_${currentListId}_${currentUserOperator}`) || 0;
-        const lastReadTime = new Date(lastRead).getTime();
-
-        const unreadCount = chatMessages.filter(m => {
-            const msgTime = new Date(m.timestamp).getTime();
-            return m.operator !== currentUserOperator && msgTime > lastReadTime;
-        }).length;
-
-        const badge = document.getElementById('chatBadge');
-        if (badge) {
-            if (unreadCount > 0) {
-                badge.innerText = unreadCount;
-                badge.classList.remove('hidden');
-                badge.classList.add('flex');
+    initOperatorDropdown: () => {
+        const userDropdown = document.getElementById('userDropdown');
+        const passSection = document.getElementById('userPasswordSection');
+        userDropdown.addEventListener('change', (e) => {
+            if (e.target.value === 'Leonardo C.' || e.target.value === 'Alberto A.') {
+                passSection.classList.remove('hidden');
             } else {
-                badge.classList.add('hidden');
-                badge.classList.remove('flex');
-            }
-        }
-    },
-
-    sendMessage: async () => {
-        const input = document.getElementById('chatInputMessage');
-        const text = input.value.trim();
-        if (!text) return;
-        if (!currentUserOperator) return ui.toast("Seleziona prima l'operatore", "error");
-
-        input.value = '';
-        try {
-            const now = new Date().toISOString();
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'lists', currentListId, 'messages'), {
-                operator: currentUserOperator,
-                text: text,
-                timestamp: now
-            });
-            localStorage.setItem(`whm_last_read_${currentListId}_${currentUserOperator}`, now);
-        } catch (e) {
-            console.error("Errore invio messaggio:", e);
-            ui.toast("Errore durante l'invio del messaggio", "error");
-        }
-    },
-
-    deleteMessage: async (messageId) => {
-        if (!db || !currentListId) return;
-        ui.showConfirm("Elimina Messaggio", "Vuoi davvero eliminare questo messaggio dalla chat?", async () => {
-            try {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'lists', currentListId, 'messages', messageId));
-                ui.toast("Messaggio eliminato", "success");
-            } catch (e) {
-                console.error("Errore eliminazione messaggio:", e);
-                ui.toast("Errore durante l'eliminazione", "error");
+                passSection.classList.add('hidden');
             }
         });
+
+        // --- NUOVO: Ripristina l'operatore se è presente un salvataggio non scaduto (30 giorni) ---
+        authLogic.checkSavedOperator();
     },
 
-    renderMessages: () => {
-        const container = document.getElementById('chatMessagesContainer');
-        if (!container) return;
+    checkSavedOperator: () => {
+        try {
+            const savedOp = localStorage.getItem('whm_saved_operator');
+            const expiry = localStorage.getItem('whm_operator_expiry');
 
-        if (chatMessages.length === 0) {
-            container.innerHTML = `<div class="text-center py-8 text-slate-400 text-xs font-medium">Nessun messaggio in questa lista. Inizia tu la conversazione!</div>`;
-            return;
+            if (savedOp && expiry) {
+                const now = new Date().getTime();
+                // Se la data attuale è inferiore alla data di scadenza (30 giorni)
+                if (now < parseInt(expiry, 10)) {
+                    currentUserOperator = savedOp;
+                    document.getElementById('currentOperatorBadge').innerText = savedOp;
+                    document.getElementById('userSelectModal').classList.add('hidden');
+                } else {
+                    // Scaduto: rimuove dai dati locali
+                    localStorage.removeItem('whm_saved_operator');
+                    localStorage.removeItem('whm_operator_expiry');
+                }
+            }
+        } catch (e) {
+            console.warn("Errore durante la lettura del session storage locale:", e);
+        }
+    },
+
+    confirmUserSelection: () => {
+        const selected = document.getElementById('userDropdown').value;
+        if (!selected) return ui.toast("Seleziona il tuo nome dal menù", "error");
+
+        if (selected === 'Leonardo C.' || selected === 'Alberto A.') {
+            const pass = document.getElementById('userPasswordInput').value;
+            if (pass !== 'csisrl') {
+                return ui.toast("Password errata per l'amministratore.", "error");
+            }
         }
 
-        let dividerInserted = false;
+        currentUserOperator = selected;
+        document.getElementById('currentOperatorBadge').innerText = selected;
+        document.getElementById('userSelectModal').classList.add('hidden');
 
-        container.innerHTML = chatMessages.map(m => {
-            const isMe = m.operator === currentUserOperator;
-            const isAdmin = currentUserOperator === 'Leonardo C.';
-            const canDelete = isMe || isAdmin;
+        // --- NUOVO: Salva l'accesso nel localStorage per 30 Giorni ---
+        try {
+            const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
+            const expiryTime = new Date().getTime() + thirtyDaysInMs;
+            localStorage.setItem('whm_saved_operator', selected);
+            localStorage.setItem('whm_operator_expiry', expiryTime.toString());
+        } catch (e) {
+            console.warn("Errore nel salvataggio dell'operatore:", e);
+        }
 
-            const msgTime = new Date(m.timestamp).getTime();
-            // Verifica se il messaggio è non letto (scritto da altri ed è successivo all'ultima lettura salvata)
-            const isUnread = !isMe && chatLastReadTimestamp && msgTime > chatLastReadTimestamp;
+        // Rileva istantaneamente il cambio ruolo/utente
+        updateListUI();
+        ui.renderProducts();
 
-            let dividerHtml = '';
-            if (isUnread && !dividerInserted) {
-                dividerInserted = true;
-                dividerHtml = `
-                    <div class="flex items-center my-4">
-                        <div class="flex-1 border-t border-blue-400/60 dark:border-blue-600/60"></div>
-                        <span class="px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-950/80 rounded-full border border-blue-300 dark:border-blue-800 shadow-xs">
-                            Messaggi non letti
-                        </span>
-                        <div class="flex-1 border-t border-blue-400/60 dark:border-blue-600/60"></div>
-                    </div>
-                `;
-            }
+        ui.toast(`Benvenuto/a, ${selected}!`, "success");
+    },
 
-            const msgDate = new Date(m.timestamp);
-            const today = new Date();
-            const isToday = msgDate.toDateString() === today.toDateString();
-            const timeFormatted = isToday 
-                ? msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                : msgDate.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' }) + ' ' + msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    openUserChangeModal: () => {
+    // Opzionale: pulisce i dati salvati se l'utente decide esplicitamente di cambiare operatore
+    localStorage.removeItem('whm_saved_operator');
+    localStorage.removeItem('whm_operator_expiry');
 
-            return `
-                ${dividerHtml}
-                <div class="flex flex-col ${isMe ? 'items-end' : 'items-start'} group relative">
-                    <span class="text-[10px] font-bold text-slate-400 px-1 mb-0.5">${ui.escapeHtml(m.operator)} • ${timeFormatted}</span>
-                    <div class="flex items-center gap-1.5 ${isMe ? 'flex-row-reverse' : 'flex-row'}">
-                        <div class="max-w-[80%] p-3 rounded-2xl text-xs font-medium ${
-                            isMe 
-                                ? 'bg-blue-600 text-white rounded-tr-xs shadow-xs' 
-                                : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-tl-xs shadow-xs'
-                        }">
-                            ${ui.escapeHtml(m.text)}
-                        </div>
-                        ${canDelete ? `
-                            <button onclick="chatLogic.deleteMessage('${m.id}')" class="opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-full bg-slate-200/80 dark:bg-slate-800 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-950/60 text-slate-500 flex items-center justify-center text-xs shrink-0 shadow-xs" title="Elimina messaggio">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
-                        ` : ''}
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        container.scrollTop = container.scrollHeight;
-    }
+    document.getElementById('userDropdown').value = currentUserOperator || '';
+    const passSection = document.getElementById('userPasswordSection');
+    if (currentUserOperator === 'Leonardo C.' || currentUserOperator === 'Alberto A.') passSection.classList.remove('hidden');
+    else passSection.classList.add('hidden');
+    document.getElementById('userPasswordInput').value = '';
+    document.getElementById('userSelectModal').classList.remove('hidden');
+}
 };
 
         window.auditLogic = {
