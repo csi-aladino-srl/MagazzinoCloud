@@ -1028,88 +1028,90 @@
         } catch (e) { console.warn(e); }
 
         window.authLogic = {
-    initOperatorDropdown: () => {
-        const userDropdown = document.getElementById('userDropdown');
-        const passSection = document.getElementById('userPasswordSection');
-        userDropdown.addEventListener('change', (e) => {
-            if (e.target.value === 'Leonardo C.' || e.target.value === 'Alberto A.') {
-                passSection.classList.remove('hidden');
-            } else {
-                passSection.classList.add('hidden');
-            }
-        });
+            initOperatorDropdown: () => {
+                const userDropdown = document.getElementById('userDropdown');
+                const passSection = document.getElementById('userPasswordSection');
+                userDropdown.addEventListener('change', (e) => {
+                    if (e.target.value === 'Leonardo C.' || e.target.value === 'Alberto A.') {
+                        passSection.classList.remove('hidden');
+                    } else {
+                        passSection.classList.add('hidden');
+                    }
+                });
 
-        // --- NUOVO: Ripristina l'operatore se è presente un salvataggio non scaduto (30 giorni) ---
-        authLogic.checkSavedOperator();
-    },
+                // Controllo automatico sessione salvata per PWA / iOS
+                authLogic.checkSavedOperator();
+            },
 
-    checkSavedOperator: () => {
-        try {
-            const savedOp = localStorage.getItem('whm_saved_operator');
-            const expiry = localStorage.getItem('whm_operator_expiry');
+            checkSavedOperator: () => {
+                try {
+                    const savedOp = localStorage.getItem('whm_saved_operator');
+                    const expiry = localStorage.getItem('whm_operator_expiry');
 
-            if (savedOp && expiry) {
-                const now = new Date().getTime();
-                // Se la data attuale è inferiore alla data di scadenza (30 giorni)
-                if (now < parseInt(expiry, 10)) {
-                    currentUserOperator = savedOp;
-                    document.getElementById('currentOperatorBadge').innerText = savedOp;
-                    document.getElementById('userSelectModal').classList.add('hidden');
-                } else {
-                    // Scaduto: rimuove dai dati locali
+                    if (savedOp && expiry) {
+                        const now = new Date().getTime();
+                        // Verifica se non sono ancora trascorsi 30 giorni
+                        if (now < parseInt(expiry, 10)) {
+                            currentUserOperator = savedOp;
+                            document.getElementById('currentOperatorBadge').innerText = savedOp;
+                            document.getElementById('userSelectModal').classList.add('hidden');
+                        } else {
+                            // Se la sessione è scaduta, cancella i dati
+                            localStorage.removeItem('whm_saved_operator');
+                            localStorage.removeItem('whm_operator_expiry');
+                        }
+                    }
+                } catch (e) {
+                    console.warn("Errore lettura salvataggio locale:", e);
+                }
+            },
+
+            confirmUserSelection: () => {
+                const selected = document.getElementById('userDropdown').value;
+                if (!selected) return ui.toast("Seleziona il tuo nome dal menù", "error");
+
+                if (selected === 'Leonardo C.' || selected === 'Alberto A.') {
+                    const pass = document.getElementById('userPasswordInput').value;
+                    if (pass !== 'csisrl') {
+                        return ui.toast("Password errata per l'amministratore.", "error");
+                    }
+                }
+
+                currentUserOperator = selected;
+                document.getElementById('currentOperatorBadge').innerText = selected;
+                document.getElementById('userSelectModal').classList.add('hidden');
+                
+                // Salva l'accesso nel localStorage per 30 giorni (30 * 24 * 60 * 60 * 1000 ms)
+                try {
+                    const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+                    const expiryTime = new Date().getTime() + thirtyDaysMs;
+                    localStorage.setItem('whm_saved_operator', selected);
+                    localStorage.setItem('whm_operator_expiry', expiryTime.toString());
+                } catch (e) {
+                    console.warn("Impossibile salvare nei dati locali:", e);
+                }
+
+                // Rileva istantaneamente il cambio ruolo/utente
+                updateListUI();
+                ui.renderProducts();
+
+                ui.toast(`Benvenuto/a, ${selected}!`, "success");
+            },
+
+            openUserChangeModal: () => {
+                // Se l'utente apre manualmente la modale per cambiare operatore, resetta il salvataggio
+                try {
                     localStorage.removeItem('whm_saved_operator');
                     localStorage.removeItem('whm_operator_expiry');
-                }
+                } catch (e) {}
+
+                document.getElementById('userDropdown').value = currentUserOperator || '';
+                const passSection = document.getElementById('userPasswordSection');
+                if (currentUserOperator === 'Leonardo C.' || currentUserOperator === 'Alberto A.') passSection.classList.remove('hidden');
+                else passSection.classList.add('hidden');
+                document.getElementById('userPasswordInput').value = '';
+                document.getElementById('userSelectModal').classList.remove('hidden');
             }
-        } catch (e) {
-            console.warn("Errore durante la lettura del session storage locale:", e);
-        }
-    },
-
-    confirmUserSelection: () => {
-        const selected = document.getElementById('userDropdown').value;
-        if (!selected) return ui.toast("Seleziona il tuo nome dal menù", "error");
-
-        if (selected === 'Leonardo C.' || selected === 'Alberto A.') {
-            const pass = document.getElementById('userPasswordInput').value;
-            if (pass !== 'csisrl') {
-                return ui.toast("Password errata per l'amministratore.", "error");
-            }
-        }
-
-        currentUserOperator = selected;
-        document.getElementById('currentOperatorBadge').innerText = selected;
-        document.getElementById('userSelectModal').classList.add('hidden');
-
-        // --- NUOVO: Salva l'accesso nel localStorage per 30 Giorni ---
-        try {
-            const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
-            const expiryTime = new Date().getTime() + thirtyDaysInMs;
-            localStorage.setItem('whm_saved_operator', selected);
-            localStorage.setItem('whm_operator_expiry', expiryTime.toString());
-        } catch (e) {
-            console.warn("Errore nel salvataggio dell'operatore:", e);
-        }
-
-        // Rileva istantaneamente il cambio ruolo/utente
-        updateListUI();
-        ui.renderProducts();
-
-        ui.toast(`Benvenuto/a, ${selected}!`, "success");
-    },
-
-    openUserChangeModal: () => {
-    // Opzionale: pulisce i dati salvati se l'utente decide esplicitamente di cambiare operatore
-    localStorage.removeItem('whm_saved_operator');
-    localStorage.removeItem('whm_operator_expiry');
-
-    document.getElementById('userDropdown').value = currentUserOperator || '';
-    const passSection = document.getElementById('userPasswordSection');
-    if (currentUserOperator === 'Leonardo C.' || currentUserOperator === 'Alberto A.') passSection.classList.remove('hidden');
-    else passSection.classList.add('hidden');
-    document.getElementById('userPasswordInput').value = '';
-    document.getElementById('userSelectModal').classList.remove('hidden');
-}
 };
 
         window.auditLogic = {
