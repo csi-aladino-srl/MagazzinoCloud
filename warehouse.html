@@ -335,19 +335,24 @@
                     </div>
                 </div>
 
-                <!-- Header Right Actions -->
-                <div class="flex items-center gap-2 shrink-0">
+<!-- Header Right Actions -->
+<div class="flex items-center gap-2 shrink-0">
 
-                    <!-- Pulsante Nuovo Prodotto (Desktop) -->
-                    <button onclick="ui.openProductModal()" class="hidden md:flex items-center gap-2 btn-theme px-4 py-2.5 rounded-2xl font-bold shadow-sm transition-transform active:scale-95 text-sm">
-                        <i class="fa-solid fa-plus"></i> Nuovo Prodotto
-                    </button>
+    <!-- Pulsante Catalogo Ubicazioni (Desktop Quadrato - Visibile solo in Inventario) -->
+    <button id="desktopCatalogBtn" onclick="catalogLogic.openModal()" class="hidden md:flex items-center justify-center w-11 h-11 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl transition-colors" title="Consulta Ubicazioni">
+        <i class="fa-solid fa-book text-lg"></i>
+    </button>
 
-                    <!-- Pulsante Impostazioni (Tre Puntini) -->
-                    <button onclick="ui.openSettingsModal()" class="flex items-center justify-center w-11 h-11 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl transition-colors" title="Impostazioni">
-                        <i class="fa-solid fa-ellipsis-vertical"></i>
-                    </button>
-                </div>
+    <!-- Pulsante Nuovo Prodotto (Desktop) -->
+    <button onclick="ui.openProductModal()" class="hidden md:flex items-center gap-2 btn-theme px-4 py-2.5 rounded-2xl font-bold shadow-sm transition-transform active:scale-95 text-sm">
+        <i class="fa-solid fa-plus"></i> Nuovo Prodotto
+    </button>
+
+    <!-- Pulsante Impostazioni (Tre Puntini) -->
+    <button onclick="ui.openSettingsModal()" class="flex items-center justify-center w-11 h-11 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl transition-colors" title="Impostazioni">
+        <i class="fa-solid fa-ellipsis-vertical"></i>
+    </button>
+</div>
 
             </div>
         </header>
@@ -540,12 +545,19 @@
     </div>
 </div>
         </main>
-    </div>
 
-    <!-- Mobile Floating Action Button (FAB) M3 Nativo -->
-    <button onclick="ui.openProductModal()" class="md:hidden fixed bottom-20 right-5 z-50 m3-fab w-14 h-14 flex items-center justify-center text-2xl shadow-2xl active:scale-90 transition-transform">
+<!-- Mobile Floating Action Buttons (FABs) -->
+<div class="md:hidden fixed bottom-20 right-5 z-50 flex flex-col gap-3 items-center">
+    <!-- Tasto Libro Consultazione Ubicazioni (Visibile solo in Inventario) -->
+    <button id="mobileCatalogBtn" onclick="catalogLogic.openModal()" class="hidden m3-fab w-14 h-14 items-center justify-center text-xl shadow-2xl active:scale-90 transition-transform bg-blue-600 text-white">
+        <i class="fa-solid fa-book"></i>
+    </button>
+    
+    <!-- Tasto + Nuovo Prodotto -->
+    <button onclick="ui.openProductModal()" class="m3-fab w-14 h-14 flex items-center justify-center text-2xl shadow-2xl active:scale-90 transition-transform">
         <i class="fa-solid fa-plus"></i>
     </button>
+</div>
 
     <!-- Mobile Bottom Navigation Bar & Search -->
     <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 z-40 p-3" style="padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));">
@@ -1030,6 +1042,172 @@
             if (locStr) recentLocations = JSON.parse(locStr);
         } catch (e) { console.warn(e); }
 
+        window.catalogLogic = {
+    sourceProducts: [],
+    filteredProducts: [],
+    currentPage: 1,
+    itemsPerPage: 30,
+    searchTerm: '',
+    unsubSource: null,
+
+    openModal: async () => {
+        const currentList = getCurrentList();
+        const isAdmin = isAdminUser();
+
+        // Mostra/Nasconde pannello amministrazione sorgente
+        const adminConfig = document.getElementById('catalogAdminConfig');
+        if (isAdmin) {
+            adminConfig.classList.remove('hidden');
+            catalogLogic.populateSourceDropdown();
+        } else {
+            adminConfig.classList.add('hidden');
+        }
+
+        const sourceListId = currentList?.catalogSourceListId;
+        if (!sourceListId) {
+            document.getElementById('catalogSourceListName').innerText = "Sorgente: Nessuna lista collegata";
+            document.getElementById('catalogTableBody').innerHTML = `
+                <tr><td colspan="2" class="text-center py-8 text-slate-400 font-medium">Nessuna lista collegata come sorgente per questa modalità inventario.</td></tr>
+            `;
+            catalogLogic.sourceProducts = [];
+            catalogLogic.filteredProducts = [];
+            catalogLogic.renderTable();
+            ui.openModal('catalogModal');
+            return;
+        }
+
+        const sourceList = globalLists.find(l => l.id === sourceListId);
+        document.getElementById('catalogSourceListName').innerText = `Sorgente: ${sourceList ? sourceList.name : 'Lista sconosciuta'}`;
+
+        // Ascolta in tempo reale i prodotti della lista sorgente
+        if (catalogLogic.unsubSource) catalogLogic.unsubSource();
+        
+        const q = query(
+            collection(db, 'artifacts', appId, 'public', 'data', 'products'),
+            where('listId', '==', sourceListId)
+        );
+
+        catalogLogic.unsubSource = onSnapshot(q, (snapshot) => {
+            catalogLogic.sourceProducts = [];
+            snapshot.forEach(docSnap => catalogLogic.sourceProducts.push(docSnap.data()));
+            catalogLogic.sourceProducts.sort((a, b) => (a.code || '').localeCompare(b.code || ''));
+            catalogLogic.applySearch();
+        });
+
+        ui.openModal('catalogModal');
+    },
+
+    populateSourceDropdown: () => {
+        const select = document.getElementById('catalogSourceSelect');
+        const currentList = getCurrentList();
+        const nonInventoryLists = globalLists.filter(l => !l.isInventory);
+
+        let optionsHtml = '<option value="" disabled selected>-- Seleziona Lista Sorgente --</option>';
+        nonInventoryLists.forEach(l => {
+            const isSelected = currentList?.catalogSourceListId === l.id;
+            optionsHtml += `<option value="${l.id}" ${isSelected ? 'selected' : ''}>${ui.escapeHtml(l.name)}</option>`;
+        });
+        select.innerHTML = optionsHtml;
+    },
+
+    setSourceList: async (listId) => {
+        if (!currentListId || !isAdminUser()) return;
+        try {
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'lists', currentListId), {
+                catalogSourceListId: listId
+            });
+            auditLogic.logAction("Collegamento Catalogo", `Collegata sorgente ubicazioni alla lista '${globalLists.find(l=>l.id===listId)?.name}'`);
+            ui.toast("Lista sorgente collegata con successo", "success");
+            catalogLogic.openModal();
+        } catch (e) {
+            console.error(e);
+            ui.toast("Errore durante il collegamento della lista", "error");
+        }
+    },
+
+    unlinkSourceList: async () => {
+        if (!currentListId || !isAdminUser()) return;
+        ui.showConfirm("Scollega Lista", "Vuoi davvero scollegare la lista sorgente delle ubicazioni?", async () => {
+            try {
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'lists', currentListId), {
+                    catalogSourceListId: null
+                });
+                if (catalogLogic.unsubSource) catalogLogic.unsubSource();
+                catalogLogic.sourceProducts = [];
+                catalogLogic.filteredProducts = [];
+                catalogLogic.renderTable();
+                document.getElementById('catalogSourceListName').innerText = "Sorgente: Nessuna lista collegata";
+                ui.toast("Lista sorgente scollegata", "info");
+            } catch (e) {
+                console.error(e);
+                ui.toast("Errore durante lo scollegamento", "error");
+            }
+        });
+    },
+
+    handleSearch: (val) => {
+        catalogLogic.searchTerm = (val || '').toLowerCase().trim();
+        catalogLogic.currentPage = 1;
+        catalogLogic.applySearch();
+    },
+
+    applySearch: () => {
+        const term = catalogLogic.searchTerm;
+        if (!term) {
+            catalogLogic.filteredProducts = [...catalogLogic.sourceProducts];
+        } else {
+            catalogLogic.filteredProducts = catalogLogic.sourceProducts.filter(p => {
+                const c = (p.code || '').toLowerCase();
+                const l = (p.location || '').toLowerCase();
+                return c.includes(term) || l.includes(term);
+            });
+        }
+        catalogLogic.renderTable();
+    },
+
+    changePage: (direction) => {
+        const totalPages = Math.ceil(catalogLogic.filteredProducts.length / catalogLogic.itemsPerPage) || 1;
+        const newPage = catalogLogic.currentPage + direction;
+        if (newPage >= 1 && newPage <= totalPages) {
+            catalogLogic.currentPage = newPage;
+            catalogLogic.renderTable();
+        }
+    },
+
+    renderTable: () => {
+            const tbody = document.getElementById('catalogTableBody');
+            const pageIndicator = document.getElementById('catalogPageIndicator');
+            const prevBtn = document.getElementById('catalogPrevBtn');
+            const nextBtn = document.getElementById('catalogNextBtn');
+
+            const totalItems = catalogLogic.filteredProducts.length;
+            const totalPages = Math.ceil(totalItems / catalogLogic.itemsPerPage) || 1;
+            
+            if (catalogLogic.currentPage > totalPages) catalogLogic.currentPage = totalPages;
+            
+            const start = (catalogLogic.currentPage - 1) * catalogLogic.itemsPerPage;
+            const pageItems = catalogLogic.filteredProducts.slice(start, start + catalogLogic.itemsPerPage);
+
+            if (pageItems.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="2" class="text-center py-8 text-slate-400 font-medium">Nessun codice o ubicazione trovata.</td></tr>`;
+            } else {
+                tbody.innerHTML = pageItems.map(p => `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                        <td class="py-2.5 px-3 font-bold text-slate-900 dark:text-white font-mono">${ui.escapeHtml(p.code || '-')}</td>
+                        <td class="py-2.5 px-3 text-right font-mono font-bold text-blue-600 dark:text-blue-400">${ui.escapeHtml(p.location || '-')}</td>
+                    </tr>
+                `).join('');
+            }
+
+            pageIndicator.innerText = `Pagina ${catalogLogic.currentPage} di ${totalPages}`;
+            prevBtn.disabled = catalogLogic.currentPage <= 1;
+            nextBtn.disabled = catalogLogic.currentPage >= totalPages;
+
+            prevBtn.classList.toggle('opacity-40', catalogLogic.currentPage <= 1);
+            nextBtn.classList.toggle('opacity-40', catalogLogic.currentPage >= totalPages);
+        }
+    };
+
         window.authLogic = {
             initOperatorDropdown: () => {
                 const userDropdown = document.getElementById('userDropdown');
@@ -1359,67 +1537,83 @@
         window.switchList = switchList;
 
         function updateListUI() {
-            const list = getCurrentList();
-            const filterNewItemsBtn = document.getElementById('filterNewItems');
+    const list = getCurrentList();
+    const filterNewItemsBtn = document.getElementById('filterNewItems');
+    const mobileCatalogBtn = document.getElementById('mobileCatalogBtn');
+    const desktopCatalogBtn = document.getElementById('desktopCatalogBtn');
 
-            if (list) {
-                document.getElementById('currentListName').innerText = list.name;
-                const invBadge = document.getElementById('inventoryBadge');
-                const expDesc = document.getElementById('exportDescriptionText');
-                const progContainer = document.getElementById('inventoryProgressBarContainer');
-                const filterConsolidatedBtn = document.getElementById('filterConsolidated');
-                const shelfToggle = document.getElementById('shelfViewToggleContainer');
-                const selectAllLabel = document.getElementById('selectAllCheckbox')?.parentElement;
+    if (list) {
+        document.getElementById('currentListName').innerText = list.name;
+        const invBadge = document.getElementById('inventoryBadge');
+        const expDesc = document.getElementById('exportDescriptionText');
+        const progContainer = document.getElementById('inventoryProgressBarContainer');
+        const filterConsolidatedBtn = document.getElementById('filterConsolidated');
+        const shelfToggle = document.getElementById('shelfViewToggleContainer');
+        const selectAllLabel = document.getElementById('selectAllCheckbox')?.parentElement;
 
-                if (list.isInventory) {
-                    document.body.classList.add('is-inventory');
-                    if (filterNewItemsBtn) filterNewItemsBtn.classList.remove('hidden');
-                    if (filterConsolidatedBtn) filterConsolidatedBtn.classList.remove('hidden');
-                    if (invBadge) invBadge.classList.remove('hidden');
-                    if (expDesc) expDesc.innerText = "Esporta inventario con colonna DELTA";
-                    if (progContainer) {
-                        progContainer.classList.remove('hidden');
-                        progContainer.classList.add('flex');
-                    }
-                    if (filterConsolidatedBtn) filterConsolidatedBtn.classList.remove('hidden');
-                    if (shelfToggle) {
-                        shelfToggle.classList.remove('hidden');
-                        shelfToggle.classList.add('flex');
-                    }
-                    // Nasconde o disabilita il checkbox "Seleziona Pagina" in Inventario
-                    if (selectAllLabel) {
-                        selectAllLabel.classList.add('hidden');
-                    }
-                    ui.clearSelection();
-                } else {
-                    document.body.classList.remove('is-inventory');
-                    if (filterNewItemsBtn) {
-                        filterNewItemsBtn.classList.add('hidden');
-                        if (activeFilter === 'newItems') ui.setFilter('all');
-                    }
-                    if (invBadge) invBadge.classList.add('hidden');
-                    if (expDesc) expDesc.innerText = "Scarica la lista corrente";
-                    if (progContainer) {
-                        progContainer.classList.add('hidden');
-                        progContainer.classList.remove('flex');
-                    }
-                    if (filterConsolidatedBtn) {
-                        filterConsolidatedBtn.classList.add('hidden');
-                        if (activeFilter === 'consolidated') {
-                            ui.setFilter('all');
-                        }
-                    }
-                    if (shelfToggle) {
-                        shelfToggle.classList.add('hidden');
-                        shelfToggle.classList.remove('flex');
-                    }
-                    if (selectAllLabel) {
-                        selectAllLabel.classList.remove('hidden');
-                    }
-                    ui.switchMainView('list');
+            if (list.isInventory) {
+                document.body.classList.add('is-inventory');
+                if (filterNewItemsBtn) filterNewItemsBtn.classList.remove('hidden');
+                if (filterConsolidatedBtn) filterConsolidatedBtn.classList.remove('hidden');
+                if (invBadge) invBadge.classList.remove('hidden');
+                if (expDesc) expDesc.innerText = "Esporta inventario con colonna DELTA";
+                
+                // Mostra pulsante Libro per la consultazione (Mobile & Desktop)
+                if (mobileCatalogBtn) {
+                    mobileCatalogBtn.classList.remove('hidden');
+                    mobileCatalogBtn.classList.add('flex');
                 }
+                if (desktopCatalogBtn) {
+                    desktopCatalogBtn.classList.remove('hidden');
+                    desktopCatalogBtn.classList.add('flex');
+                }
+
+                if (progContainer) {
+                    progContainer.classList.remove('hidden');
+                    progContainer.classList.add('flex');
+                }
+                if (shelfToggle) {
+                    shelfToggle.classList.remove('hidden');
+                    shelfToggle.classList.add('flex');
+                }
+                if (selectAllLabel) selectAllLabel.classList.add('hidden');
+                ui.clearSelection();
+            } else {
+                document.body.classList.remove('is-inventory');
+                if (filterNewItemsBtn) {
+                    filterNewItemsBtn.classList.add('hidden');
+                    if (activeFilter === 'newItems') ui.setFilter('all');
+                }
+                if (invBadge) invBadge.classList.add('hidden');
+                if (expDesc) expDesc.innerText = "Scarica la lista corrente";
+
+                // Nascondi pulsante Libro se non si è in inventario
+                if (mobileCatalogBtn) {
+                    mobileCatalogBtn.classList.add('hidden');
+                    mobileCatalogBtn.classList.remove('flex');
+                }
+                if (desktopCatalogBtn) {
+                    desktopCatalogBtn.classList.add('hidden');
+                    desktopCatalogBtn.classList.remove('flex');
+                }
+
+                if (progContainer) {
+                    progContainer.classList.add('hidden');
+                    progContainer.classList.remove('flex');
+                }
+                if (filterConsolidatedBtn) {
+                    filterConsolidatedBtn.classList.add('hidden');
+                    if (activeFilter === 'consolidated') ui.setFilter('all');
+                }
+                if (shelfToggle) {
+                    shelfToggle.classList.add('hidden');
+                    shelfToggle.classList.remove('flex');
+                }
+                if (selectAllLabel) selectAllLabel.classList.remove('hidden');
+                ui.switchMainView('list');
             }
         }
+    }
 
         window.dbLogic = {
 consolidateModifiedToOriginals: async () => {
@@ -3015,37 +3209,33 @@ toast: (msg, type='info') => {
                 localStorage.setItem('whm_recent_locations', JSON.stringify(recentLocations));
             },
 
-            openQuickEdit: (btn, prodId = null) => {
-                const productRow = btn.closest('.product-item-row');
-                const cardContainer = btn.closest('.location-card-container');
-                const popup = btn.nextElementSibling;
+            openQuickEdit: (btn, prodId = null, isLocation = false) => {
+                            const productRow = btn.closest('.product-item-row');
+                            const cardContainer = btn.closest('.location-card-container');
+                            const popup = btn.nextElementSibling;
 
-                let item = null;
-                if (prodId) {
-                    item = products.find(p => p.id === prodId);
-                } else if (productRow) {
-                    const checkbox = productRow.querySelector('.product-checkbox');
-                    if (checkbox && checkbox.dataset.id) {
-                        item = products.find(p => p.id === checkbox.dataset.id);
-                    }
-                }
+                            let item = null;
+                            if (prodId) {
+                                item = products.find(p => p.id === prodId);
+                            } else if (productRow) {
+                                const checkbox = productRow.querySelector('.product-checkbox');
+                                if (checkbox && checkbox.dataset.id) {
+                                    item = products.find(p => p.id === checkbox.dataset.id);
+                                }
+                            }
 
-                if (isCurrentListInventory()) {
-                    if (item && item.createdDuringInventory) {
-                        return ui.toast("Per i prodotti creati in inventario usa l'icona della penna a destra per la modifica completa.", "info");
-                    }
-                    if (!isAdminUser()) {
-                        return ui.toast("In modalità Inventario solo gli amministratori possono modificare i prodotti preesistenti.", "error");
-                    }
-                }
+                            // In modalità Inventario, se non è admin e NON si sta modificando l'ubicazione, blocca
+                            if (isCurrentListInventory() && !isAdminUser() && !isLocation) {
+                                return ui.toast("In modalità Inventario gli utenti normali possono modificare solo le ubicazioni.", "error");
+                            }
 
-                if (productRow) productRow.classList.add('z-30');
-                if (cardContainer) cardContainer.classList.add('z-20');
-                if (popup) {
-                    popup.classList.remove('hidden');
-                    const input = popup.querySelector('input') || popup.querySelector('textarea');
-                    if (input) input.focus();
-                }
+                            if (productRow) productRow.classList.add('z-30');
+                            if (cardContainer) cardContainer.classList.add('z-20');
+                            if (popup) {
+                                popup.classList.remove('hidden');
+                                const input = popup.querySelector('input') || popup.querySelector('textarea');
+                                if (input) input.focus();
+                            }
             },
 
             closeQuickEdit: (btn) => {
@@ -3474,16 +3664,15 @@ toast: (msg, type='info') => {
                                         <span class="text-[10px] line-through text-red-500 font-bold font-mono leading-none mb-0.5" title="Ubicazione originale">
                                             ${ui.escapeHtml(item.originalLocation)}
                                         </span>
-                                        <div class="${canEdit ? 'cursor-pointer' : 'cursor-default'} bg-blue-100 dark:bg-blue-950/50 border-2 border-blue-400 text-blue-800 dark:text-blue-300 font-bold font-mono px-3 py-1.5 rounded-2xl shadow-xs text-center text-xs" ${canEdit ? 'onclick="ui.openQuickEdit(this)"' : ''}>
+                                        <div class="cursor-pointer bg-blue-100 dark:bg-blue-950/50 border-2 border-blue-400 text-blue-800 dark:text-blue-300 font-bold font-mono px-3 py-1.5 rounded-2xl shadow-xs text-center text-xs hover:border-blue-600 transition-all" onclick="ui.openQuickEdit(this, null, true)">
                                             ${ui.escapeHtml(item.location)}
                                         </div>
                                     ` : `
-                                        <div class="${canEdit ? 'cursor-pointer hover:border-slate-300 dark:hover:border-slate-700' : 'cursor-default'} bg-slate-100 dark:bg-slate-800/80 border-2 border-transparent text-slate-800 dark:text-slate-200 font-bold font-mono px-3 py-2 rounded-2xl text-center text-xs transition-all" ${canEdit ? 'onclick="ui.openQuickEdit(this)"' : ''}>
+                                        <div class="cursor-pointer hover:border-slate-400 dark:hover:border-slate-600 bg-slate-100 dark:bg-slate-800/80 border-2 border-transparent text-slate-800 dark:text-slate-200 font-bold font-mono px-3 py-2 rounded-2xl text-center text-xs transition-all" onclick="ui.openQuickEdit(this, null, true)">
                                             ${ui.escapeHtml(item.location)}
                                         </div>
                                     `}
                                     
-                                    ${canEdit ? `
                                     <div class="hidden absolute top-0 left-0 right-0 z-50 bg-white dark:bg-slate-800 p-3 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 animate-fade-in w-64">
                                         <div class="flex items-center gap-2 mb-2">
                                             <input type="text" class="w-full m3-input bg-slate-50 dark:bg-slate-900 uppercase font-mono text-base font-bold text-blue-600" value="${ui.escapeHtml(item.location)}" onkeydown="if(event.key==='Enter') { dbLogic.quickUpdateLocation('${item.id}', this.value); ui.closeQuickEdit(this); }">
@@ -3493,8 +3682,9 @@ toast: (msg, type='info') => {
                                         <div class="flex flex-wrap gap-1">
                                             ${pillsHtml || '<span class="text-xs text-slate-400 italic">Nessuna recente</span>'}
                                         </div>
-                                    </div>` : ''}
+                                    </div>
                                 </div>
+                                
 
                                 <!-- Dettagli Testuali (Codice, Brand, Descrizione) -->
                                 <div class="flex flex-col min-w-0 flex-1">
@@ -3998,40 +4188,70 @@ window.shelfViewLogic = {
 bootApp();
     </script>
 
-<!-- ================================================================= -->
-<!-- MODALE CHAT LISTA (MATERIAL DESIGN 3)                              -->
-<!-- ================================================================= -->
-<div id="chatModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[85] hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-200">
-    <div class="bg-white dark:bg-slate-900 w-full max-w-md h-[80vh] rounded-4xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
-        <!-- Header Chat -->
-        <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950/50">
+    <!-- Modale Consultazione Codici e Ubicazioni -->
+<div id="catalogModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[110] hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-200">
+    <div class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-4xl shadow-2xl flex flex-col overflow-hidden max-h-[85vh] border border-slate-200 dark:border-slate-800">
+        
+        <!-- Intestazione Modale -->
+        <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950/50">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl icon-theme flex items-center justify-center text-lg">
-                    <i class="fa-solid fa-comments"></i>
+                <div class="w-10 h-10 rounded-2xl bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 flex items-center justify-center text-lg shrink-0">
+                    <i class="fa-solid fa-book"></i>
                 </div>
                 <div>
-                    <h3 class="text-base font-bold text-slate-900 dark:text-white" id="chatTitle">Chat Lista</h3>
-                    <p class="text-[11px] text-slate-500 font-medium">Messaggi in tempo reale con il team</p>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white">Consulta Ubicazioni</h3>
+                    <p class="text-xs text-slate-500" id="catalogSourceListName">Sorgente: Non collegata</p>
                 </div>
             </div>
-            <button onclick="ui.closeModal('chatModal')" class="w-9 h-9 rounded-full bg-slate-200/60 dark:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center">
+            <button onclick="ui.closeModal('catalogModal')" class="w-9 h-9 rounded-full bg-slate-200/60 dark:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center hover:bg-slate-300">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
 
-        <!-- Contenitore Messaggi -->
-        <div id="chatMessagesContainer" class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-50/50 dark:bg-slate-950/30">
-            <div class="text-center py-8 text-slate-400 text-xs font-medium">Caricamento messaggi...</div>
+        <!-- Barra di Ricerca e Gestione Collegamento (Admin) -->
+        <div class="p-4 bg-slate-100/60 dark:bg-slate-900/40 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="relative w-full sm:w-72">
+                <i class="fa-solid fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="text" id="catalogSearchInput" oninput="catalogLogic.handleSearch(this.value)" placeholder="Cerca codice o ubicazione..." class="w-full m3-input bg-white dark:bg-slate-800 text-xs pl-9 pr-3 py-2">
+            </div>
+
+            <!-- Selezione Sorgente (Visibile solo agli Admin) -->
+            <div id="catalogAdminConfig" class="hidden w-full sm:w-auto flex items-center gap-2">
+                <select id="catalogSourceSelect" onchange="catalogLogic.setSourceList(this.value)" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200">
+                </select>
+                <button onclick="catalogLogic.unlinkSourceList()" class="px-3 py-2 bg-red-100 hover:bg-red-200 text-red-700 dark:bg-red-950/60 dark:text-red-300 rounded-xl text-xs font-bold shrink-0 transition-colors" title="Scollega lista sorgente">
+                    <i class="fa-solid fa-link-slash"></i> Scollega
+                </button>
+            </div>
         </div>
 
-        <!-- Input Invio Messaggio -->
-        <div class="p-3 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center gap-2">
-            <input type="text" id="chatInputMessage" placeholder="Scrivi un messaggio..." class="flex-1 m3-input bg-slate-50 dark:bg-slate-800 text-sm py-2.5" onkeydown="if(event.key==='Enter') chatLogic.sendMessage()">
-            <button onclick="chatLogic.sendMessage()" class="w-11 h-11 btn-theme rounded-2xl flex items-center justify-center text-white shrink-0 shadow-xs active:scale-95 transition-transform">
-                <i class="fa-solid fa-paper-plane text-sm"></i>
+        <!-- Tabella Codici e Ubicazioni -->
+        <div class="flex-1 overflow-y-auto p-4">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold uppercase text-slate-400">
+                        <th class="py-2 px-3">Codice Articolo</th>
+                        <th class="py-2 px-3 text-right">Ubicazione</th>
+                    </tr>
+                </thead>
+                <tbody id="catalogTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs font-semibold">
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginazione e Chiusura -->
+        <div class="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 flex items-center justify-between">
+            <button id="catalogPrevBtn" onclick="catalogLogic.changePage(-1)" class="px-3.5 py-1.5 bg-slate-200 dark:bg-slate-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300">
+                <i class="fa-solid fa-chevron-left mr-1"></i> Prec.
+            </button>
+            <span id="catalogPageIndicator" class="text-xs font-bold text-slate-500">Pagina 1 di 1</span>
+            <button id="catalogNextBtn" onclick="catalogLogic.changePage(1)" class="px-3.5 py-1.5 bg-slate-200 dark:bg-slate-800 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300">
+                Succ. <i class="fa-solid fa-chevron-right ml-1"></i>
             </button>
         </div>
+
     </div>
 </div>
+
 </body>
 </html>
