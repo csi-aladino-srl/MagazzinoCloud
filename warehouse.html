@@ -338,8 +338,8 @@
 <!-- Header Right Actions -->
 <div class="flex items-center gap-2 shrink-0">
 
-    <!-- Pulsante Catalogo Ubicazioni (Desktop Quadrato - Visibile solo in Inventario) -->
-    <button id="desktopCatalogBtn" onclick="catalogLogic.openModal()" class="hidden md:flex items-center justify-center w-11 h-11 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl transition-colors" title="Consulta Ubicazioni">
+    <!-- Pulsante Catalogo Ubicazioni (Desktop Quadrato) -->
+    <button id="desktopCatalogBtn" onclick="catalogLogic.openModal()" class="hidden md:hidden items-center justify-center w-11 h-11 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl transition-colors" title="Consulta Ubicazioni">
         <i class="fa-solid fa-book text-lg"></i>
     </button>
 
@@ -548,8 +548,9 @@
 
 <!-- Mobile Floating Action Buttons (FABs) -->
 <div class="md:hidden fixed bottom-20 right-5 z-50 flex flex-col gap-3 items-center">
-    <!-- Tasto Libro Consultazione Ubicazioni (Visibile solo in Inventario) -->
-    <button id="mobileCatalogBtn" onclick="catalogLogic.openModal()" class="hidden m3-fab w-14 h-14 items-center justify-center text-xl shadow-2xl active:scale-90 transition-transform bg-blue-600 text-white">
+
+    <!-- Tasto Libro Consultazione Ubicazioni (Mobile) -->
+    <button id="mobileCatalogBtn" onclick="catalogLogic.openModal()" class="hidden md:hidden m3-fab w-14 h-14 items-center justify-center text-xl shadow-2xl active:scale-90 transition-transform bg-blue-600 text-white">
         <i class="fa-solid fa-book"></i>
     </button>
     
@@ -1537,83 +1538,80 @@
         window.switchList = switchList;
 
         function updateListUI() {
-    const list = getCurrentList();
-    const filterNewItemsBtn = document.getElementById('filterNewItems');
-    const mobileCatalogBtn = document.getElementById('mobileCatalogBtn');
-    const desktopCatalogBtn = document.getElementById('desktopCatalogBtn');
+                const list = getCurrentList();
+                const filterNewItemsBtn = document.getElementById('filterNewItems');
+                const mobileCatalogBtn = document.getElementById('mobileCatalogBtn');
+                const desktopCatalogBtn = document.getElementById('desktopCatalogBtn');
 
-    if (list) {
-        document.getElementById('currentListName').innerText = list.name;
-        const invBadge = document.getElementById('inventoryBadge');
-        const expDesc = document.getElementById('exportDescriptionText');
-        const progContainer = document.getElementById('inventoryProgressBarContainer');
-        const filterConsolidatedBtn = document.getElementById('filterConsolidated');
-        const shelfToggle = document.getElementById('shelfViewToggleContainer');
-        const selectAllLabel = document.getElementById('selectAllCheckbox')?.parentElement;
+                if (list) {
+                    document.getElementById('currentListName').innerText = list.name;
+                    const invBadge = document.getElementById('inventoryBadge');
+                    const expDesc = document.getElementById('exportDescriptionText');
+                    const progContainer = document.getElementById('inventoryProgressBarContainer');
+                    const filterConsolidatedBtn = document.getElementById('filterConsolidated');
+                    const shelfToggle = document.getElementById('shelfViewToggleContainer');
+                    const selectAllLabel = document.getElementById('selectAllCheckbox')?.parentElement;
 
-            if (list.isInventory) {
-                document.body.classList.add('is-inventory');
-                if (filterNewItemsBtn) filterNewItemsBtn.classList.remove('hidden');
-                if (filterConsolidatedBtn) filterConsolidatedBtn.classList.remove('hidden');
-                if (invBadge) invBadge.classList.remove('hidden');
-                if (expDesc) expDesc.innerText = "Esporta inventario con colonna DELTA";
-                
-                // Mostra pulsante Libro per la consultazione (Mobile & Desktop)
-                if (mobileCatalogBtn) {
-                    mobileCatalogBtn.classList.remove('hidden');
-                    mobileCatalogBtn.classList.add('flex');
-                }
-                if (desktopCatalogBtn) {
-                    desktopCatalogBtn.classList.remove('hidden');
-                    desktopCatalogBtn.classList.add('flex');
-                }
+                    if (list.isInventory) {
+                        document.body.classList.add('is-inventory');
+                        if (filterNewItemsBtn) filterNewItemsBtn.classList.remove('hidden');
+                        if (filterConsolidatedBtn) filterConsolidatedBtn.classList.remove('hidden');
+                        if (invBadge) invBadge.classList.remove('hidden');
+                        if (expDesc) expDesc.innerText = "Esporta inventario con colonna DELTA";
+                        
+                        // Mostra SOLO su mobile (flex su mobile, hidden su desktop)
+                        if (mobileCatalogBtn) {
+                            mobileCatalogBtn.className = "flex md:hidden m3-fab w-14 h-14 items-center justify-center text-xl shadow-2xl active:scale-90 transition-transform bg-blue-600 text-white";
+                        }
+                        // Mostra SOLO su desktop (hidden su mobile, flex su desktop)
+                        if (desktopCatalogBtn) {
+                            desktopCatalogBtn.className = "hidden md:flex items-center justify-center w-11 h-11 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl transition-colors";
+                        }
 
-                if (progContainer) {
-                    progContainer.classList.remove('hidden');
-                    progContainer.classList.add('flex');
-                }
-                if (shelfToggle) {
-                    shelfToggle.classList.remove('hidden');
-                    shelfToggle.classList.add('flex');
-                }
-                if (selectAllLabel) selectAllLabel.classList.add('hidden');
-                ui.clearSelection();
-            } else {
-                document.body.classList.remove('is-inventory');
-                if (filterNewItemsBtn) {
-                    filterNewItemsBtn.classList.add('hidden');
-                    if (activeFilter === 'newItems') ui.setFilter('all');
-                }
-                if (invBadge) invBadge.classList.add('hidden');
-                if (expDesc) expDesc.innerText = "Scarica la lista corrente";
+                        if (progContainer) {
+                            progContainer.classList.remove('hidden');
+                            progContainer.classList.add('flex');
+                        }
+                        if (shelfToggle) {
+                            shelfToggle.classList.remove('hidden');
+                            shelfToggle.classList.add('flex');
+                        }
+                        if (selectAllLabel) selectAllLabel.classList.add('hidden');
+                        ui.clearSelection();
+                    } else {
+                        document.body.classList.remove('is-inventory');
+                        if (filterNewItemsBtn) {
+                            filterNewItemsBtn.classList.add('hidden');
+                            if (activeFilter === 'newItems') ui.setFilter('all');
+                        }
+                        if (invBadge) invBadge.classList.add('hidden');
+                        if (expDesc) expDesc.innerText = "Scarica la lista corrente";
 
-                // Nascondi pulsante Libro se non si è in inventario
-                if (mobileCatalogBtn) {
-                    mobileCatalogBtn.classList.add('hidden');
-                    mobileCatalogBtn.classList.remove('flex');
-                }
-                if (desktopCatalogBtn) {
-                    desktopCatalogBtn.classList.add('hidden');
-                    desktopCatalogBtn.classList.remove('flex');
-                }
+                        // Nascondi entrambi ovunque se non si è in inventario
+                        if (mobileCatalogBtn) {
+                            mobileCatalogBtn.className = "hidden md:hidden m3-fab w-14 h-14 items-center justify-center text-xl shadow-2xl active:scale-90 transition-transform bg-blue-600 text-white";
+                        }
+                        if (desktopCatalogBtn) {
+                            desktopCatalogBtn.className = "hidden md:hidden items-center justify-center w-11 h-11 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl transition-colors";
+                        }
 
-                if (progContainer) {
-                    progContainer.classList.add('hidden');
-                    progContainer.classList.remove('flex');
+                        if (progContainer) {
+                            progContainer.classList.add('hidden');
+                            progContainer.classList.remove('flex');
+                        }
+                        if (filterConsolidatedBtn) {
+                            filterConsolidatedBtn.classList.add('hidden');
+                            if (activeFilter === 'consolidated') ui.setFilter('all');
+                        }
+                        if (shelfToggle) {
+                            shelfToggle.classList.add('hidden');
+                            shelfToggle.classList.remove('flex');
+                        }
+                        if (selectAllLabel) selectAllLabel.classList.remove('hidden');
+                        ui.switchMainView('list');
+                    }
                 }
-                if (filterConsolidatedBtn) {
-                    filterConsolidatedBtn.classList.add('hidden');
-                    if (activeFilter === 'consolidated') ui.setFilter('all');
-                }
-                if (shelfToggle) {
-                    shelfToggle.classList.add('hidden');
-                    shelfToggle.classList.remove('flex');
-                }
-                if (selectAllLabel) selectAllLabel.classList.remove('hidden');
-                ui.switchMainView('list');
             }
-        }
-    }
 
         window.dbLogic = {
 consolidateModifiedToOriginals: async () => {
@@ -3210,32 +3208,31 @@ toast: (msg, type='info') => {
             },
 
             openQuickEdit: (btn, prodId = null, isLocation = false) => {
-                            const productRow = btn.closest('.product-item-row');
-                            const cardContainer = btn.closest('.location-card-container');
-                            const popup = btn.nextElementSibling;
+                const productRow = btn.closest('.product-item-row');
+                const cardContainer = btn.closest('.location-card-container');
+                const popup = btn.nextElementSibling;
 
-                            let item = null;
-                            if (prodId) {
-                                item = products.find(p => p.id === prodId);
-                            } else if (productRow) {
-                                const checkbox = productRow.querySelector('.product-checkbox');
-                                if (checkbox && checkbox.dataset.id) {
-                                    item = products.find(p => p.id === checkbox.dataset.id);
-                                }
-                            }
+                let item = null;
+                if (prodId) {
+                    item = products.find(p => p.id === prodId);
+                } else if (productRow) {
+                    const checkbox = productRow.querySelector('.product-checkbox');
+                    if (checkbox && checkbox.dataset.id) {
+                        item = products.find(p => p.id === checkbox.dataset.id);
+                    }
+                }
 
-                            // In modalità Inventario, se non è admin e NON si sta modificando l'ubicazione, blocca
-                            if (isCurrentListInventory() && !isAdminUser() && !isLocation) {
-                                return ui.toast("In modalità Inventario gli utenti normali possono modificare solo le ubicazioni.", "error");
-                            }
+                if (isCurrentListInventory() && !isAdminUser() && !isLocation) {
+                    return ui.toast("In modalità Inventario gli utenti normali possono modificare solo le ubicazioni.", "error");
+                }
 
-                            if (productRow) productRow.classList.add('z-30');
-                            if (cardContainer) cardContainer.classList.add('z-20');
-                            if (popup) {
-                                popup.classList.remove('hidden');
-                                const input = popup.querySelector('input') || popup.querySelector('textarea');
-                                if (input) input.focus();
-                            }
+                if (productRow) productRow.classList.add('z-30');
+                if (cardContainer) cardContainer.classList.add('z-20');
+                if (popup) {
+                    popup.classList.remove('hidden');
+                    const input = popup.querySelector('input') || popup.querySelector('textarea');
+                    if (input) input.focus();
+                }
             },
 
             closeQuickEdit: (btn) => {
