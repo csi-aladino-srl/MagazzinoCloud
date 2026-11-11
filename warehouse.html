@@ -386,6 +386,9 @@
                         <button id="filterNotes" class="filter-btn shrink-0 px-4 py-2 rounded-full text-xs font-bold bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors" onclick="ui.setFilter('notes')">
                             <i class="fa-solid fa-comment-dots mr-1"></i> Con Note (<span id="countNotes">0</span>)
                         </button>
+                        <button id="filterNewItems" class="filter-btn hidden shrink-0 px-4 py-2 rounded-full text-xs font-bold bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors" onclick="ui.setFilter('newItems')">
+                            <i class="fa-solid fa-square-plus mr-1"></i> Nuovi Articoli (<span id="countNewItems">0</span>)
+                        </button>
                         <button id="filterConsolidated" class="filter-btn hidden shrink-0 px-4 py-2 rounded-full text-xs font-bold bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors" onclick="ui.setFilter('consolidated')">
                             <i class="fa-solid fa-check-double mr-1"></i> Consolidati (<span id="countConsolidated">0</span>)
                         </button>
@@ -1355,8 +1358,10 @@
         }
         window.switchList = switchList;
 
-function updateListUI() {
+        function updateListUI() {
             const list = getCurrentList();
+            const filterNewItemsBtn = document.getElementById('filterNewItems');
+
             if (list) {
                 document.getElementById('currentListName').innerText = list.name;
                 const invBadge = document.getElementById('inventoryBadge');
@@ -1368,6 +1373,8 @@ function updateListUI() {
 
                 if (list.isInventory) {
                     document.body.classList.add('is-inventory');
+                    if (filterNewItemsBtn) filterNewItemsBtn.classList.remove('hidden');
+                    if (filterConsolidatedBtn) filterConsolidatedBtn.classList.remove('hidden');
                     if (invBadge) invBadge.classList.remove('hidden');
                     if (expDesc) expDesc.innerText = "Esporta inventario con colonna DELTA";
                     if (progContainer) {
@@ -1386,6 +1393,10 @@ function updateListUI() {
                     ui.clearSelection();
                 } else {
                     document.body.classList.remove('is-inventory');
+                    if (filterNewItemsBtn) {
+                        filterNewItemsBtn.classList.add('hidden');
+                        if (activeFilter === 'newItems') ui.setFilter('all');
+                    }
                     if (invBadge) invBadge.classList.add('hidden');
                     if (expDesc) expDesc.innerText = "Scarica la lista corrente";
                     if (progContainer) {
@@ -1639,7 +1650,8 @@ consolidateModifiedToOriginals: async () => {
                 } catch(e) { console.error(e); }
             },
             
-            saveProduct: async () => {
+            
+saveProduct: async () => {
                 const id = document.getElementById('prodId').value;
                 const code = document.getElementById('prodCode').value.trim();
                 const origCodeInput = document.getElementById('prodOrigCode').value.trim();
@@ -1666,8 +1678,9 @@ consolidateModifiedToOriginals: async () => {
                 let finalOrigBrand = brand;
                 let finalOrigStock = stock;
                 let finalOrigNote = note;
+                let isCreatedDuringInv = false;
 
-               	if (id) {
+                if (id) {
                     const existing = products.find(p => p.id === id);
                     if (existing) {
                         finalOrigCode = origCodeInput || existing.originalCode || existing.code || code;
@@ -1676,6 +1689,7 @@ consolidateModifiedToOriginals: async () => {
                         finalOrigBrand = origBrandInput;
                         finalOrigStock = origStockInput !== null ? origStockInput : (existing.originalStock !== undefined && existing.originalStock !== null ? existing.originalStock : (existing.stock !== undefined ? existing.stock : stock));
                         finalOrigNote = origNoteInput;
+                        isCreatedDuringInv = existing.createdDuringInventory || false;
                     }
                 } else {
                     finalOrigCode = origCodeInput || code;
@@ -1684,6 +1698,10 @@ consolidateModifiedToOriginals: async () => {
                     finalOrigBrand = origBrandInput;
                     finalOrigStock = origStockInput !== null ? origStockInput : stock;
                     finalOrigNote = origNoteInput;
+                    // Se stiamo creando un nuovo prodotto in modalità inventario, marchiamo la flag
+                    if (isCurrentListInventory()) {
+                        isCreatedDuringInv = true;
+                    }
                 }
 
                 const data = {
@@ -1700,6 +1718,7 @@ consolidateModifiedToOriginals: async () => {
                     originalStock: finalOrigStock,
                     note: note,
                     originalNote: finalOrigNote,
+                    createdDuringInventory: isCreatedDuringInv,
                     timestamp: new Date().toISOString()
                 };
 
@@ -2867,21 +2886,16 @@ toast: (msg, type='info') => {
                 `).join('');
             },
 
-            openProductModal: (id = null) => {
-                if (isCurrentListInventory() && !isAdminUser()) {
-                    return ui.toast("In modalità Inventario solo gli amministratori possono aggiungere o modificare prodotti.", "error");
-                }
-                document.getElementById('prodId').value = id || '';
+                        openProductModal: (id = null) => {
+                            if (id) {
+                                const item = products.find(p => p.id === id);
+                                if (item) {
+                                    if (isCurrentListInventory() && !isAdminUser()) {
+                                        if (!item.createdDuringInventory) {
+                                            return ui.toast("In modalità Inventario puoi modificare solo i prodotti creati durante l'inventario.", "error");
+                                        }
+                                    }
 
-                ['origCodeSection', 'origLocSection', 'origDescSection', 'origStockSection', 'origBrandSection', 'origNoteSection'].forEach(sec => {
-                    document.getElementById(sec).classList.add('hidden');
-                    const icon = document.getElementById('icon_' + sec);
-                    if (icon) icon.classList.remove('rotate-90');
-                });
-                
-                if (id) {
-                    const item = products.find(p => p.id === id);
-                    if (item) {
                         document.getElementById('productModalTitle').innerText = 'Modifica Prodotto';
                         document.getElementById('prodCode').value = item.code || '';
                         document.getElementById('prodOrigCode').value = item.originalCode || '';
@@ -2911,6 +2925,13 @@ toast: (msg, type='info') => {
                     document.getElementById('prodNote').value = '';
                     document.getElementById('prodOrigNote').value = '';
                 }
+
+                ['origCodeSection', 'origLocSection', 'origDescSection', 'origStockSection', 'origBrandSection', 'origNoteSection'].forEach(sec => {
+                    document.getElementById(sec).classList.add('hidden');
+                    const icon = document.getElementById('icon_' + sec);
+                    if (icon) icon.classList.remove('rotate-90');
+                });
+
                 ui.openModal('productModal');
             },
 
@@ -2922,7 +2943,7 @@ toast: (msg, type='info') => {
                     b.classList.add('bg-slate-200/80', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-slate-300');
                 });
                 
-                let btnId = f === 'all' ? 'filterAll' : (f === 'modified' ? 'filterModified' : (f === 'notes' ? 'filterNotes' : 'filterConsolidated'));
+                let btnId = f === 'all' ? 'filterAll' : (f === 'modified' ? 'filterModified' : (f === 'notes' ? 'filterNotes' : (f === 'newItems' ? 'filterNewItems' : 'filterConsolidated')));
                 let btn = document.getElementById(btnId);
                 if (btn) {
                     btn.classList.remove('bg-slate-200/80', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-slate-300');
@@ -2933,8 +2954,8 @@ toast: (msg, type='info') => {
 
             setLocationFilter: (loc) => {
                 selectedLocationFilter = loc;
-    currentPage = 1;
-    ui.renderProducts();
+                currentPage = 1;
+                ui.renderProducts();
             },
 
             changePage: (newPage) => {
@@ -2994,18 +3015,37 @@ toast: (msg, type='info') => {
                 localStorage.setItem('whm_recent_locations', JSON.stringify(recentLocations));
             },
 
-            openQuickEdit: (btn) => {
-                if (isCurrentListInventory() && !isAdminUser()) {
-                    return ui.toast("In modalità Inventario solo gli amministratori possono modificare i dati.", "error");
-                }
+            openQuickEdit: (btn, prodId = null) => {
                 const productRow = btn.closest('.product-item-row');
                 const cardContainer = btn.closest('.location-card-container');
                 const popup = btn.nextElementSibling;
+
+                let item = null;
+                if (prodId) {
+                    item = products.find(p => p.id === prodId);
+                } else if (productRow) {
+                    const checkbox = productRow.querySelector('.product-checkbox');
+                    if (checkbox && checkbox.dataset.id) {
+                        item = products.find(p => p.id === checkbox.dataset.id);
+                    }
+                }
+
+                if (isCurrentListInventory()) {
+                    if (item && item.createdDuringInventory) {
+                        return ui.toast("Per i prodotti creati in inventario usa l'icona della penna a destra per la modifica completa.", "info");
+                    }
+                    if (!isAdminUser()) {
+                        return ui.toast("In modalità Inventario solo gli amministratori possono modificare i prodotti preesistenti.", "error");
+                    }
+                }
+
                 if (productRow) productRow.classList.add('z-30');
                 if (cardContainer) cardContainer.classList.add('z-20');
-                popup.classList.remove('hidden');
-                const input = popup.querySelector('input') || popup.querySelector('textarea');
-                if (input) input.focus();
+                if (popup) {
+                    popup.classList.remove('hidden');
+                    const input = popup.querySelector('input') || popup.querySelector('textarea');
+                    if (input) input.focus();
+                }
             },
 
             closeQuickEdit: (btn) => {
@@ -3040,65 +3080,65 @@ toast: (msg, type='info') => {
                 container.innerHTML = skeletonHtml;
             },
 
-renderLocationChips: () => {
-                const chipsContainer = document.getElementById('locationChipsContainer');
-                const allLocations = [...new Set(products.map(p => p.location ? p.location.toUpperCase() : 'SENZA UBICAZIONE'))].sort(compareLocations);
-                const isInv = isCurrentListInventory();
+                renderLocationChips: () => {
+                    const chipsContainer = document.getElementById('locationChipsContainer');
+                    const allLocations = [...new Set(products.map(p => p.location ? p.location.toUpperCase() : 'SENZA UBICAZIONE'))].sort(compareLocations);
+                    const isInv = isCurrentListInventory();
 
-                if (allLocations.length <= 1 && allLocations[0] === 'SENZA UBICAZIONE') {
-                    chipsContainer.innerHTML = '';
-                    return;
-                }
-
-                const activeBtnClass = isInv 
-                    ? 'bg-blue-600 text-white font-bold shadow-xs' 
-                    : 'bg-emerald-600 text-white font-bold shadow-xs';
-                const inactiveBtnClass = isInv 
-                    ? 'bg-blue-100 text-blue-900 hover:bg-blue-200 dark:bg-blue-950/60 dark:text-blue-200 dark:hover:bg-blue-900/80 font-semibold' 
-                    : 'bg-emerald-100 text-emerald-900 hover:bg-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-200 dark:hover:bg-emerald-900/80 font-semibold';
-
-                const isAllActive = selectedLocationFilter === null;
-
-                let chipsHtml = `
-                    <button onclick="ui.setLocationFilter(null)" 
-                            class="shrink-0 px-4 py-2 text-xs font-mono transition-all flex items-center gap-1.5 rounded-l-full rounded-r-md ${isAllActive ? activeBtnClass : inactiveBtnClass}">
-                        ${isAllActive ? '<i class="fa-solid fa-check text-[11px]"></i>' : ''}
-                        <span>Tutte</span>
-                    </button>
-                `;
-
-                allLocations.forEach((loc, index) => {
-                    const isActive = selectedLocationFilter === loc;
-                    const isLast = index === allLocations.length - 1;
-                    const borderShape = isLast ? 'rounded-r-full rounded-l-md' : 'rounded-md';
-
-                    if (isActive && isInv) {
-                        chipsHtml += `
-                            <div class="shrink-0 text-xs font-mono transition-all inline-flex items-center ${borderShape} bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md">
-                                <button onclick="window.exportLocationPDF('${ui.escapeHtml(loc)}')" class="px-3 py-2 flex items-center gap-1.5" title="Scarica PDF dell'ubicazione">
-                                    <i class="fa-solid fa-file-pdf animate-pulse"></i>
-                                    <span>PDF ${ui.escapeHtml(loc)}</span>
-                                </button>
-                                <button onclick="ui.setLocationFilter(null)" class="pr-3 pl-1 py-2 opacity-80 hover:opacity-100 flex items-center" title="Deseleziona ubicazione">
-                                    <i class="fa-solid fa-xmark text-sm"></i>
-                                </button>
-                            </div>
-                        `;
-                    } else {
-                        chipsHtml += `
-                            <button onclick="ui.setLocationFilter('${ui.escapeHtml(loc)}')" 
-                                    class="shrink-0 px-4 py-2 text-xs font-mono transition-all flex items-center gap-1.5 ${borderShape} ${isActive ? activeBtnClass : inactiveBtnClass}">
-                                ${isActive ? '<i class="fa-solid fa-check text-[11px]"></i>' : ''}
-                                <span>${ui.escapeHtml(loc)}</span>
-                            </button>
-                        `;
+                    if (allLocations.length <= 1 && allLocations[0] === 'SENZA UBICAZIONE') {
+                        chipsContainer.innerHTML = '';
+                        return;
                     }
-                });
 
-                chipsContainer.innerHTML = chipsHtml;
+                    const activeBtnClass = isInv 
+                        ? 'bg-blue-600 text-white font-bold shadow-xs' 
+                        : 'bg-emerald-600 text-white font-bold shadow-xs';
+                    const inactiveBtnClass = isInv 
+                        ? 'bg-blue-100 text-blue-900 hover:bg-blue-200 dark:bg-blue-950/60 dark:text-blue-200 dark:hover:bg-blue-900/80 font-semibold' 
+                        : 'bg-emerald-100 text-emerald-900 hover:bg-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-200 dark:hover:bg-emerald-900/80 font-semibold';
+
+                    const isAllActive = selectedLocationFilter === null;
+
+                    let chipsHtml = `
+                        <button onclick="ui.setLocationFilter(null)" 
+                                class="shrink-0 px-4 py-2 text-xs font-mono transition-all flex items-center gap-1.5 rounded-l-full rounded-r-md ${isAllActive ? activeBtnClass : inactiveBtnClass}">
+                            ${isAllActive ? '<i class="fa-solid fa-check text-[11px]"></i>' : ''}
+                            <span>Tutte</span>
+                        </button>
+                    `;
+
+                    allLocations.forEach((loc, index) => {
+                        const isActive = selectedLocationFilter === loc;
+                        const isLast = index === allLocations.length - 1;
+                        const borderShape = isLast ? 'rounded-r-full rounded-l-md' : 'rounded-md';
+
+                        if (isActive && isInv) {
+                            chipsHtml += `
+                                <div class="shrink-0 text-xs font-mono transition-all inline-flex items-center ${borderShape} bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-md">
+                                    <button onclick="window.exportLocationPDF('${ui.escapeHtml(loc)}')" class="px-3 py-2 flex items-center gap-1.5" title="Scarica PDF dell'ubicazione">
+                                        <i class="fa-solid fa-file-pdf animate-pulse"></i>
+                                        <span>PDF ${ui.escapeHtml(loc)}</span>
+                                    </button>
+                                    <button onclick="ui.setLocationFilter(null)" class="pr-3 pl-1 py-2 opacity-80 hover:opacity-100 flex items-center" title="Deseleziona ubicazione">
+                                        <i class="fa-solid fa-xmark text-sm"></i>
+                                    </button>
+                                </div>
+                            `;
+                        } else {
+                            chipsHtml += `
+                                <button onclick="ui.setLocationFilter('${ui.escapeHtml(loc)}')" 
+                                        class="shrink-0 px-4 py-2 text-xs font-mono transition-all flex items-center gap-1.5 ${borderShape} ${isActive ? activeBtnClass : inactiveBtnClass}">
+                                    ${isActive ? '<i class="fa-solid fa-check text-[11px]"></i>' : ''}
+                                    <span>${ui.escapeHtml(loc)}</span>
+                                </button>
+                            `;
+                        }
+                    });
+
+                    chipsContainer.innerHTML = chipsHtml;
             },
 
-renderProducts: () => {
+                renderProducts: () => {
                 ui.renderLocationChips();
 
                 const container = document.getElementById('productsList');
@@ -3142,6 +3182,7 @@ renderProducts: () => {
                 let filtered = products.filter(p => {
                     if (activeFilter === 'modified' && !isProductModified(p)) return false;
                     if (activeFilter === 'notes' && (!p.note || p.note.trim() === '')) return false;
+                    if (activeFilter === 'newItems' && !p.createdDuringInventory) return false;
                     if (activeFilter === 'consolidated' && !p.isInventoryLocked) return false;
 
                     if (selectedLocationFilter !== null) {
@@ -3167,6 +3208,11 @@ renderProducts: () => {
                     }
                     return true;
                 });
+
+                const countNewItemsEl = document.getElementById('countNewItems');
+                if (countNewItemsEl) {
+                    countNewItemsEl.innerText = products.filter(p => p.createdDuringInventory === true).length;
+                }
 
                 document.getElementById('countAll').innerText = products.length;
 
@@ -3279,6 +3325,7 @@ renderProducts: () => {
 
                     items.forEach((item, itemIndex) => {
                         const isChecked = selectedProductIds.has(item.id);
+                        // L'Admin può SEMPRE fare modifiche veloci inline su qualsiasi prodotto
                         const canEdit = !isInv || isAdminUser();
                         
                         const itemIsCodeMod = isCodeModified(item);
@@ -3555,12 +3602,16 @@ renderProducts: () => {
                                     ${isInv ? inventoryStepperWidget : standardStockWidget}
                                 </div>
 
-                                <!-- Pulsanti Azioni -->
                                 <div class="flex items-center gap-1 shrink-0">
                                     <button onclick="searchGoogleProduct('${ui.escapeHtml(item.brand || '')}', '${ui.escapeHtml(item.code || '')}')" class="w-8 h-8 rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center" title="Cerca su Google"><i class="fa-solid fa-earth-americas text-sm"></i></button>
                                     
-                                    ${canEdit ? `
+                                    <!-- Penna di Modifica Completa: visibile se fuori da inventario, se Admin, o se l'articolo è stato creato in questo inventario -->
+                                    ${(!isInv || isAdminUser() || item.createdDuringInventory) ? `
                                     <button onclick="ui.openProductModal('${item.id}')" class="w-8 h-8 rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center" title="Modifica completa"><i class="fa-solid fa-pen text-sm"></i></button>
+                                    ` : ''}
+
+                                    <!-- Cestino Elimina: visibile se fuori da inventario, se Admin, o se l'articolo è stato creato in questo inventario -->
+                                    ${(!isInv || isAdminUser() || item.createdDuringInventory) ? `
                                     <button onclick="dbLogic.deleteProduct('${item.id}')" class="w-8 h-8 rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800 transition-colors flex items-center justify-center" title="Elimina"><i class="fa-solid fa-trash-can text-sm"></i></button>
                                     ` : ''}
                                 </div>
