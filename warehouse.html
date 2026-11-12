@@ -385,8 +385,11 @@
                         <button id="filterModified" class="filter-btn shrink-0 px-4 py-2 rounded-full text-xs font-bold bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors" onclick="ui.setFilter('modified')">
                             <i class="fa-solid fa-pen-to-square mr-1"></i> Modificati (<span id="countModified">0</span>)
                         </button>
-                        <button id="btnConsolidateOriginals" class="hidden shrink-0 px-3.5 py-2 rounded-full text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white shadow-xs transition-all flex items-center gap-1.5 active:scale-95" onclick="dbLogic.consolidateModifiedToOriginals()" title="Sovrascrivi i valori originali con le modifiche attuali per tutti i prodotti modificati">
+                        <button id="btnConsolidateOriginals" class="hidden shrink-0 px-3.5 py-2 rounded-full text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white shadow-xs transition-all items-center gap-1.5 active:scale-95" onclick="dbLogic.consolidateModifiedToOriginals()" title="Sovrascrivi i valori originali con le modifiche attuali per tutti i prodotti modificati">
                             <i class="fa-solid fa-wand-magic-sparkles"></i> Salva su Originali
+                        </button>
+                        <button id="btnExportExcelAlberto" class="hidden shrink-0 px-3.5 py-2 rounded-full text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-all items-center gap-1.5 active:scale-95" onclick="excelLogic.exportAlbertoExcel()" title="Esporta in Excel i prodotti modificati">
+                            <i class="fa-solid fa-file-excel"></i> Esporta Excel Alberto
                         </button>
                         <button id="filterNotes" class="filter-btn shrink-0 px-4 py-2 rounded-full text-xs font-bold bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 transition-colors" onclick="ui.setFilter('notes')">
                             <i class="fa-solid fa-comment-dots mr-1"></i> Con Note (<span id="countNotes">0</span>)
@@ -2521,6 +2524,7 @@ window.exportLocationPDF = async function(locationName) {
 // 2. Definizione corretta dell'oggetto excelLogic
 window.excelLogic = {
 exportExcel: () => {
+    
         if (products.length === 0) return ui.toast("Nessun prodotto da esportare.", "error");
 
         const isInv = isCurrentListInventory();
@@ -2587,6 +2591,34 @@ exportExcel: () => {
         auditLogic.logAction("Esportazione Excel", `Esportata lista '${listName}' (${products.length} prodotti)`);
         ui.closeModal('settingsModal');
         ui.toast("Esportazione completata", "success");
+    },
+
+    exportAlbertoExcel: () => {
+        if (!isAdminUser()) {
+            return ui.toast("Solo gli amministratori possono esportare questo file Excel.", "error");
+        }
+
+        const modifiedProducts = products.filter(isProductModified);
+        if (modifiedProducts.length === 0) {
+            return ui.toast("Nessun prodotto modificato da esportare.", "error");
+        }
+
+        const dataToExport = modifiedProducts.map(p => ({
+            "MG7A_DITTA_CG18": 20,
+            "MG7A_CODART_MG66": p.code || '',
+            "MG7A_CODDEP_MG58": "00",
+            "MG7A_UBICAZFIX": p.location || ''
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(dataToExport);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Modifiche Alberto");
+
+        const fileName = `Esporta_Excel_Alberto_${new Date().toISOString().split('T')[0]}.xlsx`;
+        XLSX.writeFile(wb, fileName);
+
+        auditLogic.logAction("Esportazione Excel Alberto", `Esportati ${modifiedProducts.length} prodotti modificati`);
+        ui.toast("Esportazione Excel Alberto completata", "success");
     },
     
     importExcel: (event) => {
@@ -3407,18 +3439,31 @@ toast: (msg, type='info') => {
                 document.getElementById('countModified').innerText = modifiedCount;
 
                 const btnConsolidate = document.getElementById('btnConsolidateOriginals');
+                const btnExportAlberto = document.getElementById('btnExportExcelAlberto');
+
+                const isAdmin = isAdminUser();
+                const isModifiedFilterActive = activeFilter === 'modified';
+                const showActionButtons = isAdmin && !isInv && isModifiedFilterActive && modifiedCount > 0;
+
                 if (btnConsolidate) {
-                    const isAdmin = isAdminUser();
-                    const isModifiedFilterActive = activeFilter === 'modified';
-                    
-                    if (isAdmin && isModifiedFilterActive && modifiedCount > 0) {
+                    if (showActionButtons) {
                         btnConsolidate.classList.remove('hidden');
                         btnConsolidate.classList.add('inline-flex');
                     } else {
                         btnConsolidate.classList.add('hidden');
                         btnConsolidate.classList.remove('inline-flex');
                     }
-                }             
+                }
+
+                if (btnExportAlberto) {
+                    if (showActionButtons) {
+                        btnExportAlberto.classList.remove('hidden');
+                        btnExportAlberto.classList.add('inline-flex');
+                    } else {
+                        btnExportAlberto.classList.add('hidden');
+                        btnExportAlberto.classList.remove('inline-flex');
+                    }
+                }       
 
                 document.getElementById('countNotes').innerText = products.filter(p => p.note && p.note.trim() !== '').length;
                 
