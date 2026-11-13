@@ -1473,7 +1473,7 @@
             }
         }
 
-        function loadListsAndListen() {
+function loadListsAndListen() {
             if (!userId) return;
             const listsRef = collection(db, 'artifacts', appId, 'public', 'data', 'lists');
             
@@ -1489,7 +1489,21 @@
                     dbLogic.createList("Magazzino Principale");
                 } else {
                     if (!currentListId || !globalLists.find(l => l.id === currentListId)) {
-                        switchList(globalLists[0].id);
+                        // Legge i parametri dall'URL (es. ?list=Inventario_2026)
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const listParam = urlParams.get('list');
+                        let matchedList = null;
+
+                        if (listParam) {
+                            // Cerca la lista per ID oppure confrontando il nome (senza distinzione maiuscole/minuscole)
+                            matchedList = globalLists.find(l => l.id === listParam || l.name.toLowerCase() === listParam.toLowerCase());
+                        }
+
+                        if (matchedList) {
+                            switchList(matchedList.id, false);
+                        } else {
+                            switchList(globalLists[0].id, false);
+                        }
                     } else {
                         updateListUI();
                         ui.renderProducts();
@@ -1508,14 +1522,25 @@
             });
         }
 
-        function switchList(listId) {
+function switchList(listId, updateUrl = true) {
             currentListId = listId;
             updateListUI();
             selectedProductIds.clear();
             ui.updateBulkBar();
+
+            // Aggiorna il parametro 'list' nell'URL senza ricaricare la pagina
+            if (updateUrl) {
+                try {
+                    const url = new URL(window.location);
+                    url.searchParams.set('list', listId);
+                    window.history.replaceState({}, '', url);
+                } catch (e) {
+                    console.warn("Impossibile aggiornare l'URL:", e);
+                }
+            }
             
             if (unsubProducts) unsubProducts();
-	    if (unsubChat) unsubChat();
+            if (unsubChat) unsubChat();
             
             const productsQuery = query(
                 collection(db, 'artifacts', appId, 'public', 'data', 'products'),
