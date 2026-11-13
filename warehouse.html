@@ -3425,7 +3425,7 @@ toast: (msg, type='info') => {
                             </div>
                         </div>`;
                     });
-                } else {
+                } else if (isAdminUser()) {
                     html += `
                     <div class="mb-4">
                         <button onclick="ui.openAnnouncementModal()" class="w-full py-3 px-4 bg-amber-50/80 hover:bg-amber-100/80 dark:bg-amber-950/20 dark:hover:bg-amber-950/30 border border-dashed border-amber-300/80 dark:border-amber-800/60 rounded-3xl text-amber-800 dark:text-amber-300 text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-xs">
