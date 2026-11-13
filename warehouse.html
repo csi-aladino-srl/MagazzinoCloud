@@ -2200,25 +2200,29 @@ saveProduct: async () => {
                 try {
                     const item = products.find(p => p.id === id);
                     if (!item) return;
-                    if (item.isInventoryLocked && isCurrentListInventory()) return;
+                    if (item.isInventoryLocked && isCurrentListInventory()) {
+                        ui.toast("Articolo bloccato/consolidato. Sbloccalo per modificarlo.", "error");
+                        return;
+                    }
 
                     const oldStock = item.stock !== undefined ? item.stock : 0;
                     let finalOrigStock = (item.originalStock !== undefined && item.originalStock !== null) ? item.originalStock : oldStock;
 
-                    if (!isCurrentListInventory()) {
-                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), {
-                            stock: stockNum,
-                            originalStock: finalOrigStock
-                        });
-                        auditLogic.logAction("Modifica Giacenza", `Prodotto [${item.code}]: Q.tà ${oldStock} -> ${stockNum}`);
-                        ui.toast("Giacenza aggiornata", "success");
-                    } else {
-                        item.stock = stockNum;
-                        if (item.originalStock === undefined || item.originalStock === null) {
-                            item.originalStock = oldStock;
-                        }
-                        ui.refreshProductRowDOM(id);
+                    // Aggiornamento locale
+                    item.stock = stockNum;
+                    if (item.originalStock === undefined || item.originalStock === null) {
+                        item.originalStock = oldStock;
                     }
+
+                    // Salvataggio immediato su Firebase Firestore
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), {
+                        stock: stockNum,
+                        originalStock: finalOrigStock
+                    });
+
+                    auditLogic.logAction("Modifica Giacenza", `Prodotto [${item.code}]: Q.tà ${oldStock} -> ${stockNum}`);
+                    ui.toast("Giacenza aggiornata e salvata", "success");
+                    ui.refreshProductRowDOM(id);
                 } catch(e) { 
                     console.error(e); 
                     ui.toast("Errore aggiornamento giacenza", "error");
@@ -3110,15 +3114,19 @@ toast: (msg, type='info') => {
                 `).join('');
             },
 
-                        openProductModal: (id = null) => {
-                            if (id) {
-                                const item = products.find(p => p.id === id);
-                                if (item) {
-                                    if (isCurrentListInventory() && !isAdminUser()) {
-                                        if (!item.createdDuringInventory) {
-                                            return ui.toast("In modalità Inventario puoi modificare solo i prodotti creati durante l'inventario.", "error");
-                                        }
-                                    }
+            openProductModal: (id = null) => {
+                const prodIdInput = document.getElementById('prodId');
+                if (id) {
+                    const item = products.find(p => p.id === id);
+                    if (item) {
+                        if (isCurrentListInventory() && !isAdminUser()) {
+                            if (!item.createdDuringInventory) {
+                                return ui.toast("In modalità Inventario puoi modificare solo i prodotti creati durante l'inventario.", "error");
+                            }
+                        }
+
+                        // Assegna correttamente l'ID per attivare l'aggiornamento (updateDoc)
+                        prodIdInput.value = item.id;
 
                         document.getElementById('productModalTitle').innerText = 'Modifica Prodotto';
                         document.getElementById('prodCode').value = item.code || '';
@@ -3135,6 +3143,9 @@ toast: (msg, type='info') => {
                         document.getElementById('prodOrigNote').value = item.originalNote !== undefined ? item.originalNote : '';
                     }
                 } else {
+                    // Pulisce l'ID per indicare che si tratta di un nuovo prodotto (addDoc)
+                    prodIdInput.value = '';
+                    
                     document.getElementById('productModalTitle').innerText = 'Nuovo Prodotto';
                     document.getElementById('prodCode').value = '';
                     document.getElementById('prodOrigCode').value = '';
