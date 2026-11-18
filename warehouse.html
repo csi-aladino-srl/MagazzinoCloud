@@ -91,6 +91,78 @@
             --md-sys-color-outline-variant: #c3c6cf;
         }
 
+        /* ================================================================= */
+        /* MATERIAL YOU 3 - STANDARD RESIZABLE BOTTOM SHEETS (SOLO MOBILE)   */
+        /* ================================================================= */
+        @media (max-width: 767px) {
+            #productModal.m3-bottom-sheet,
+            #catalogModal.m3-bottom-sheet {
+                inset: auto 0 0 0 !important;
+                padding: 0 !important;
+                background-color: transparent !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                align-items: flex-end !important;
+                justify-content: center !important;
+                pointer-events: none; /* Permette di scorrere e cliccare la pagina sotto */
+            }
+
+            #productModal.m3-bottom-sheet .m3-sheet-surface,
+            #catalogModal.m3-bottom-sheet .m3-sheet-surface {
+                pointer-events: auto;
+                width: 100% !important;
+                max-width: 100% !important;
+                height: 55vh;
+                min-height: 240px;
+                max-height: 92vh;
+                border-radius: 28px 28px 0 0 !important; /* M3 Extra-large top corners */
+                background-color: var(--md-sys-color-surface-container-low, #f2f3fa);
+                box-shadow: 0 -6px 28px rgba(0, 0, 0, 0.18), 0 -1px 4px rgba(0, 0, 0, 0.08);
+                border-top: 1px solid var(--md-sys-color-outline-variant);
+                transform: translateY(100%);
+                transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1), height 0.25s cubic-bezier(0.2, 0, 0, 1);
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+
+            .dark #productModal.m3-bottom-sheet .m3-sheet-surface,
+            .dark #catalogModal.m3-bottom-sheet .m3-sheet-surface {
+                background-color: #181c22;
+                border-top-color: #333842;
+            }
+
+            #productModal.m3-bottom-sheet.sheet-visible .m3-sheet-surface,
+            #catalogModal.m3-bottom-sheet.sheet-visible .m3-sheet-surface {
+                transform: translateY(0) !important;
+            }
+
+            #productModal.m3-bottom-sheet .m3-sheet-surface.is-dragging,
+            #catalogModal.m3-bottom-sheet .m3-sheet-surface.is-dragging {
+                transition: none !important;
+            }
+
+            /* Drag Handle M3 (32dp x 4dp) */
+            .m3-drag-handle-area {
+                width: 100%;
+                padding: 12px 0 6px 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                cursor: grab;
+                touch-action: none;
+                flex-shrink: 0;
+            }
+            .m3-drag-handle-area:active {
+                cursor: grabbing;
+            }
+            .m3-drag-handle-pill {
+                width: 32px;
+                height: 4px;
+                border-radius: 9999px;
+                background-color: var(--md-sys-color-on-surface-variant);
+                opacity: 0.4;
+            }
+        }
+
         html, body { 
             margin: 0; 
             padding: 0; 
@@ -743,10 +815,14 @@
         </div>
     </div>
 
-    <!-- Product Modal / Sidebar Desktop Style Material Navigation Drawer -->
-    <div id="productModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none z-[70] hidden flex items-center justify-center p-4 md:p-0 md:inset-y-0 md:right-0 md:left-auto md:w-[440px] opacity-0 transition-opacity duration-200">
-        <div class="bg-white dark:bg-slate-900 w-full max-w-lg md:max-w-none md:h-full rounded-4xl md:rounded-none md:rounded-l-4xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh] md:max-h-none transform scale-95 md:transform-none transition-transform md:border-l md:border-slate-200 md:dark:border-slate-800">
-            <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950/50">
+    <!-- Product Modal / Bottom Sheet Mobile / Sidebar Desktop -->
+    <div id="productModal" class="m3-bottom-sheet fixed inset-0 bg-slate-950/60 backdrop-blur-sm md:bg-transparent md:backdrop-blur-none z-[70] hidden flex items-center justify-center p-4 md:p-0 md:inset-y-0 md:right-0 md:left-auto md:w-[440px] opacity-0 transition-opacity duration-200">
+        <div class="m3-sheet-surface bg-white dark:bg-slate-900 w-full max-w-lg md:max-w-none md:h-full rounded-4xl md:rounded-none md:rounded-l-4xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh] md:max-h-none transform scale-95 md:transform-none transition-transform md:border-l md:border-slate-200 md:dark:border-slate-800">
+            <!-- Drag Handle Material 3 (Solo Mobile) -->
+            <div class="m3-drag-handle-area md:hidden" data-sheet-target="productModal" title="Trascina per ridimensionare">
+                <div class="m3-drag-handle-pill"></div>
+            </div>
+            <div class="px-4 pb-3 pt-1 md:p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-transparent md:bg-slate-50 md:dark:bg-slate-950/50 shrink-0">
                 <div class="flex items-center gap-2">
                     <button onclick="ui.toggleSidebarCollapse()" class="hidden md:flex w-9 h-9 items-center justify-center rounded-full bg-slate-200/60 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors text-slate-700 dark:text-slate-200" title="Nascondi Sidebar">
                         <i class="fa-solid fa-angles-right"></i>
@@ -1044,60 +1120,56 @@
             if (locStr) recentLocations = JSON.parse(locStr);
         } catch (e) { console.warn(e); }
 
-        window.catalogLogic = {
-    sourceProducts: [],
-    filteredProducts: [],
-    currentPage: 1,
-    itemsPerPage: 30,
-    searchTerm: '',
-    unsubSource: null,
+window.catalogLogic = {
+            sourceProducts: [],
+            filteredProducts: [],
+            currentPage: 1,
+            itemsPerPage: 30,
+            searchTerm: '',
+            unsubSource: null,
 
-    openModal: async () => {
-        const currentList = getCurrentList();
-        const isAdmin = isAdminUser();
+            openModal: () => {
+                const currentList = getCurrentList();
+                const adminConfig = document.getElementById('catalogAdminConfig');
+                const sourceNameLabel = document.getElementById('catalogSourceListName');
 
-        // Mostra/Nasconde pannello amministrazione sorgente
-        const adminConfig = document.getElementById('catalogAdminConfig');
-        if (isAdmin) {
-            adminConfig.classList.remove('hidden');
-            catalogLogic.populateSourceDropdown();
-        } else {
-            adminConfig.classList.add('hidden');
-        }
+                if (isAdminUser()) {
+                    adminConfig.classList.remove('hidden');
+                    adminConfig.classList.add('flex');
+                    catalogLogic.populateSourceDropdown();
+                } else {
+                    adminConfig.classList.add('hidden');
+                    adminConfig.classList.remove('flex');
+                }
 
-        const sourceListId = currentList?.catalogSourceListId;
-        if (!sourceListId) {
-            document.getElementById('catalogSourceListName').innerText = "Sorgente: Nessuna lista collegata";
-            document.getElementById('catalogTableBody').innerHTML = `
-                <tr><td colspan="2" class="text-center py-8 text-slate-400 font-medium">Nessuna lista collegata come sorgente per questa modalità inventario.</td></tr>
-            `;
-            catalogLogic.sourceProducts = [];
-            catalogLogic.filteredProducts = [];
-            catalogLogic.renderTable();
-            ui.openModal('catalogModal');
-            return;
-        }
+                const sourceListId = currentList?.catalogSourceListId;
+                if (sourceListId) {
+                    const sourceList = globalLists.find(l => l.id === sourceListId);
+                    sourceNameLabel.innerText = `Sorgente: ${sourceList ? sourceList.name : 'Lista collegata'}`;
 
-        const sourceList = globalLists.find(l => l.id === sourceListId);
-        document.getElementById('catalogSourceListName').innerText = `Sorgente: ${sourceList ? sourceList.name : 'Lista sconosciuta'}`;
+                    if (catalogLogic.unsubSource) catalogLogic.unsubSource();
+                    const qSource = query(
+                        collection(db, 'artifacts', appId, 'public', 'data', 'products'),
+                        where('listId', '==', sourceListId)
+                    );
+                    catalogLogic.unsubSource = onSnapshot(qSource, (snapshot) => {
+                        catalogLogic.sourceProducts = [];
+                        snapshot.forEach(docSnap => catalogLogic.sourceProducts.push(docSnap.data()));
+                        catalogLogic.sourceProducts.sort((a, b) => (a.code || '').localeCompare(b.code || ''));
+                        catalogLogic.applySearch();
+                    });
+                } else {
+                    sourceNameLabel.innerText = "Sorgente: Nessuna lista collegata";
+                    catalogLogic.sourceProducts = [];
+                    catalogLogic.filteredProducts = [];
+                    catalogLogic.renderTable();
+                }
 
-        // Ascolta in tempo reale i prodotti della lista sorgente
-        if (catalogLogic.unsubSource) catalogLogic.unsubSource();
-        
-        const q = query(
-            collection(db, 'artifacts', appId, 'public', 'data', 'products'),
-            where('listId', '==', sourceListId)
-        );
-
-        catalogLogic.unsubSource = onSnapshot(q, (snapshot) => {
-            catalogLogic.sourceProducts = [];
-            snapshot.forEach(docSnap => catalogLogic.sourceProducts.push(docSnap.data()));
-            catalogLogic.sourceProducts.sort((a, b) => (a.code || '').localeCompare(b.code || ''));
-            catalogLogic.applySearch();
-        });
-
-        ui.openModal('catalogModal');
-    },
+                document.getElementById('catalogSearchInput').value = '';
+                catalogLogic.searchTerm = '';
+                catalogLogic.currentPage = 1;
+                ui.openModal('catalogModal');
+            },
 
     populateSourceDropdown: () => {
         const select = document.getElementById('catalogSourceSelect');
@@ -2622,9 +2694,6 @@ exportExcel: () => {
     },
 
     exportAlbertoExcel: () => {
-        if (!isAdminUser()) {
-            return ui.toast("Solo gli amministratori possono esportare questo file Excel.", "error");
-        }
 
         const modifiedProducts = products.filter(isProductModified);
         if (modifiedProducts.length === 0) {
@@ -2786,6 +2855,65 @@ exportExcel: () => {
         }
 
         window.ui = {
+
+            openModal: (id) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const isMobileSheet = window.innerWidth < 768 && (id === 'productModal' || id === 'catalogModal');
+                
+                el.classList.remove('hidden');
+                if (!isMobileSheet) {
+                    document.body.classList.add('modal-open');
+                }
+                void el.offsetWidth;
+                el.classList.remove('opacity-0');
+                
+                if (isMobileSheet) {
+                    const surface = el.querySelector('.m3-sheet-surface');
+                    if (surface && !surface.style.height) {
+                        surface.style.height = id === 'catalogModal' ? '60vh' : '55vh';
+                    }
+                    el.classList.add('sheet-visible');
+                } else {
+                    const inner = el.querySelector('div');
+                    if (inner) inner.classList.remove('scale-95');
+                }
+
+                if (id === 'productModal' && window.innerWidth >= 768) {
+                    document.body.classList.add('sidebar-open');
+                    document.getElementById('sidebarToggleTab').classList.add('hidden');
+                }
+            },
+
+            closeModal: (id) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const isMobileSheet = window.innerWidth < 768 && (id === 'productModal' || id === 'catalogModal');
+
+                el.classList.add('opacity-0');
+                if (isMobileSheet) {
+                    el.classList.remove('sheet-visible');
+                } else {
+                    const inner = el.querySelector('div');
+                    if (inner) inner.classList.add('scale-95');
+                }
+                
+                setTimeout(() => {
+                    el.classList.add('hidden');
+                    if (id === 'productModal') {
+                        document.body.classList.remove('sidebar-open');
+                        document.getElementById('sidebarToggleTab').classList.add('hidden');
+                    }
+                    const openBlockingModals = Array.from(document.querySelectorAll('.fixed:not(.hidden)')).filter(m => {
+                        if (window.innerWidth < 768 && (m.id === 'productModal' || m.id === 'catalogModal')) return false;
+                        return ['z-[70]', 'z-[75]', 'z-[80]', 'z-[90]', 'z-[95]', 'z-[110]', 'z-[115]'].some(z => m.classList.contains(z));
+                    });
+                    if (openBlockingModals.length === 0) {
+                        document.body.classList.remove('modal-open');
+                    }
+                }, 260);
+            },
+
             switchMainView: (viewMode) => {
                 const listContainer = document.getElementById('productsList');
                 const shelfContainer = document.getElementById('shelfViewContainer');
@@ -2904,37 +3032,6 @@ toast: (msg, type='info') => {
 
                 document.getElementById('confirmOkBtn').onclick = () => { cleanup(); onConfirm(); };
                 document.getElementById('confirmCancelBtn').onclick = cleanup;
-            },
-
-            openModal: (id) => {
-                const el = document.getElementById(id);
-                el.classList.remove('hidden');
-                document.body.classList.add('modal-open');
-                void el.offsetWidth;
-                el.classList.remove('opacity-0');
-                el.querySelector('div').classList.remove('scale-95');
-
-                if (id === 'productModal' && window.innerWidth >= 768) {
-                    document.body.classList.add('sidebar-open');
-                    document.getElementById('sidebarToggleTab').classList.add('hidden');
-                }
-            },
-
-            closeModal: (id) => {
-                const el = document.getElementById(id);
-                el.classList.add('opacity-0');
-                el.querySelector('div').classList.add('scale-95');
-                
-                setTimeout(() => {
-                    el.classList.add('hidden');
-                    if (id === 'productModal') {
-                        document.body.classList.remove('sidebar-open');
-                        document.getElementById('sidebarToggleTab').classList.add('hidden');
-                    }
-                    if(!document.querySelectorAll('.fixed:not(.hidden).z-[70], .fixed:not(.hidden).z-[75], .fixed:not(.hidden).z-[80], .fixed:not(.hidden).z-[90], .fixed:not(.hidden).z-[95], .fixed:not(.hidden).z-[115]').length){
-                        document.body.classList.remove('modal-open');
-                    }
-                }, 200);
             },
 
             openManualStockModal: (id) => {
@@ -3478,10 +3575,11 @@ toast: (msg, type='info') => {
 
                 const isAdmin = isAdminUser();
                 const isModifiedFilterActive = activeFilter === 'modified';
-                const showActionButtons = isAdmin && !isInv && isModifiedFilterActive && modifiedCount > 0;
+                const showAdminActionButtons = isAdmin && !isInv && isModifiedFilterActive && modifiedCount > 0;
+                const showExportAlbertoButton = !isInv && isModifiedFilterActive && modifiedCount > 0;
 
                 if (btnConsolidate) {
-                    if (showActionButtons) {
+                    if (showAdminActionButtons) {
                         btnConsolidate.classList.remove('hidden');
                         btnConsolidate.classList.add('inline-flex');
                     } else {
@@ -3491,14 +3589,14 @@ toast: (msg, type='info') => {
                 }
 
                 if (btnExportAlberto) {
-                    if (showActionButtons) {
+                    if (showExportAlbertoButton) {
                         btnExportAlberto.classList.remove('hidden');
                         btnExportAlberto.classList.add('inline-flex');
                     } else {
                         btnExportAlberto.classList.add('hidden');
                         btnExportAlberto.classList.remove('inline-flex');
                     }
-                }       
+                }
 
                 document.getElementById('countNotes').innerText = products.filter(p => p.note && p.note.trim() !== '').length;
                 
@@ -4262,15 +4360,82 @@ window.shelfViewLogic = {
     }
 };
 
+function initM3BottomSheets() {
+    document.querySelectorAll('.m3-drag-handle-area').forEach(handle => {
+        const modalId = handle.dataset.sheetTarget;
+        const modal = document.getElementById(modalId);
+        const surface = modal ? modal.querySelector('.m3-sheet-surface') : null;
+        if (!modal || !surface) return;
+
+        let startY = 0;
+        let startHeight = 0;
+        let isDragging = false;
+
+        const onPointerDown = (e) => {
+            if (window.innerWidth >= 768) return;
+            isDragging = true;
+            startY = e.touches ? e.touches[0].clientY : e.clientY;
+            startHeight = surface.getBoundingClientRect().height;
+            surface.classList.add('is-dragging');
+        };
+
+        const onPointerMove = (e) => {
+            if (!isDragging) return;
+            const currentY = e.touches ? e.touches[0].clientY : e.clientY;
+            const deltaY = startY - currentY;
+            const maxH = window.innerHeight * 0.92;
+            const newHeight = Math.max(140, Math.min(maxH, startHeight + deltaY));
+            surface.style.height = `${newHeight}px`;
+        };
+
+        const onPointerUp = () => {
+            if (!isDragging) return;
+            isDragging = false;
+            surface.classList.remove('is-dragging');
+
+            const currentH = surface.getBoundingClientRect().height;
+            const vh = window.innerHeight;
+
+            // Se trascinato molto in basso (< 22% schermo), chiude il bottom sheet
+            if (currentH < vh * 0.22) {
+                surface.style.height = '55vh';
+                ui.closeModal(modalId);
+                return;
+            }
+
+            // Snap Material 3 ai 3 detent: Compatto (38%), Medio (62%), Espanso (90%)
+            const detents = [vh * 0.38, vh * 0.62, vh * 0.90];
+            const closest = detents.reduce((prev, curr) =>
+                Math.abs(curr - currentH) < Math.abs(prev - currentH) ? curr : prev
+            );
+            surface.style.height = `${Math.round(closest)}px`;
+        };
+
+        handle.addEventListener('touchstart', onPointerDown, { passive: true });
+        window.addEventListener('touchmove', onPointerMove, { passive: true });
+        window.addEventListener('touchend', onPointerUp);
+
+        handle.addEventListener('mousedown', onPointerDown);
+        window.addEventListener('mousemove', onPointerMove);
+        window.addEventListener('mouseup', onPointerUp);
+    });
+}
+initM3BottomSheets();
+
 bootApp();
     </script>
 
-    <!-- Modale Consultazione Codici e Ubicazioni -->
-<div id="catalogModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[110] hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-200">
-    <div class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-4xl shadow-2xl flex flex-col overflow-hidden max-h-[85vh] border border-slate-200 dark:border-slate-800">
+<!-- Modale / Bottom Sheet Consultazione Codici e Ubicazioni -->
+<div id="catalogModal" class="m3-bottom-sheet fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[110] hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-200">
+    <div class="m3-sheet-surface bg-white dark:bg-slate-900 w-full max-w-2xl rounded-4xl shadow-2xl flex flex-col overflow-hidden max-h-[85vh] border border-slate-200 dark:border-slate-800">
         
+        <!-- Drag Handle Material 3 (Solo Mobile) -->
+        <div class="m3-drag-handle-area md:hidden" data-sheet-target="catalogModal" title="Trascina per ridimensionare">
+            <div class="m3-drag-handle-pill"></div>
+        </div>
+
         <!-- Intestazione Modale -->
-        <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950/50">
+        <div class="px-4 pb-3 pt-1 md:p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-transparent md:bg-slate-50 md:dark:bg-slate-950/50 shrink-0">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-2xl bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 flex items-center justify-center text-lg shrink-0">
                     <i class="fa-solid fa-book"></i>
