@@ -51,7 +51,7 @@
 <body class="h-full w-full m-0 p-0 bg-md-surface text-md-on-surface font-sans antialiased flex flex-col justify-center items-center">
 
 <script>
-const APP_VERSION = '10.1';
+const APP_VERSION = '11.0';
 
 function forzaAggiornamento() {
     if ('serviceWorker' in navigator) {
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </button>
         <div class="flex flex-col text-left">
             <!-- Testo con la versione in nero e più grande -->
-            <span id="appVersionDisplay" class="text-sm font-semibold text-slate-900">Versione 10.1</span>
+            <span id="appVersionDisplay" class="text-sm font-semibold text-slate-900">Versione 11.0</span>
             <span class="text-[10px] text-md-outline">Tocca l'icona per pulire la cache</span>
         </div>
     </div>
@@ -113,21 +113,31 @@ document.addEventListener('DOMContentLoaded', () => {
             </button>
         </div>
         
-        <div class="space-y-4 text-xs text-slate-600 leading-relaxed mb-6">
-    <!-- Novità per l'Inventario -->
+<div class="space-y-4 text-xs text-slate-600 leading-relaxed mb-6">
+    <!-- Consultazione Ubicazioni & Aggiunta Rapida -->
     <div class="flex items-start gap-3">
-        <span class="material-symbols-outlined text-md-primary text-xl mt-0.5">inventory_2</span>
+        <span class="material-symbols-outlined text-md-primary text-xl mt-0.5">add_circle</span>
         <div>
-            <b class="text-slate-900 block">Novità per l'Inventario</b>
-            Introdotte importanti novità e ottimizzazioni per la gestione e il controllo completo dell'inventario.
+            <b class="text-slate-900 block">Aggiunta Rapida da Consulta Ubicazioni</b>
+            Durante la modalità inventario, puoi aggiungere un articolo direttamente dalla tabella di consultazione tramite il pulsante <b>+</b>, ereditando in automatico codice, descrizione e quantità sorgente.
         </div>
     </div>
-    <!-- Disposizione degli Scaffali -->
+
+    <!-- Visualizzazione Quantità Sorgente -->
+    <div class="flex items-start gap-3">
+        <span class="material-symbols-outlined text-md-primary text-xl mt-0.5">inventory</span>
+        <div>
+            <b class="text-slate-900 block">Giacenze e Descrizioni in Consultazione</b>
+            La finestra di consultazione ubicazioni mostra ora l'anteprima della descrizione e la quantità sorgente accanto a ogni codice articolo per un riscontro immediato.
+        </div>
+    </div>
+
+    <!-- Novità per l'Inventario & Scaffali -->
     <div class="flex items-start gap-3">
         <span class="material-symbols-outlined text-md-primary text-xl mt-0.5">grid_view</span>
         <div>
-            <b class="text-slate-900 block">Disposizione degli Scaffali</b>
-            È ora disponibile la nuova funzionalità per visualizzare e organizzare la disposizione degli scaffali all'interno del magazzino.
+            <b class="text-slate-900 block">Vista Scaffale 2D e Controllo Inventario</b>
+            Ottimizzata la gestione dell'inventario con la vista grafica degli scaffali in centimetri, il monitoraggio dell'avanzamento in tempo reale e l'esportazione Excel per ubicazione.
         </div>
     </div>
 </div>
