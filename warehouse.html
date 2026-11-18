@@ -1229,6 +1229,29 @@ window.catalogLogic = {
                 ui.openModal('catalogModal');
             },
 
+            addToInventory: (index) => {
+            const item = catalogLogic.filteredProducts[index];
+            if (!item) return;
+
+            // Chiude la finestra "Consulta Ubicazioni"
+            ui.closeModal('catalogModal');
+
+            // Apre la finestra "+" (Nuovo Prodotto) con i campi puliti
+            ui.openProductModal();
+
+            // Precompila Codice Prodotto e Descrizione ereditati dalla tabella sorgente
+            document.getElementById('prodCode').value = item.code || '';
+            document.getElementById('prodDesc').value = item.description || '';
+
+            // Sposta il focus direttamente sul campo Ubicazione Attuale per velocizzare l'inserimento
+            setTimeout(() => {
+                const locInput = document.getElementById('prodLocation');
+                if (locInput) locInput.focus();
+            }, 150);
+
+            ui.toast(`Dati di "${item.code}" caricati nel nuovo prodotto`, "info");
+        },
+
     populateSourceDropdown: () => {
         const select = document.getElementById('catalogSourceSelect');
         const currentList = getCurrentList();
@@ -1291,7 +1314,8 @@ window.catalogLogic = {
             catalogLogic.filteredProducts = catalogLogic.sourceProducts.filter(p => {
                 const c = (p.code || '').toLowerCase();
                 const l = (p.location || '').toLowerCase();
-                return c.includes(term) || l.includes(term);
+                const d = (p.description || '').toLowerCase();
+                return c.includes(term) || l.includes(term) || d.includes(term);
             });
         }
         catalogLogic.renderTable();
@@ -1358,25 +1382,40 @@ window.catalogLogic = {
             
             const start = (catalogLogic.currentPage - 1) * catalogLogic.itemsPerPage;
             const pageItems = catalogLogic.filteredProducts.slice(start, start + catalogLogic.itemsPerPage);
+            const isInv = isCurrentListInventory();
 
             if (pageItems.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="2" class="text-center py-8 text-slate-400 font-medium">Nessun codice o ubicazione trovata.</td></tr>`;
             } else {
-                tbody.innerHTML = pageItems.map(p => {
+                tbody.innerHTML = pageItems.map((p, idx) => {
+                    const globalIndex = start + idx;
                     const safeCodeAttr = (p.code || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    
                     return `
                     <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                        <td class="py-2 px-3">
-                            <button type="button"
-                                    onclick="catalogLogic.copyCode('${safeCodeAttr}', this)"
-                                    title="Tocca per copiare il codice"
-                                    class="group inline-flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-100/80 hover:bg-blue-50 active:scale-95 dark:bg-slate-800/80 dark:hover:bg-blue-950/40 border border-slate-200/80 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 font-bold text-slate-900 dark:text-white font-mono transition-all cursor-pointer">
-                                <span>${ui.escapeHtml(p.code || '-')}</span>
-                                <i class="copy-icon fa-regular fa-copy text-slate-400 group-hover:text-blue-600 text-[11px]"></i>
-                                <span class="copied-badge hidden text-[10px] font-sans font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Copiato</span>
-                            </button>
+                        <td class="py-2.5 px-3">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <button type="button"
+                                        onclick="catalogLogic.copyCode('${safeCodeAttr}', this)"
+                                        title="Tocca per copiare il codice"
+                                        class="group inline-flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-slate-100/80 hover:bg-blue-50 active:scale-95 dark:bg-slate-800/80 dark:hover:bg-blue-950/40 border border-slate-200/80 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 font-bold text-slate-900 dark:text-white font-mono transition-all cursor-pointer">
+                                    <span>${ui.escapeHtml(p.code || '-')}</span>
+                                    <i class="copy-icon fa-regular fa-copy text-slate-400 group-hover:text-blue-600 text-[11px]"></i>
+                                    <span class="copied-badge hidden text-[10px] font-sans font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Copiato</span>
+                                </button>
+
+                                ${isInv ? `
+                                <button type="button"
+                                        onclick="catalogLogic.addToInventory(${globalIndex})"
+                                        title="Aggiungi questo articolo all'inventario con codice e descrizione già compilati"
+                                        class="w-8 h-8 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-90 text-white flex items-center justify-center shadow-xs transition-all cursor-pointer shrink-0">
+                                    <i class="fa-solid fa-plus text-xs"></i>
+                                </button>
+                                ` : ''}
+                            </div>
+                            ${p.description ? `<div class="text-[11px] text-slate-500 dark:text-slate-400 font-normal mt-1 line-clamp-1">${ui.escapeHtml(p.description)}</div>` : ''}
                         </td>
-                        <td class="py-2 px-3 text-right font-mono font-bold text-blue-600 dark:text-blue-400">${ui.escapeHtml(p.location || '-')}</td>
+                        <td class="py-2.5 px-3 text-right font-mono font-bold text-blue-600 dark:text-blue-400 align-top">${ui.escapeHtml(p.location || '-')}</td>
                     </tr>
                 `}).join('');
             }
