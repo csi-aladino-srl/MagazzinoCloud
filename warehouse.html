@@ -1236,12 +1236,13 @@ window.catalogLogic = {
             // Chiude la finestra "Consulta Ubicazioni"
             ui.closeModal('catalogModal');
 
-            // Apre la finestra "+" (Nuovo Prodotto) con i campi puliti
+            // Apre la finestra del nuovo prodotto
             ui.openProductModal();
 
-            // Precompila Codice Prodotto e Descrizione ereditati dalla tabella sorgente
+            // Precompila Codice, Descrizione, Marchio e Quantità ereditati dalla sorgente
             document.getElementById('prodCode').value = item.code || '';
             document.getElementById('prodDesc').value = item.description || '';
+            document.getElementById('prodBrand').value = item.brand || '';
 
             // Sposta il focus direttamente sul campo Ubicazione Attuale per velocizzare l'inserimento
             setTimeout(() => {
