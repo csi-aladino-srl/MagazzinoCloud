@@ -16,6 +16,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
     <script>
 	let unsubChat = null;
@@ -501,10 +503,10 @@
         <div class="bg-slate-50/80 dark:bg-slate-900/40 border-b border-slate-200/80 dark:border-slate-800/80 z-30 shrink-0">
             <div class="max-w-7xl mx-auto px-4 py-2.5 flex flex-col gap-2.5">
                 
-                <!-- Chip Avanzamento Generale Inventario -->
-                <div id="inventoryProgressBarContainer" class="hidden items-center justify-between bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 px-4 py-2.5 rounded-2xl shadow-xs">
+                <!-- Chip Avanzamento Generale Inventario + Pulsante Esporta Tutto -->
+                <div id="inventoryProgressBarContainer" class="hidden items-center justify-between bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 px-4 py-2.5 rounded-2xl shadow-xs gap-3 flex-wrap">
                     <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-xs">
+                        <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-xs shrink-0">
                             <i class="fa-solid fa-chart-pie"></i>
                         </div>
                         <div class="flex flex-col">
@@ -512,8 +514,14 @@
                             <span class="text-xs text-blue-800 dark:text-blue-300 font-semibold" id="inventoryProgressText">0 di 0 articoli consolidati (0%)</span>
                         </div>
                     </div>
-                    <div class="w-28 sm:w-40 bg-blue-200/80 dark:bg-blue-900 rounded-full h-3 overflow-hidden shadow-inner p-0.5">
-                        <div id="inventoryProgressBarFill" class="bg-blue-600 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                    <div class="flex items-center gap-3 ml-auto">
+                        <div class="w-24 sm:w-36 bg-blue-200/80 dark:bg-blue-900 rounded-full h-3 overflow-hidden shadow-inner p-0.5">
+                            <div id="inventoryProgressBarFill" class="bg-blue-600 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                        <button id="btnExportFullInventory" onclick="inventoryExportLogic.openExportModal()" class="hidden px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold items-center gap-1.5 shadow-xs transition-all active:scale-95 shrink-0" title="Esporta l'intero inventario in Excel o PDF">
+                            <i class="fa-solid fa-file-export"></i>
+                            <span>Esporta Tutto</span>
+                        </button>
                     </div>
                 </div>
 
@@ -1097,6 +1105,15 @@
                 </button>
             </div>
             <div class="p-4 flex flex-col gap-3">
+                <button onclick="ui.closeModal('settingsModal'); inventoryExportLogic.openExportModal();" class="w-full flex items-center gap-3.5 p-4 bg-blue-50/80 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-950/50 rounded-2xl transition-colors text-left font-semibold border border-blue-200 dark:border-blue-800/60">
+                    <div class="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                        <i class="fa-solid fa-file-invoice text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-bold text-slate-900 dark:text-white">Report Inventario (Excel / PDF)</div>
+                        <div class="text-xs text-slate-500 font-normal mt-0.5">Esporta tutto organizzato per ubicazione</div>
+                    </div>
+                </button>
                 <button onclick="excelLogic.exportExcel()" class="w-full flex items-center gap-3.5 p-4 bg-slate-50 dark:bg-slate-800/60 hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded-2xl transition-colors text-left text-blue-600 font-semibold border border-slate-200 dark:border-slate-700">
                     <div class="w-11 h-11 rounded-2xl bg-white dark:bg-slate-800 flex items-center justify-center shadow-xs text-blue-600 shrink-0">
                         <i class="fa-solid fa-file-export text-lg"></i>
@@ -1132,13 +1149,63 @@
         </div>
     </div>
 
+    <!-- Modale Esportazione Completa Inventario (Excel / PDF) -->
+    <div id="fullInventoryExportModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[95] hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-200">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-md rounded-4xl shadow-2xl flex flex-col overflow-hidden transform scale-95 transition-transform border border-slate-200 dark:border-slate-800">
+            <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950/50">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                        <i class="fa-solid fa-folder-open"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white">Esporta Inventario Completo</h3>
+                </div>
+                <button onclick="ui.closeModal('fullInventoryExportModal')" class="w-9 h-9 rounded-full bg-slate-200/60 dark:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-6 flex flex-col gap-5">
+                <!-- Riepilogo rapido -->
+                <div class="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 flex items-center justify-between">
+                    <span>Lista: <b id="exportModalListName" class="text-slate-900 dark:text-white">-</b></span>
+                    <span id="exportModalStatsBadge" class="px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 font-bold">0 Art.</span>
+                </div>
+
+                <!-- Scelta contenuto da includere -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 ml-1">Articoli da includere</label>
+                    <select id="exportInventoryScope" class="w-full m3-input bg-slate-50 dark:bg-slate-800 text-sm font-bold text-slate-800 dark:text-white cursor-pointer">
+                        <option value="all" selected>Tutto l'inventario (tutti gli articoli)</option>
+                        <option value="consolidated">Solo articoli consolidati / verificati</option>
+                        <option value="delta">Solo articoli con differenze (Delta ≠ 0)</option>
+                    </select>
+                </div>
+
+                <!-- Pulsanti Formato File -->
+                <div class="grid grid-cols-2 gap-3 pt-1">
+                    <button onclick="inventoryExportLogic.exportFullExcel()" class="flex flex-col items-center justify-center gap-2 p-4 rounded-3xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-md transition-all active:scale-95 cursor-pointer">
+                        <i class="fa-solid fa-file-excel text-2xl"></i>
+                        <span class="text-xs">Scarica Excel</span>
+                        <span class="text-[10px] font-normal opacity-85">3 Fogli Organizzati</span>
+                    </button>
+
+                    <button onclick="inventoryExportLogic.exportFullPDF()" class="flex flex-col items-center justify-center gap-2 p-4 rounded-3xl bg-red-600 hover:bg-red-700 text-white font-bold shadow-md transition-all active:scale-95 cursor-pointer">
+                        <i class="fa-solid fa-file-pdf text-2xl"></i>
+                        <span class="text-xs">Scarica PDF</span>
+                        <span class="text-[10px] font-normal opacity-85">Impaginato per Scaffale</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Snackbar Material Design -->
     <div id="toastContainer" class="fixed top-20 right-4 z-[130] flex flex-col gap-2 pointer-events-none"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, updateDoc, deleteDoc, onSnapshot, collection, addDoc, getDocs, writeBatch, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, addDoc, getDocs, writeBatch, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const appId = 'warehouse-manager-cloud-shared';
 
@@ -1696,6 +1763,7 @@ window.catalogLogic = {
                 userId = auth.currentUser.uid;
                 loadListsAndListen();
                 auditLogic.listenToAuditLogs();
+                shelfViewLogic.listenToShelfDimensions();
                 setupSearchListeners();
             } catch (error) {
                 console.error("Auth Error:", error);
@@ -1800,6 +1868,14 @@ function switchList(listId, updateUrl = true) {
                 const filterNewItemsBtn = document.getElementById('filterNewItems');
                 const mobileCatalogBtn = document.getElementById('mobileCatalogBtn');
                 const desktopCatalogBtn = document.getElementById('desktopCatalogBtn');
+                const btnExportFull = document.getElementById('btnExportFullInventory');
+                const settingsReportBtn = document.getElementById('settingsReportBtn');
+
+                // Visibilità pulsanti Report completo solo per Admin
+                if (settingsReportBtn) {
+                    settingsReportBtn.classList.toggle('hidden', !isAdminUser());
+                    settingsReportBtn.classList.toggle('flex', isAdminUser());
+                }
 
                 if (list) {
                     document.getElementById('currentListName').innerText = list.name;
@@ -1830,6 +1906,15 @@ function switchList(listId, updateUrl = true) {
                             progContainer.classList.remove('hidden');
                             progContainer.classList.add('flex');
                         }
+                        if (btnExportFull) {
+                            if (isAdminUser()) {
+                                btnExportFull.classList.remove('hidden');
+                                btnExportFull.classList.add('flex');
+                            } else {
+                                btnExportFull.classList.add('hidden');
+                                btnExportFull.classList.remove('flex');
+                            }
+                        }
                         if (shelfToggle) {
                             shelfToggle.classList.remove('hidden');
                             shelfToggle.classList.add('flex');
@@ -1856,6 +1941,10 @@ function switchList(listId, updateUrl = true) {
                         if (progContainer) {
                             progContainer.classList.add('hidden');
                             progContainer.classList.remove('flex');
+                        }
+                        if (btnExportFull) {
+                            btnExportFull.classList.add('hidden');
+                            btnExportFull.classList.remove('flex');
                         }
                         if (filterConsolidatedBtn) {
                             filterConsolidatedBtn.classList.add('hidden');
@@ -4303,6 +4392,30 @@ let shelfConfig = {
 window.shelfViewLogic = {
     currentShelfIndex: 0,
     availableShelves: [],
+    dimensionsCache: {},
+    unsubDimensions: null,
+
+    listenToShelfDimensions: () => {
+        if (!db) return;
+        if (shelfViewLogic.unsubDimensions) shelfViewLogic.unsubDimensions();
+
+        const dimsRef = collection(db, 'artifacts', appId, 'public', 'data', 'shelf_dimensions');
+        shelfViewLogic.unsubDimensions = onSnapshot(dimsRef, (snapshot) => {
+            snapshot.forEach(docSnap => {
+                shelfViewLogic.dimensionsCache[docSnap.id] = docSnap.data();
+                try {
+                    localStorage.setItem(`whm_shelf_dims_${docSnap.id}`, JSON.stringify(docSnap.data()));
+                } catch (e) {}
+            });
+
+            const shelfContainer = document.getElementById('shelfViewContainer');
+            if (shelfContainer && !shelfContainer.classList.contains('hidden')) {
+                shelfViewLogic.renderShelf();
+            }
+        }, (err) => {
+            console.error("Errore sincronizzazione misure scaffali:", err);
+        });
+    },
 
     getDetectedShelves: () => {
         const shelfCodes = new Set();
@@ -4317,7 +4430,6 @@ window.shelfViewLogic = {
                 }
             }
         });
-        // Restituisce solo le ubicazioni reali trovate nella lista, senza fallback
         return Array.from(shelfCodes).sort(compareLocations);
     },
 
@@ -4331,10 +4443,18 @@ window.shelfViewLogic = {
     },
 
     getShelfDimensions: (shelfCode) => {
-        const saved = localStorage.getItem(`whm_shelf_dims_${shelfCode}`);
-        if (saved) {
-            try { return JSON.parse(saved); } catch(e){}
+        if (shelfViewLogic.dimensionsCache[shelfCode]) {
+            return shelfViewLogic.dimensionsCache[shelfCode];
         }
+        try {
+            const saved = localStorage.getItem(`whm_shelf_dims_${shelfCode}`);
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                shelfViewLogic.dimensionsCache[shelfCode] = parsed;
+                return parsed;
+            }
+        } catch (e) {}
+
         return {
             widthCm: 120,
             heightCm: 200,
@@ -4353,11 +4473,16 @@ window.shelfViewLogic = {
     openDimensionsModal: () => {
         const shelves = shelfViewLogic.getDetectedShelves();
         if (shelves.length === 0) return ui.toast("Nessuna ubicazione disponibile", "error");
-        
-        const currentCode = shelves[shelfViewLogic.currentShelfIndex] || shelves[0];
-        const dims = shelfViewLogic.getShelfDimensions(currentCode);
 
-        let maxFoundLevel = dims.maxLevel || 4;
+        const dropdown = document.getElementById('shelfDropdown');
+        const currentCode = (dropdown && dropdown.value && shelves.includes(dropdown.value))
+            ? dropdown.value
+            : (shelves[shelfViewLogic.currentShelfIndex] || shelves[0]);
+
+        const dims = shelfViewLogic.getShelfDimensions(currentCode);
+        const savedMaxLevel = (dims.maxLevel !== undefined && dims.maxLevel !== null) ? Number(dims.maxLevel) : 4;
+
+        let maxFoundLevel = savedMaxLevel;
         products.forEach(p => {
             if (p.location) {
                 const locUpper = p.location.toUpperCase().trim();
@@ -4371,29 +4496,37 @@ window.shelfViewLogic = {
             }
         });
 
-        const effectiveMaxLevel = Math.max(dims.maxLevel, maxFoundLevel);
+        const effectiveMaxLevel = Math.max(savedMaxLevel, maxFoundLevel);
         const totalRipiani = effectiveMaxLevel + 1;
 
         document.getElementById('modalShelfTitle').innerText = `Misure Scaffale ${currentCode}`;
-        document.getElementById('shelfWidthCm').value = dims.widthCm;
-        document.getElementById('shelfHeightCm').value = dims.heightCm;
-        document.getElementById('shelfDepthCm').value = dims.depthCm;
+        document.getElementById('shelfWidthCm').value = dims.widthCm ?? 120;
+        document.getElementById('shelfHeightCm').value = dims.heightCm ?? 200;
+        document.getElementById('shelfDepthCm').value = dims.depthCm ?? 50;
         document.getElementById('shelfLevelsCount').value = totalRipiani;
 
-        shelfViewLogic.generateLevelHeightInputs(totalRipiani, dims.levelHeights);
+        shelfViewLogic.generateLevelHeightInputs(totalRipiani, dims.levelHeights || {});
         ui.openModal('shelfDimensionsModal');
     },
 
     generateLevelHeightInputs: (totalRipianiCount = null, existingHeights = null) => {
-        const totalCount = totalRipianiCount !== null ? totalRipianiCount : (parseInt(document.getElementById('shelfLevelsCount').value, 10) || 5);
+        const parsedCount = parseInt(document.getElementById('shelfLevelsCount').value, 10);
+        const totalCount = totalRipianiCount !== null ? totalRipianiCount : (!isNaN(parsedCount) && parsedCount >= 1 ? parsedCount : 5);
         const container = document.getElementById('levelHeightsContainer');
         if (!container) return;
-        let html = '';
 
+        let currentHeights = existingHeights;
+        if (!currentHeights) {
+            const shelves = shelfViewLogic.getDetectedShelves();
+            const currentCode = shelves[shelfViewLogic.currentShelfIndex];
+            currentHeights = currentCode ? (shelfViewLogic.getShelfDimensions(currentCode).levelHeights || {}) : {};
+        }
+
+        let html = '';
         const maxLvl = Math.max(0, totalCount - 1);
 
         for (let i = maxLvl; i >= 0; i--) {
-            const defaultH = existingHeights && existingHeights[i] !== undefined ? existingHeights[i] : 40;
+            const defaultH = (currentHeights && currentHeights[i] !== undefined) ? currentHeights[i] : 40;
             const label = (i === 0) ? "Ripiano Terra (0) Altezza (cm)" : `Ripiano ${i} Altezza (cm)`;
             html += `
                 <div class="flex items-center justify-between gap-3 bg-slate-100 dark:bg-slate-800 p-2 rounded-xl">
@@ -4405,29 +4538,68 @@ window.shelfViewLogic = {
         container.innerHTML = html;
     },
 
-    saveShelfDimensions: () => {
+    saveShelfDimensions: async () => {
         const shelves = shelfViewLogic.getDetectedShelves();
-        const currentCode = shelves[shelfViewLogic.currentShelfIndex];
-        if (!currentCode) return;
+        const dropdown = document.getElementById('shelfDropdown');
+        const currentCode = (dropdown && dropdown.value && shelves.includes(dropdown.value))
+            ? dropdown.value
+            : shelves[shelfViewLogic.currentShelfIndex];
 
-        const widthCm = parseFloat(document.getElementById('shelfWidthCm').value) || 120;
-        const heightCm = parseFloat(document.getElementById('shelfHeightCm').value) || 200;
-        const depthCm = parseFloat(document.getElementById('shelfDepthCm').value) || 50;
-        const totalRipiani = parseInt(document.getElementById('shelfLevelsCount').value, 10) || 5;
+        if (!currentCode) return ui.toast("Nessuno scaffale selezionato", "error");
+
+        const rawW = parseFloat(document.getElementById('shelfWidthCm').value);
+        const rawH = parseFloat(document.getElementById('shelfHeightCm').value);
+        const rawD = parseFloat(document.getElementById('shelfDepthCm').value);
+        const rawLevels = parseInt(document.getElementById('shelfLevelsCount').value, 10);
+
+        const widthCm = (!isNaN(rawW) && rawW > 0) ? rawW : 120;
+        const heightCm = (!isNaN(rawH) && rawH > 0) ? rawH : 200;
+        const depthCm = (!isNaN(rawD) && rawD > 0) ? rawD : 50;
+        const totalRipiani = (!isNaN(rawLevels) && rawLevels >= 1) ? rawLevels : 5;
         const maxLevel = Math.max(0, totalRipiani - 1);
 
         const levelHeights = {};
         for (let i = 0; i <= maxLevel; i++) {
             const input = document.getElementById(`levelH_${i}`);
-            levelHeights[i] = input ? (parseFloat(input.value) || 40) : 40;
+            const val = input ? parseFloat(input.value) : NaN;
+            levelHeights[i] = (!isNaN(val) && val > 0) ? val : 40;
         }
 
-        const dimsData = { widthCm, heightCm, depthCm, maxLevel, levelHeights };
-        localStorage.setItem(`whm_shelf_dims_${currentCode}`, JSON.stringify(dimsData));
+        const dimsData = {
+            shelfCode: currentCode,
+            widthCm,
+            heightCm,
+            depthCm,
+            maxLevel,
+            levelHeights,
+            updatedAt: new Date().toISOString(),
+            updatedBy: currentUserOperator || 'Admin'
+        };
+
+        // Aggiornamento immediato cache in memoria + localStorage di backup
+        shelfViewLogic.dimensionsCache[currentCode] = dimsData;
+        try {
+            localStorage.setItem(`whm_shelf_dims_${currentCode}`, JSON.stringify(dimsData));
+        } catch (e) {
+            console.warn("Salvataggio locale non disponibile:", e);
+        }
 
         ui.closeModal('shelfDimensionsModal');
-        ui.toast(`Misure dello scaffale ${currentCode} salvate!`, "success");
         shelfViewLogic.renderShelf();
+
+        // Salvataggio permanente su Firebase Firestore
+        if (db) {
+            try {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'shelf_dimensions', currentCode), dimsData);
+                auditLogic.logAction("Misure Scaffale", `Aggiornate misure scaffale ${currentCode}: L ${widthCm}cm × H ${heightCm}cm × P ${depthCm}cm (${totalRipiani} ripiani)`);
+                ui.toast(`Misure dello scaffale ${currentCode} salvate nel cloud!`, "success");
+            } catch (err) {
+                console.error("Errore salvataggio Firestore misure scaffale:", err);
+                ui.toast("Misure salvate solo in locale (errore rete/permessi Firebase).", "error");
+            }
+        } else {
+            ui.toast(`Misure dello scaffale ${currentCode} salvate!`, "success");
+        }
     },
 
     prevShelf: () => {
@@ -4451,8 +4623,7 @@ window.shelfViewLogic = {
         if (!container) return;
 
         const shelves = shelfViewLogic.getDetectedShelves();
-        
-        // Se non ci sono ubicazioni nella lista, non crea alcuno scaffale
+
         if (shelves.length === 0) {
             if (shelfDropdown) shelfDropdown.innerHTML = '<option value="" disabled selected>Nessuna ubicazione</option>';
             container.innerHTML = `
@@ -4468,16 +4639,17 @@ window.shelfViewLogic = {
         if (shelfViewLogic.currentShelfIndex >= shelves.length) {
             shelfViewLogic.currentShelfIndex = 0;
         }
-        
+
         const currentShelfCode = shelves[shelfViewLogic.currentShelfIndex];
-        
+
         if (shelfDropdown) {
             shelfDropdown.innerHTML = shelves.map(s => `<option value="${s}" ${s === currentShelfCode ? 'selected' : ''}>SCAFFALE ${s}</option>`).join('');
         }
 
         const dims = shelfViewLogic.getShelfDimensions(currentShelfCode);
+        const savedMaxLevel = (dims.maxLevel !== undefined && dims.maxLevel !== null) ? Number(dims.maxLevel) : 4;
 
-        let maxFoundLevel = dims.maxLevel || 4;
+        let maxFoundLevel = savedMaxLevel;
         products.forEach(p => {
             if (p.location) {
                 const locUpper = p.location.toUpperCase().trim();
@@ -4491,17 +4663,17 @@ window.shelfViewLogic = {
             }
         });
 
-        const effectiveMaxLevel = Math.max(dims.maxLevel, maxFoundLevel);
+        const effectiveMaxLevel = Math.max(savedMaxLevel, maxFoundLevel);
         const totalLevels = effectiveMaxLevel + 1;
 
-        const minHeightPerLevel = 75; 
-        const calculatedMinHeight = totalLevels * minHeightPerLevel + 120;
+        const minHeightPerLevel = 72;
+        const calculatedMinHeight = totalLevels * minHeightPerLevel + 90;
         const scaleFactor = 2.4;
         const pixelWidth = Math.max(300, Math.min(dims.widthCm * scaleFactor, 850));
         const pixelHeight = Math.max(calculatedMinHeight, dims.heightCm * scaleFactor);
 
         let shelfHtml = `
-            <div class="relative bg-slate-900/10 dark:bg-slate-950 p-4 rounded-xl border-4 border-slate-700 dark:border-slate-600 shadow-2xl flex flex-col justify-between"
+            <div class="relative bg-slate-900/10 dark:bg-slate-950 p-4 rounded-xl border-4 border-slate-700 dark:border-slate-600 shadow-2xl flex flex-col justify-between mt-4"
                  style="width: ${pixelWidth}px; height: ${pixelHeight}px; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);">
                 
                 <div class="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-slate-600 via-slate-400 to-slate-700 border-r border-slate-800 z-20 flex flex-col justify-between py-2 items-center">
@@ -4511,7 +4683,7 @@ window.shelfViewLogic = {
                     ${Array.from({length: Math.max(12, totalLevels * 2)}).map(() => `<div class="w-1.5 h-1.5 rounded-full bg-slate-900/80"></div>`).join('')}
                 </div>
 
-                <div class="absolute -top-7 left-0 right-0 text-center text-[11px] font-mono font-bold text-slate-500">
+                <div class="absolute -top-8 left-0 right-0 text-center text-[11px] font-mono font-bold text-slate-600 dark:text-slate-300">
                     L: ${dims.widthCm}cm × H: ${dims.heightCm}cm × P: ${dims.depthCm}cm (Ripiani: ${totalLevels})
                 </div>
 
@@ -4521,7 +4693,7 @@ window.shelfViewLogic = {
         for (let lvl = effectiveMaxLevel; lvl >= 0; lvl--) {
             const locCode = `${currentShelfCode}${lvl}`;
             const locProducts = products.filter(p => (p.location ? p.location.toUpperCase().trim() : '') === locCode);
-            
+
             let cellBg = "bg-slate-800/80 hover:bg-slate-700 text-slate-400 border-slate-600";
             let statusIcon = "";
             let itemCountText = "";
@@ -4535,15 +4707,16 @@ window.shelfViewLogic = {
                     cellBg = "bg-red-600 hover:bg-red-500 text-white border-red-400 shadow-lg active:scale-98 animate-pulse";
                     statusIcon = `<i class="fa-solid fa-circle-exclamation text-white text-base"></i>`;
                 }
-                itemCountText = `<span class="text-[10px] font-extrabold mt-0.5 bg-black/30 px-2 py-0.5 rounded-full">${locProducts.length} Art.</span>`;
+                itemCountText = `<span class="text-[10px] font-extrabold bg-black/30 px-2 py-0.5 rounded-full">${locProducts.length} Art.</span>`;
             }
 
-            const levelH = dims.levelHeights[lvl] || 40;
+            const levelH = (dims.levelHeights && dims.levelHeights[lvl] !== undefined) ? dims.levelHeights[lvl] : 40;
 
             shelfHtml += `
-                <div class="w-full flex flex-col justify-end" style="flex: ${levelH}; min-height: 65px;">
+                <div class="w-full flex flex-col justify-end" style="flex: ${levelH}; min-height: 62px;">
                     <button onclick="ui.switchMainView('list'); ui.setLocationFilter('${locCode}');"
                             class="w-full h-full rounded-lg border-2 flex flex-col items-center justify-center p-1 transition-all ${cellBg} relative group shadow-sm">
+                        <span class="absolute top-1 right-1.5 text-[9px] font-mono opacity-75">${levelH}cm</span>
                         <span class="font-mono font-black text-sm sm:text-base tracking-wider drop-shadow-md leading-tight">${locCode}</span>
                         <div class="flex items-center gap-1.5 mt-0.5">
                             ${statusIcon}
@@ -4668,6 +4841,576 @@ window.addEventListener('resize', () => {
         if (toggleTab) toggleTab.classList.add('hidden');
     }
 });
+
+window.inventoryExportLogic = {
+    openExportModal: () => {
+        if (!isAdminUser()) {
+            return ui.toast("Funzione riservata agli amministratori.", "error");
+        }
+        if (!products || products.length === 0) {
+            return ui.toast("Nessun prodotto presente nella lista da esportare.", "error");
+        }
+        const list = getCurrentList();
+        const lockedCount = products.filter(p => p.isInventoryLocked === true).length;
+        document.getElementById('exportModalListName').innerText = list ? list.name : 'Inventario';
+        document.getElementById('exportModalStatsBadge').innerText = `${lockedCount}/${products.length} Consolidati`;
+        ui.openModal('fullInventoryExportModal');
+    },
+
+    buildStructuredData: () => {
+        const scope = document.getElementById('exportInventoryScope')?.value || 'all';
+        let filtered = [...products];
+
+        if (scope === 'consolidated') {
+            filtered = filtered.filter(p => p.isInventoryLocked === true);
+        } else if (scope === 'delta') {
+            filtered = filtered.filter(p => {
+                const curr = Number(p.stock ?? 0);
+                const orig = (p.originalStock !== undefined && p.originalStock !== null && p.originalStock !== '') ? Number(p.originalStock) : curr;
+                return (curr - orig) !== 0;
+            });
+        }
+
+        // Raggruppa per ubicazione e ordina
+        const groupsMap = {};
+        filtered.forEach(p => {
+            const loc = p.location ? p.location.toUpperCase().trim() : 'SENZA UBICAZIONE';
+            if (!groupsMap[loc]) groupsMap[loc] = [];
+            groupsMap[loc].push(p);
+        });
+
+        const sortedLocations = Object.keys(groupsMap).sort(compareLocations);
+
+        let totalOrig = 0;
+        let totalCurr = 0;
+        let totalConsolidated = 0;
+        let totalCarichi = 0;
+        let totalScarichi = 0;
+
+        const groups = sortedLocations.map(loc => {
+            const items = groupsMap[loc].sort((a, b) => (a.code || '').localeCompare(b.code || ''));
+            const parsed = parseLocationNumber(loc);
+            let zoneLabel = 'GENERALE';
+            if (loc !== 'SENZA UBICAZIONE') {
+                if (parsed.num >= 8) zoneLabel = 'ZONA PRIMARIA';
+                else if (parsed.num >= 1 && parsed.num <= 7) zoneLabel = 'ZONA SECONDARIA';
+            }
+
+            let locOrig = 0;
+            let locCurr = 0;
+            let locConsolidated = 0;
+
+            const normalizedItems = items.map(p => {
+                const currStock = (p.stock !== undefined && p.stock !== '' && !isNaN(Number(p.stock))) ? Number(p.stock) : 0;
+                const origStock = (p.originalStock !== undefined && p.originalStock !== null && p.originalStock !== '' && !isNaN(Number(p.originalStock))) ? Number(p.originalStock) : currStock;
+                const delta = currStock - origStock;
+                const isLocked = p.isInventoryLocked === true;
+
+                let modalita = 'Allineato';
+                if (delta > 0) { modalita = 'Carico'; totalCarichi += delta; }
+                else if (delta < 0) { modalita = 'Scarico'; totalScarichi += Math.abs(delta); }
+
+                let dateFormatted = '';
+                if (p.consolidatedAt) {
+                    const d = new Date(p.consolidatedAt);
+                    if (!isNaN(d.getTime())) {
+                        dateFormatted = d.toLocaleString('it-IT', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+                    }
+                }
+
+                locOrig += origStock;
+                locCurr += currStock;
+                if (isLocked) locConsolidated++;
+
+                return {
+                    code: p.code || '-',
+                    brand: p.brand || '-',
+                    description: p.description || '-',
+                    origStock,
+                    currStock,
+                    delta,
+                    modalita,
+                    isLocked,
+                    statusLabel: isLocked ? 'CONSOLIDATO' : 'DA CONTARE',
+                    operator: p.consolidatedBy || '-',
+                    dateStr: dateFormatted || '-',
+                    note: p.note || ''
+                };
+            });
+
+            totalOrig += locOrig;
+            totalCurr += locCurr;
+            totalConsolidated += locConsolidated;
+
+            return {
+                location: loc,
+                zone: zoneLabel,
+                items: normalizedItems,
+                locOrig,
+                locCurr,
+                locDelta: locCurr - locOrig,
+                locConsolidated,
+                locTotal: normalizedItems.length
+            };
+        });
+
+        const scopeLabels = {
+            all: 'Tutto l\'inventario',
+            consolidated: 'Solo articoli consolidati',
+            delta: 'Solo differenze (Delta ≠ 0)'
+        };
+
+        return {
+            scope,
+            scopeLabel: scopeLabels[scope] || 'Tutto l\'inventario',
+            listName: getCurrentList()?.name || 'Inventario',
+            groups,
+            summary: {
+                totalItems: filtered.length,
+                totalLocations: groups.length,
+                totalConsolidated,
+                completionPct: filtered.length > 0 ? Math.round((totalConsolidated / filtered.length) * 100) : 0,
+                totalOrig,
+                totalCurr,
+                netDelta: totalCurr - totalOrig,
+                totalCarichi,
+                totalScarichi
+            }
+        };
+    },
+
+    exportFullExcel: async () => {
+        const data = inventoryExportLogic.buildStructuredData();
+        if (data.summary.totalItems === 0) {
+            return ui.toast("Nessun articolo corrisponde al filtro selezionato.", "error");
+        }
+
+        ui.closeModal('fullInventoryExportModal');
+        ui.toast("Generazione file Excel completo...", "info");
+
+        try {
+            const workbook = new ExcelJS.Workbook();
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('it-IT');
+            const timeStr = now.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+
+            // ============================================================
+            // FOGLIO 1: INVENTARIO COMPLETO ORGANIZZATO PER UBICAZIONE
+            // ============================================================
+            const wsMain = workbook.addWorksheet('Inventario per Ubicazione', {
+                views: [{ showGridLines: true, state: 'frozen', ySplit: 5 }],
+                pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 }
+            });
+
+            // Titolo Report
+            wsMain.mergeCells('A1:G1');
+            const titleCell = wsMain.getCell('A1');
+            titleCell.value = `INVENTARIO MAGAZZINO: ${data.listName.toUpperCase()}`;
+            titleCell.font = { name: 'Calibri', size: 16, bold: true, color: { argb: 'FFFFFFFF' } };
+            titleCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0061A4' } };
+            titleCell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+
+            wsMain.mergeCells('H1:K1');
+            const metaCell = wsMain.getCell('H1');
+            metaCell.value = `Esportato il ${dateStr} ${timeStr} • ${currentUserOperator || 'Operatore'}`;
+            metaCell.font = { name: 'Calibri', size: 10, italic: true, color: { argb: 'FFE2E8F0' } };
+            metaCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0061A4' } };
+            metaCell.alignment = { vertical: 'middle', horizontal: 'right' };
+            wsMain.getRow(1).height = 28;
+
+            // Riga KPI Riepilogo
+            wsMain.mergeCells('A2:K2');
+            const kpiCell = wsMain.getCell('A2');
+            const s = data.summary;
+            const netSign = s.netDelta > 0 ? `+${s.netDelta}` : `${s.netDelta}`;
+            kpiCell.value = `Filtro: ${data.scopeLabel}   |   Ubicazioni: ${s.totalLocations}   |   Articoli: ${s.totalItems}   |   Consolidati: ${s.totalConsolidated}/${s.totalItems} (${s.completionPct}%)   |   Pezzi Orig.: ${s.totalOrig}   |   Pezzi Cont.: ${s.totalCurr}   |   Delta Netto: ${netSign}`;
+            kpiCell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF0F172A' } };
+            kpiCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE0F2FE' } };
+            kpiCell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+            wsMain.getRow(2).height = 22;
+
+            wsMain.addRow([]); // Riga 3 vuota
+
+            // Intestazione Colonne (Riga 4-5)
+            const headers = [
+                'Codice', 'Marchio', 'Descrizione', 'Q.tà Orig.', 'Q.tà Cont.',
+                'Delta', 'Modalità', 'Stato', 'Operatore', 'Data/Ora', 'Note'
+            ];
+            const headerRow = wsMain.addRow(headers);
+            headerRow.height = 24;
+            headerRow.eachCell(cell => {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
+                cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
+                cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                cell.border = {
+                    top: { style: 'thin', color: { argb: 'FF94A3B8' } },
+                    bottom: { style: 'medium', color: { argb: 'FF0F172A' } },
+                    left: { style: 'thin', color: { argb: 'FF475569' } },
+                    right: { style: 'thin', color: { argb: 'FF475569' } }
+                };
+            });
+
+            // Blocchi per ciascuna Ubicazione
+            data.groups.forEach(group => {
+                // Intestazione Ubicazione
+                const locRow = wsMain.addRow([
+                    `UBICAZIONE: ${group.location}   (${group.zone})   —   Consolidati: ${group.locConsolidated}/${group.locTotal}`
+                ]);
+                wsMain.mergeCells(`A${locRow.number}:K${locRow.number}`);
+                locRow.height = 22;
+                const lCell = locRow.getCell(1);
+                lCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDBEAFE' } };
+                lCell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF1E3A8A' } };
+                lCell.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+                lCell.border = {
+                    top: { style: 'medium', color: { argb: 'FF93C5FD' } },
+                    bottom: { style: 'thin', color: { argb: 'FF93C5FD' } }
+                };
+
+                // Righe Articoli dell'ubicazione
+                group.items.forEach((item, idx) => {
+                    const deltaFormatted = item.delta > 0 ? `+${item.delta}` : `${item.delta}`;
+                    const r = wsMain.addRow([
+                        item.code,
+                        item.brand,
+                        item.description,
+                        item.origStock,
+                        item.currStock,
+                        deltaFormatted,
+                        item.modalita,
+                        item.statusLabel,
+                        item.operator,
+                        item.dateStr,
+                        item.note
+                    ]);
+                    r.height = 20;
+                    const bgHex = idx % 2 === 1 ? 'FFF8FAFC' : 'FFFFFFFF';
+
+                    r.eachCell((cell, colNum) => {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bgHex } };
+                        cell.font = { name: 'Calibri', size: 10, color: { argb: 'FF1E293B' } };
+                        cell.border = {
+                            top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+                            bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+                            left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
+                            right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
+                        };
+
+                        if (colNum === 1) {
+                            cell.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF0F172A' } };
+                            cell.alignment = { vertical: 'middle', horizontal: 'left' };
+                        } else if (colNum === 2 || colNum === 9 || colNum === 10) {
+                            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                        } else if (colNum === 3 || colNum === 11) {
+                            cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+                        } else if (colNum === 4 || colNum === 5) {
+                            cell.font = { name: 'Calibri', size: 10, bold: colNum === 5, color: { argb: 'FF0F172A' } };
+                            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                        } else if (colNum === 6 || colNum === 7) {
+                            const color = item.delta > 0 ? 'FF059669' : (item.delta < 0 ? 'FFDC2626' : 'FF64748B');
+                            cell.font = { name: 'Calibri', size: 10, bold: item.delta !== 0, color: { argb: color } };
+                            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                        } else if (colNum === 8) {
+                            cell.font = { name: 'Calibri', size: 9, bold: true, color: { argb: item.isLocked ? 'FF047857' : 'FFB45309' } };
+                            cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                        }
+                    });
+                });
+
+                // Subtotale Ubicazione
+                const subDeltaStr = group.locDelta > 0 ? `+${group.locDelta}` : `${group.locDelta}`;
+                const subRow = wsMain.addRow([
+                    `Subtotale ${group.location} (${group.locTotal} art.)`, '', '',
+                    group.locOrig, group.locCurr, subDeltaStr, '', '', '', '', ''
+                ]);
+                wsMain.mergeCells(`A${subRow.number}:C${subRow.number}`);
+                subRow.height = 19;
+                subRow.eachCell((cell, colNum) => {
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF1F5F9' } };
+                    cell.font = { name: 'Calibri', size: 9, bold: true, italic: true, color: { argb: 'FF334155' } };
+                    cell.alignment = { vertical: 'middle', horizontal: colNum <= 3 ? 'right' : 'center' };
+                    cell.border = { bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } } };
+                });
+            });
+
+            // Riga Totale Generale
+            wsMain.addRow([]);
+            const totRow = wsMain.addRow([
+                `TOTALE GENERALE (${s.totalItems} art.)`, '', '',
+                s.totalOrig, s.totalCurr, netSign, '', `${s.completionPct}% Consolidato`, '', '', ''
+            ]);
+            wsMain.mergeCells(`A${totRow.number}:C${totRow.number}`);
+            totRow.height = 25;
+            totRow.eachCell((cell, colNum) => {
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
+                cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+                cell.alignment = { vertical: 'middle', horizontal: colNum <= 3 ? 'right' : 'center' };
+            });
+
+            wsMain.columns = [
+                { width: 20 }, { width: 14 }, { width: 42 }, { width: 11 }, { width: 11 },
+                { width: 10 }, { width: 12 }, { width: 15 }, { width: 16 }, { width: 16 }, { width: 28 }
+            ];
+
+            // ============================================================
+            // FOGLIO 2: RIEPILOGO PER UBICAZIONE
+            // ============================================================
+            const wsSummary = workbook.addWorksheet('Riepilogo Ubicazioni', {
+                views: [{ showGridLines: true }]
+            });
+            const sumHeader = wsSummary.addRow([
+                'Ubicazione', 'Zona', 'Articoli Totali', 'Consolidati', '% Completamento', 'Pezzi Originali', 'Pezzi Conteggiati', 'Delta Netto'
+            ]);
+            sumHeader.height = 24;
+            sumHeader.eachCell(c => {
+                c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0061A4' } };
+                c.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
+                c.alignment = { vertical: 'middle', horizontal: 'center' };
+            });
+
+            data.groups.forEach((g, idx) => {
+                const pct = g.locTotal > 0 ? Math.round((g.locConsolidated / g.locTotal) * 100) : 0;
+                const dStr = g.locDelta > 0 ? `+${g.locDelta}` : `${g.locDelta}`;
+                const r = wsSummary.addRow([g.location, g.zone, g.locTotal, g.locConsolidated, `${pct}%`, g.locOrig, g.locCurr, dStr]);
+                r.eachCell((c, colNum) => {
+                    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: idx % 2 === 1 ? 'FFF8FAFC' : 'FFFFFFFF' } };
+                    c.font = { name: 'Calibri', size: 10, bold: colNum === 1 };
+                    c.alignment = { vertical: 'middle', horizontal: 'center' };
+                    c.border = { bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } } };
+                });
+            });
+            wsSummary.columns = [
+                { width: 18 }, { width: 18 }, { width: 15 }, { width: 14 }, { width: 18 }, { width: 16 }, { width: 18 }, { width: 14 }
+            ];
+
+            // ============================================================
+            // FOGLIO 3: SOLO DIFFERENZE (CARICHI / SCARICHI)
+            // ============================================================
+            const wsDiff = workbook.addWorksheet('Solo Differenze (Delta)', {
+                views: [{ showGridLines: true }]
+            });
+            const diffHeader = wsDiff.addRow([
+                'Ubicazione', 'Codice', 'Marchio', 'Descrizione', 'Q.tà Orig.', 'Q.tà Cont.', 'Delta Assoluto', 'Modalità', 'Operatore', 'Note'
+            ]);
+            diffHeader.height = 24;
+            diffHeader.eachCell(c => {
+                c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
+                c.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
+                c.alignment = { vertical: 'middle', horizontal: 'center' };
+            });
+
+            data.groups.forEach(g => {
+                g.items.filter(i => i.delta !== 0).forEach(item => {
+                    const r = wsDiff.addRow([
+                        g.location, item.code, item.brand, item.description,
+                        item.origStock, item.currStock, Math.abs(item.delta), item.modalita, item.operator, item.note
+                    ]);
+                    r.eachCell((c, colNum) => {
+                        c.alignment = { vertical: 'middle', horizontal: (colNum === 2 || colNum === 4 || colNum === 10) ? 'left' : 'center' };
+                        if (colNum === 8) {
+                            c.font = { name: 'Calibri', size: 10, bold: true, color: { argb: item.delta > 0 ? 'FF059669' : 'FFDC2626' } };
+                        }
+                        c.border = { bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } } };
+                    });
+                });
+            });
+            wsDiff.columns = [
+                { width: 15 }, { width: 20 }, { width: 14 }, { width: 42 }, { width: 12 }, { width: 12 }, { width: 14 }, { width: 14 }, { width: 16 }, { width: 28 }
+            ];
+
+            // Download file
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const safeName = data.listName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            a.href = url;
+            a.download = `Report_Inventario_${safeName}_${now.toISOString().split('T')[0]}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            auditLogic.logAction("Esportazione Report Excel", `Esportato inventario completo '${data.listName}' (${data.summary.totalItems} art.)`);
+            ui.toast("Excel inventario completo scaricato!", "success");
+        } catch (err) {
+            console.error("Errore export Excel completo:", err);
+            ui.toast("Errore durante la generazione dell'Excel.", "error");
+        }
+    },
+
+    exportFullPDF: () => {
+        if (!window.jspdf || !window.jspdf.jsPDF) {
+            return ui.toast("Libreria PDF non caricata. Ricarica la pagina.", "error");
+        }
+
+        const data = inventoryExportLogic.buildStructuredData();
+        if (data.summary.totalItems === 0) {
+            return ui.toast("Nessun articolo corrisponde al filtro selezionato.", "error");
+        }
+
+        ui.closeModal('fullInventoryExportModal');
+        ui.toast("Generazione PDF impaginato in corso...", "info");
+
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const now = new Date();
+            const dateTimeStr = now.toLocaleString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+            // Header Blu Inventario
+            doc.setFillColor(0, 97, 164);
+            doc.rect(0, 0, pageWidth, 22, 'F');
+
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14);
+            doc.text(`INVENTARIO MAGAZZINO — ${data.listName.toUpperCase()}`, 12, 10);
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.text(`Filtro: ${data.scopeLabel}  •  Generato il ${dateTimeStr} da ${currentUserOperator || 'Operatore'}`, 12, 17);
+
+            // Box KPI Riepilogativi (4 schede)
+            const s = data.summary;
+            const netSign = s.netDelta > 0 ? `+${s.netDelta}` : `${s.netDelta}`;
+            const kpis = [
+                { label: 'UBICAZIONI / ARTICOLI', val: `${s.totalLocations} Ubic. / ${s.totalItems} Art.` },
+                { label: 'AVANZAMENTO', val: `${s.totalConsolidated} Consolidati (${s.completionPct}%)` },
+                { label: 'GIACENZA (ORIG. -> CONT.)', val: `${s.totalOrig} -> ${s.totalCurr} pz` },
+                { label: 'DIFFERENZA NETTA', val: `${netSign} pz (+${s.totalCarichi} / -${s.totalScarichi})` }
+            ];
+
+            const cardW = (pageWidth - 24 - 9) / 4;
+            kpis.forEach((k, idx) => {
+                const x = 12 + idx * (cardW + 3);
+                doc.setFillColor(241, 245, 249);
+                doc.setDrawColor(203, 213, 225);
+                doc.roundedRect(x, 26, cardW, 14, 2, 2, 'FD');
+
+                doc.setTextColor(100, 116, 139);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(7);
+                doc.text(k.label, x + 3, 31);
+
+                doc.setTextColor(15, 23, 42);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(9.5);
+                doc.text(k.val, x + 3, 37.5);
+            });
+
+            // Costruzione righe tabella raggruppate per ubicazione
+            const tableBody = [];
+            data.groups.forEach(group => {
+                const locDeltaStr = group.locDelta > 0 ? `+${group.locDelta}` : `${group.locDelta}`;
+                tableBody.push([{
+                    content: `UBICAZIONE: ${group.location}   •   ${group.zone}   •   Consolidati: ${group.locConsolidated}/${group.locTotal}   •   Delta Scaffale: ${locDeltaStr}`,
+                    colSpan: 8,
+                    styles: {
+                        fillColor: [219, 234, 254],
+                        textColor: [30, 58, 138],
+                        fontStyle: 'bold',
+                        fontSize: 8.5,
+                        halign: 'left'
+                    }
+                }]);
+
+                group.items.forEach(item => {
+                    const dStr = item.delta > 0 ? `+${item.delta}` : `${item.delta}`;
+                    const descFull = item.brand !== '-' ? `[${item.brand}] ${item.description}` : item.description;
+                    const opAndDate = item.isLocked ? `${item.statusLabel}\n${item.operator} (${item.dateStr})` : item.statusLabel;
+
+                    tableBody.push([
+                        item.code,
+                        descFull,
+                        item.origStock.toString(),
+                        item.currStock.toString(),
+                        dStr,
+                        item.modalita,
+                        opAndDate,
+                        item.note || '-'
+                    ]);
+                });
+            });
+
+            doc.autoTable({
+                startY: 44,
+                margin: { left: 12, right: 12, bottom: 14 },
+                head: [[
+                    'Codice', 'Marchio & Descrizione', 'Orig.', 'Cont.', 'Delta', 'Esito', 'Stato / Operatore', 'Note'
+                ]],
+                body: tableBody,
+                theme: 'grid',
+                styles: {
+                    font: 'helvetica',
+                    fontSize: 8,
+                    cellPadding: 2.2,
+                    textColor: [30, 41, 59],
+                    lineColor: [226, 232, 240],
+                    lineWidth: 0.2,
+                    valign: 'middle'
+                },
+                headStyles: {
+                    fillColor: [30, 41, 59],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold',
+                    halign: 'center'
+                },
+                columnStyles: {
+                    0: { cellWidth: 34, fontStyle: 'bold', halign: 'left' },
+                    1: { cellWidth: 82, halign: 'left' },
+                    2: { cellWidth: 16, halign: 'center' },
+                    3: { cellWidth: 16, halign: 'center', fontStyle: 'bold' },
+                    4: { cellWidth: 16, halign: 'center', fontStyle: 'bold' },
+                    5: { cellWidth: 20, halign: 'center', fontStyle: 'bold' },
+                    6: { cellWidth: 44, halign: 'center', fontSize: 7.2 },
+                    7: { cellWidth: 'auto', halign: 'left', fontSize: 7.5 }
+                },
+                didParseCell: (hookData) => {
+                    if (hookData.section === 'body' && hookData.row.raw.length > 1) {
+                        const colIdx = hookData.column.index;
+                        const textVal = hookData.cell.text[0] || '';
+                        if (colIdx === 4 || colIdx === 5) {
+                            if (textVal.startsWith('+') || textVal === 'Carico') {
+                                hookData.cell.styles.textColor = [5, 150, 105];
+                            } else if ((textVal.startsWith('-') && textVal !== '-') || textVal === 'Scarico') {
+                                hookData.cell.styles.textColor = [220, 38, 38];
+                            } else {
+                                hookData.cell.styles.textColor = [100, 116, 139];
+                            }
+                        }
+                        if (colIdx === 6) {
+                            if (textVal.startsWith('CONSOLIDATO')) {
+                                hookData.cell.styles.textColor = [4, 120, 87];
+                            } else {
+                                hookData.cell.styles.textColor = [180, 83, 9];
+                            }
+                        }
+                    }
+                },
+                didDrawPage: () => {
+                    const pageCount = doc.internal.getNumberOfPages();
+                    const currentPageNum = doc.internal.getCurrentPageInfo().pageNumber;
+                    doc.setFontSize(8);
+                    doc.setTextColor(148, 163, 184);
+                    doc.text(`Magazzino Cloud — ${data.listName}`, 12, pageHeight - 6);
+                    doc.text(`Pagina ${currentPageNum} di ${pageCount}`, pageWidth - 12, pageHeight - 6, { align: 'right' });
+                }
+            });
+
+            const safeName = data.listName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            doc.save(`Report_Inventario_${safeName}_${now.toISOString().split('T')[0]}.pdf`);
+
+            auditLogic.logAction("Esportazione Report PDF", `Esportato PDF inventario '${data.listName}' (${data.summary.totalItems} art.)`);
+            ui.toast("PDF inventario completo scaricato!", "success");
+        } catch (err) {
+            console.error("Errore export PDF:", err);
+            ui.toast("Errore durante la generazione del PDF.", "error");
+        }
+    }
+};
 
 bootApp();
     </script>
