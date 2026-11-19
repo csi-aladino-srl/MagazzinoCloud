@@ -221,6 +221,18 @@
             }
         }
 
+        @media (min-width: 768px) {
+            #productModal.m3-bottom-sheet .m3-sheet-surface {
+                height: 100% !important;
+                transform: none !important;
+            }
+
+            #catalogModal.m3-bottom-sheet .m3-sheet-surface {
+                height: auto !important;
+                transform: none !important;
+            }
+        }
+
         html, body { 
             margin: 0; 
             padding: 0; 
@@ -3007,19 +3019,24 @@ exportExcel: () => {
             openModal: (id) => {
                 const el = document.getElementById(id);
                 if (!el) return;
-                const isMobileSheet = window.innerWidth < 768 && (id === 'productModal' || id === 'catalogModal');
-                
+                const isSheetComponent = (id === 'productModal' || id === 'catalogModal');
+                const isMobileSheet = window.innerWidth < 768 && isSheetComponent;
+
                 el.classList.remove('hidden');
-                if (!isMobileSheet) {
+                if (!isMobileSheet && !(id === 'productModal' && window.innerWidth >= 768)) {
                     document.body.classList.add('modal-open');
                 }
                 void el.offsetWidth;
                 el.classList.remove('opacity-0');
-                
-                if (isMobileSheet) {
+
+                if (isSheetComponent) {
                     const surface = el.querySelector('.m3-sheet-surface');
-                    if (surface && !surface.style.height) {
-                        surface.style.height = id === 'catalogModal' ? '60vh' : '55vh';
+                    if (isMobileSheet) {
+                        if (surface && !surface.style.height) {
+                            surface.style.height = id === 'catalogModal' ? '60vh' : '55vh';
+                        }
+                    } else if (surface) {
+                        surface.style.height = '';
                     }
                     el.classList.add('sheet-visible');
                 } else {
@@ -3036,7 +3053,8 @@ exportExcel: () => {
             closeModal: (id) => {
                 const el = document.getElementById(id);
                 if (!el) return;
-                const isMobileSheet = window.innerWidth < 768 && (id === 'productModal' || id === 'catalogModal');
+                const isSheetComponent = (id === 'productModal' || id === 'catalogModal');
+                const isMobileSheet = window.innerWidth < 768 && isSheetComponent;
 
                 el.classList.add('opacity-0');
                 if (isMobileSheet) {
@@ -3045,15 +3063,21 @@ exportExcel: () => {
                     const inner = el.querySelector('div');
                     if (inner) inner.classList.add('scale-95');
                 }
-                
+
                 setTimeout(() => {
                     el.classList.add('hidden');
+                    if (isSheetComponent) {
+                        el.classList.remove('sheet-visible');
+                        const surface = el.querySelector('.m3-sheet-surface');
+                        if (surface) surface.style.height = '';
+                    }
                     if (id === 'productModal') {
                         document.body.classList.remove('sidebar-open');
                         document.getElementById('sidebarToggleTab').classList.add('hidden');
                     }
                     const openBlockingModals = Array.from(document.querySelectorAll('.fixed:not(.hidden)')).filter(m => {
                         if (window.innerWidth < 768 && (m.id === 'productModal' || m.id === 'catalogModal')) return false;
+                        if (window.innerWidth >= 768 && m.id === 'productModal') return false;
                         return ['z-[70]', 'z-[75]', 'z-[80]', 'z-[90]', 'z-[95]', 'z-[110]', 'z-[115]'].some(z => m.classList.contains(z));
                     });
                     if (openBlockingModals.length === 0) {
@@ -4601,6 +4625,49 @@ function initM3BottomSheets() {
     });
 }
 initM3BottomSheets();
+
+let wasMobileViewport = window.innerWidth < 768;
+
+window.addEventListener('resize', () => {
+    const isMobileNow = window.innerWidth < 768;
+    if (isMobileNow === wasMobileViewport) return;
+    wasMobileViewport = isMobileNow;
+
+    const productModal = document.getElementById('productModal');
+    const catalogModal = document.getElementById('catalogModal');
+    const toggleTab = document.getElementById('sidebarToggleTab');
+
+    [productModal, catalogModal].forEach(modal => {
+        if (!modal) return;
+        const surface = modal.querySelector('.m3-sheet-surface');
+        if (!surface) return;
+
+        surface.classList.remove('is-dragging');
+        if (!isMobileNow) {
+            surface.style.height = '';
+        } else if (!modal.classList.contains('hidden')) {
+            modal.classList.add('sheet-visible');
+            if (!surface.style.height) {
+                surface.style.height = modal.id === 'catalogModal' ? '60vh' : '55vh';
+            }
+        }
+    });
+
+    if (!isMobileNow) {
+        if (productModal && !productModal.classList.contains('hidden')) {
+            document.body.classList.add('sidebar-open');
+            if (toggleTab) toggleTab.classList.add('hidden');
+        }
+        if (catalogModal && !catalogModal.classList.contains('hidden')) {
+            document.body.classList.add('modal-open');
+        } else {
+            document.body.classList.remove('modal-open');
+        }
+    } else {
+        document.body.classList.remove('sidebar-open', 'modal-open');
+        if (toggleTab) toggleTab.classList.add('hidden');
+    }
+});
 
 bootApp();
     </script>
