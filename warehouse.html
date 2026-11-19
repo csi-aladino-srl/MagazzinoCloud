@@ -1322,28 +1322,34 @@ window.catalogLogic = {
             },
 
             addToInventory: (index) => {
-            const item = catalogLogic.filteredProducts[index];
-            if (!item) return;
+                const item = catalogLogic.filteredProducts[index];
+                if (!item) return;
 
-            // Chiude la finestra "Consulta Ubicazioni"
-            ui.closeModal('catalogModal');
+                // Chiude la finestra "Consulta Ubicazioni"
+                ui.closeModal('catalogModal');
 
-            // Apre la finestra del nuovo prodotto
-            ui.openProductModal();
+                // Apre la finestra del nuovo prodotto
+                ui.openProductModal();
 
-            // Precompila Codice, Descrizione, Marchio e Quantità ereditati dalla sorgente
-            document.getElementById('prodCode').value = item.code || '';
-            document.getElementById('prodDesc').value = item.description || '';
-            document.getElementById('prodBrand').value = item.brand || '';
+                const inheritedStock = (item.stock !== undefined && item.stock !== null && item.stock !== '' && !isNaN(Number(item.stock)))
+                    ? Number(item.stock)
+                    : 0;
 
-            // Sposta il focus direttamente sul campo Ubicazione Attuale per velocizzare l'inserimento
-            setTimeout(() => {
-                const locInput = document.getElementById('prodLocation');
-                if (locInput) locInput.focus();
-            }, 150);
+                // Precompila Codice, Descrizione, Marchio e Quantità ereditati dalla sorgente
+                document.getElementById('prodCode').value = item.code || '';
+                document.getElementById('prodDesc').value = item.description || '';
+                document.getElementById('prodBrand').value = item.brand || '';
+                document.getElementById('prodStock').value = inheritedStock;
+                document.getElementById('prodOrigStock').value = inheritedStock;
 
-            ui.toast(`Dati di "${item.code}" caricati nel nuovo prodotto`, "info");
-        },
+                // Sposta il focus direttamente sul campo Ubicazione Attuale per velocizzare l'inserimento
+                setTimeout(() => {
+                    const locInput = document.getElementById('prodLocation');
+                    if (locInput) locInput.focus();
+                }, 150);
+
+                ui.toast(`Dati e quantità (${inheritedStock}) di "${item.code}" caricati`, "info");
+            },
 
     populateSourceDropdown: () => {
         const select = document.getElementById('catalogSourceSelect');
@@ -2995,110 +3001,184 @@ exportExcel: () => {
                     if (json.length === 0) return ui.toast("Il file Excel è vuoto.", "error");
 
                     document.getElementById('fullLoader').classList.remove('hidden', 'opacity-0');
-                    document.getElementById('loaderText').innerText = "Importazione in corso (450 prodotti per blocco)...";
+                    document.getElementById('loaderText').innerText = "Importazione in corso...";
                     ui.closeModal('settingsModal');
 
-                    const BATCH_LIMIT = 450;
-                    let addedCount = 0, updatedCount = 0;
-                    const totalRows = json.length;
+                    // Verifica se siamo in una lista Inventario con una lista sorgente normale collegata
+                    const currentList = getCurrentList();
+                    const isInv = isCurrentListInventory();
+                    const sourceListId = isInv ? currentList?.catalogSourceListId : null;
+                    const linkedNormalList = sourceListId
+                        ? globalLists.find(l => l.id === sourceListId && !l.isInventory)
+                        : null;
 
-                    for (let i = 0; i < totalRows; i += BATCH_LIMIT) {
-                        const batch = writeBatch(db);
-                        const chunk = json.slice(i, i + BATCH_LIMIT);
-
-                        const currentProgress = Math.min(i + BATCH_LIMIT, totalRows);
-                        document.getElementById('loaderText').innerText = `Elaborazione: ${currentProgress} di ${totalRows} prodotti...`;
-
-                        for (const row of chunk) {
-                            const normalizedRow = {};
-                            Object.keys(row).forEach(k => { normalizedRow[k.trim().toLowerCase()] = row[k]; });
-
-                            const getVal = (...keys) => {
-                                for (const k of keys) {
-                                    if (normalizedRow[k] !== undefined && normalizedRow[k] !== null) return normalizedRow[k];
-                                }
-                                return '';
-                            };
-
-                            const code = getVal("codice prodotto", "codice articolo", "codice", "code", "articolo", "art");
-                            const originalCode = getVal("codice originale", "original code") || code;
-                            const location = getVal("ubicazione attuale", "ubicazione", "location", "loc", "scaffale") || 'GENERALE';
-                            const originalLocation = getVal("ubicazione originale", "original location") || location;
-                            const description = getVal("descrizione", "description", "desc");
-                            const originalDescription = getVal("descrizione originale", "original description") || description;
-                            const brand = getVal("marchio", "brand", "marca");
-                            const originalBrand = getVal("marchio originale", "original brand") || brand;
-                            const note = getVal("note", "annotazioni");
-                            const originalNote = getVal("nota originale", "original note") || note;
-                            const stockNum = Number(getVal("giacenzaattuale", "giacenza attuale", "giacenza", "quantità", "stock", "qty") || 0);
-                            const origStockNum = getVal("giacenza originale", "original stock") !== '' ? Number(getVal("giacenza originale", "original stock")) : null;
-
-                            const isConsolidatedRaw = getVal("consolidato (si/no)", "consolidato", "isinventorylocked", "locked").toString().trim().toUpperCase();
-                            const isInventoryLocked = (isConsolidatedRaw === "SI" || isConsolidatedRaw === "SÌ" || isConsolidatedRaw === "TRUE" || isConsolidatedRaw === "1");
-
-                            // Lettura Operatore, Data e Ora
-                            const operatorVal = getVal("operatore", "consolidatedby", "operatore consolida").toString().trim();
-                            const dateVal = getVal("data consolida", "data", "consolidateddate").toString().trim();
-                            const timeVal = getVal("ora consolida", "ora", "consolidatedtime").toString().trim();
-
-                            let consolidatedIso = null;
-                            if (dateVal) {
-                                try {
-                                    const parts = dateVal.split(/[\/\.-]/);
-                                    if (parts.length === 3) {
-                                        let day = parts[0].padStart(2, '0');
-                                        let month = parts[1].padStart(2, '0');
-                                        let year = parts[2].length === 2 ? '20' + parts[2] : parts[2];
-                                        let timePart = timeVal || '00:00:00';
-                                        consolidatedIso = new Date(`${year}-${month}-${day}T${timePart}`).toISOString();
-                                    }
-                                } catch(err) {
-                                    console.warn("Errore parsing data consolida:", err);
-                                }
+                    // Carica i prodotti della lista sorgente collegata (indicizzati per codice)
+                    const sourceProductsByCode = new Map();
+                    if (linkedNormalList) {
+                        document.getElementById('loaderText').innerText = `Lettura lista collegata "${linkedNormalList.name}"...`;
+                        const qSource = query(
+                            collection(db, 'artifacts', appId, 'public', 'data', 'products'),
+                            where('listId', '==', linkedNormalList.id)
+                        );
+                        const sourceSnap = await getDocs(qSource);
+                        sourceSnap.forEach(docSnap => {
+                            const pData = docSnap.data();
+                            if (pData.code) {
+                                const key = pData.code.toString().trim().toLowerCase();
+                                if (!sourceProductsByCode.has(key)) sourceProductsByCode.set(key, []);
+                                sourceProductsByCode.get(key).push({ id: docSnap.id, ...pData });
                             }
+                        });
+                    }
 
-                            if (code) {
-                                const codeStr = code.toString().trim();
-                                const existingProduct = products.find(p => p.code && p.code.toString().trim().toLowerCase() === codeStr.toLowerCase() && p.listId === currentListId);
-                                
-                                let finalOrigStock = origStockNum !== null ? origStockNum : stockNum;
+                    const operations = [];
+                    let addedCount = 0;
+                    let updatedCount = 0;
+                    let linkedUpdatedCount = 0;
 
-                                let itemData = {
-                                    listId: currentListId,
-                                    code: codeStr,
-                                    originalCode: originalCode.toString().trim(),
-                                    location: location.toString().trim().toUpperCase(),
-                                    originalLocation: originalLocation.toString().trim().toUpperCase(),
-                                    description: description.toString().trim(),
-                                    originalDescription: originalDescription.toString().trim(),
-                                    brand: brand.toString().trim(),
-                                    originalBrand: originalBrand.toString().trim(),
-                                    note: note.toString().trim(),
-                                    originalNote: originalNote.toString().trim(),
-                                    stock: stockNum,
-                                    originalStock: finalOrigStock,
-                                    isInventoryLocked: isInventoryLocked,
-                                    consolidatedBy: operatorVal || (existingProduct ? existingProduct.consolidatedBy || '' : ''),
-                                    consolidatedAt: consolidatedIso || (existingProduct ? existingProduct.consolidatedAt || null : null),
-                                    timestamp: new Date().toISOString()
-                                };
+                    for (const row of json) {
+                        const normalizedRow = {};
+                        Object.keys(row).forEach(k => { normalizedRow[k.trim().toLowerCase()] = row[k]; });
 
-                                if (existingProduct) {
-                                    batch.update(doc(db, 'artifacts', appId, 'public', 'data', 'products', existingProduct.id), itemData);
-                                    updatedCount++;
-                                } else {
-                                    batch.set(doc(collection(db, 'artifacts', appId, 'public', 'data', 'products')), itemData);
-                                    addedCount++;
+                        const getVal = (...keys) => {
+                            for (const k of keys) {
+                                if (normalizedRow[k] !== undefined && normalizedRow[k] !== null) return normalizedRow[k];
+                            }
+                            return '';
+                        };
+
+                        const code = getVal("codice prodotto", "codice articolo", "codice", "code", "articolo", "art");
+                        if (!code) continue;
+
+                        const codeStr = code.toString().trim();
+                        const codeKey = codeStr.toLowerCase();
+
+                        const originalCode = getVal("codice originale", "original code") || codeStr;
+                        const location = getVal("ubicazione attuale", "ubicazione", "location", "loc", "scaffale") || 'GENERALE';
+                        const originalLocation = getVal("ubicazione originale", "original location") || location;
+                        const description = getVal("descrizione", "description", "desc");
+                        const originalDescription = getVal("descrizione originale", "original description") || description;
+                        const brand = getVal("marchio", "brand", "marca");
+                        const originalBrand = getVal("marchio originale", "original brand") || brand;
+                        const note = getVal("note", "annotazioni");
+                        const originalNote = getVal("nota originale", "original note") || note;
+
+                        const rawStockVal = getVal("giacenzaattuale", "giacenza attuale", "giacenza", "quantità", "stock", "qty");
+                        const hasValidStock = rawStockVal !== '' && !isNaN(Number(rawStockVal));
+                        const stockNum = hasValidStock ? Number(rawStockVal) : 0;
+                        const origStockNum = getVal("giacenza originale", "original stock") !== '' ? Number(getVal("giacenza originale", "original stock")) : null;
+
+                        const isConsolidatedRaw = getVal("consolidato (si/no)", "consolidato", "isinventorylocked", "locked").toString().trim().toUpperCase();
+                        const isInventoryLocked = (isConsolidatedRaw === "SI" || isConsolidatedRaw === "SÌ" || isConsolidatedRaw === "TRUE" || isConsolidatedRaw === "1");
+
+                        const operatorVal = getVal("operatore", "consolidatedby", "operatore consolida").toString().trim();
+                        const dateVal = getVal("data consolida", "data", "consolidateddate").toString().trim();
+                        const timeVal = getVal("ora consolida", "ora", "consolidatedtime").toString().trim();
+
+                        let consolidatedIso = null;
+                        if (dateVal) {
+                            try {
+                                const parts = dateVal.split(/[\/\.-]/);
+                                if (parts.length === 3) {
+                                    let day = parts[0].padStart(2, '0');
+                                    let month = parts[1].padStart(2, '0');
+                                    let year = parts[2].length === 2 ? '20' + parts[2] : parts[2];
+                                    let timePart = timeVal || '00:00:00';
+                                    consolidatedIso = new Date(`${year}-${month}-${day}T${timePart}`).toISOString();
                                 }
+                            } catch (err) {
+                                console.warn("Errore parsing data consolida:", err);
                             }
                         }
+
+                        const existingProduct = products.find(p => p.code && p.code.toString().trim().toLowerCase() === codeKey && p.listId === currentListId);
+                        const finalOrigStock = origStockNum !== null ? origStockNum : stockNum;
+
+                        const itemData = {
+                            listId: currentListId,
+                            code: codeStr,
+                            originalCode: originalCode.toString().trim(),
+                            location: location.toString().trim().toUpperCase(),
+                            originalLocation: originalLocation.toString().trim().toUpperCase(),
+                            description: description.toString().trim(),
+                            originalDescription: originalDescription.toString().trim(),
+                            brand: brand.toString().trim(),
+                            originalBrand: originalBrand.toString().trim(),
+                            note: note.toString().trim(),
+                            originalNote: originalNote.toString().trim(),
+                            stock: stockNum,
+                            originalStock: finalOrigStock,
+                            isInventoryLocked: isInventoryLocked,
+                            consolidatedBy: operatorVal || (existingProduct ? existingProduct.consolidatedBy || '' : ''),
+                            consolidatedAt: consolidatedIso || (existingProduct ? existingProduct.consolidatedAt || null : null),
+                            timestamp: new Date().toISOString()
+                        };
+
+                        if (existingProduct) {
+                            operations.push({
+                                type: 'update',
+                                ref: doc(db, 'artifacts', appId, 'public', 'data', 'products', existingProduct.id),
+                                data: itemData
+                            });
+                            updatedCount++;
+                        } else {
+                            operations.push({
+                                type: 'set',
+                                ref: doc(collection(db, 'artifacts', appId, 'public', 'data', 'products')),
+                                data: itemData
+                            });
+                            addedCount++;
+                        }
+
+                        // Se esiste la lista sorgente collegata e il file contiene la quantità, aggiorna i prodotti corrispondenti
+                        if (linkedNormalList && hasValidStock && sourceProductsByCode.has(codeKey)) {
+                            const matchingSourceItems = sourceProductsByCode.get(codeKey);
+                            matchingSourceItems.forEach(srcProd => {
+                                const srcOrigStock = (srcProd.originalStock !== undefined && srcProd.originalStock !== null)
+                                    ? srcProd.originalStock
+                                    : (srcProd.stock !== undefined ? srcProd.stock : stockNum);
+
+                                operations.push({
+                                    type: 'update',
+                                    ref: doc(db, 'artifacts', appId, 'public', 'data', 'products', srcProd.id),
+                                    data: {
+                                        stock: stockNum,
+                                        originalStock: srcOrigStock,
+                                        timestamp: new Date().toISOString()
+                                    }
+                                });
+                                linkedUpdatedCount++;
+                            });
+                        }
+                    }
+
+                    // Invio a blocchi di 450 operazioni per rispettare il limite Firestore (max 500 per batch)
+                    const BATCH_LIMIT = 450;
+                    const totalOps = operations.length;
+                    for (let i = 0; i < totalOps; i += BATCH_LIMIT) {
+                        const batch = writeBatch(db);
+                        const chunk = operations.slice(i, i + BATCH_LIMIT);
+                        document.getElementById('loaderText').innerText = `Salvataggio: ${Math.min(i + BATCH_LIMIT, totalOps)} di ${totalOps} operazioni...`;
+
+                        chunk.forEach(op => {
+                            if (op.type === 'update') batch.update(op.ref, op.data);
+                            else batch.set(op.ref, op.data);
+                        });
                         await batch.commit();
                     }
 
-                    auditLogic.logAction("Importazione Excel", `Importati ${addedCount} nuovi prodotti e aggiornati ${updatedCount}`);
+                    const linkedMsg = linkedUpdatedCount > 0
+                        ? ` (${linkedUpdatedCount} aggiornati anche in "${linkedNormalList.name}")`
+                        : '';
+
+                    auditLogic.logAction(
+                        "Importazione Excel",
+                        `Importati ${addedCount} nuovi prodotti e aggiornati ${updatedCount}${linkedMsg}`
+                    );
+
                     document.getElementById('fullLoader').classList.add('opacity-0');
                     setTimeout(() => document.getElementById('fullLoader').classList.add('hidden'), 300);
-                    ui.toast(`Importazione completata: ${addedCount} aggiunti, ${updatedCount} aggiornati.`, "success");
+                    ui.toast(`Importazione completata: ${addedCount} aggiunti, ${updatedCount} aggiornati${linkedMsg}.`, "success");
                     event.target.value = '';
                 } catch (error) {
                     console.error(error);
@@ -4045,27 +4125,39 @@ toast: (msg, type='info') => {
                         let inventoryStepperWidget = '';
                         if (isLocked) {
                             inventoryStepperWidget = `
-                                <div class="flex-1 sm:flex-initial">
-                                    <div class="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-500 sm:border-2 rounded-xl sm:rounded-2xl px-2.5 py-1.5 sm:p-2.5 shadow-xs flex flex-col gap-1 w-full sm:w-60">
-                                        <div class="flex items-center justify-between gap-2">
-                                            <div class="flex items-center gap-2 min-w-0">
+                                <div class="max-w-full sm:flex-initial">
+                                    <div class="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-500 sm:border-2 rounded-xl sm:rounded-2xl px-2 py-1 sm:p-2.5 shadow-xs flex flex-row sm:flex-col items-center sm:items-stretch justify-between gap-2 sm:gap-1 w-fit max-w-full sm:w-60">
+                                        <div class="flex items-center justify-between gap-2 min-w-0">
+                                            <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
                                                 <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-md sm:rounded-lg bg-emerald-500 text-white flex items-center justify-center font-bold text-[10px] sm:text-xs shrink-0">
                                                     <i class="fa-solid fa-check"></i>
                                                 </div>
-                                                <div class="flex items-center sm:flex-col sm:items-start gap-1.5 sm:gap-0 min-w-0">
-                                                    <span class="text-[9px] font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider leading-none">CONSOLIDATO</span>
+                                                <div class="flex items-center sm:flex-col sm:items-start gap-1 sm:gap-0 min-w-0">
+                                                    <span class="hidden sm:inline text-[9px] font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider leading-none">CONSOLIDATO</span>
                                                     <div class="flex items-center gap-1 sm:mt-0.5">
                                                         <span class="text-sm font-black text-emerald-950 dark:text-white leading-none">${stockVal}</span>
                                                         ${deltaBadge}
                                                     </div>
                                                 </div>
                                             </div>
-                                            <button onclick="dbLogic.unlockStock('${item.id}')" class="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg sm:rounded-xl font-bold text-[11px] border border-emerald-300 dark:border-slate-700 flex items-center gap-1 shadow-2xs hover:bg-slate-50 transition-colors shrink-0">
-                                                <i class="fa-solid fa-pen text-blue-600 text-[9px]"></i> Modifica
+
+                                            <!-- Operatore e Data compatti inline su mobile -->
+                                            ${(dateStr || opStr) ? `
+                                                <div class="flex sm:hidden flex-col justify-center min-w-0 leading-tight text-[9.5px] text-emerald-900 dark:text-emerald-300 border-l border-emerald-200 dark:border-emerald-800 pl-1.5">
+                                                    ${opStr ? `<span class="font-bold truncate">${ui.escapeHtml(opStr)}</span>` : ''}
+                                                    ${dateStr ? `<span class="opacity-80 whitespace-nowrap">${dateStr}</span>` : ''}
+                                                </div>
+                                            ` : ''}
+
+                                            <button onclick="dbLogic.unlockStock('${item.id}')" class="px-2 py-1 sm:px-2.5 sm:py-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg sm:rounded-xl font-bold text-[10px] sm:text-[11px] border border-emerald-300 dark:border-slate-700 flex items-center gap-1 shadow-2xs hover:bg-slate-50 transition-colors shrink-0">
+                                                <i class="fa-solid fa-pen text-blue-600 text-[9px]"></i>
+                                                <span class="hidden min-[370px]:inline">Modifica</span>
                                             </button>
                                         </div>
+
+                                        <!-- Pillola Operatore e Data estesa su Desktop -->
                                         ${(dateStr || opStr) ? `
-                                            <div class="flex items-center justify-between gap-2 text-[10px] text-emerald-900 dark:text-emerald-300 font-medium bg-emerald-100/80 dark:bg-emerald-900/40 px-2 py-0.5 sm:py-1 rounded-lg sm:rounded-xl border border-emerald-200/60 dark:border-emerald-800/50">
+                                            <div class="hidden sm:flex items-center justify-between gap-2 text-[10px] text-emerald-900 dark:text-emerald-300 font-medium bg-emerald-100/80 dark:bg-emerald-900/40 px-2 py-1 rounded-xl border border-emerald-200/60 dark:border-emerald-800/50">
                                                 ${opStr ? `<span class="truncate">Op: <b>${ui.escapeHtml(opStr)}</b></span>` : '<span></span>'}
                                                 ${dateStr ? `<span class="shrink-0 opacity-90">${dateStr}</span>` : ''}
                                             </div>
