@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Magazzino Cloud">
     <title>Gestione Magazzino Cloud</title>
     
     <!-- Tailwind CSS -->
@@ -235,18 +239,26 @@
             }
         }
 
-        html, body { 
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            height: 100dvh;
+            background-color: #ffffff;
+        }
+
+        html.dark {
+            background-color: #0f172a;
+        }
+
+        body { 
             margin: 0; 
             padding: 0; 
             height: 100%; 
             font-family: var(--md-sys-font);
             background-color: var(--md-sys-color-surface);
             color: var(--md-sys-color-on-surface);
-        }
-
-        body { 
             overscroll-behavior-y: none; 
-            padding-bottom: env(safe-area-inset-bottom);
             -webkit-tap-highlight-color: transparent;
         }
         
