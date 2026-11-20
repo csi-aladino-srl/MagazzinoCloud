@@ -1756,9 +1756,32 @@ window.catalogLogic = {
             if (brand && brand.trim()) queryParts.push(brand.trim());
             if (code && code.trim()) queryParts.push(code.trim());
             const searchQuery = encodeURIComponent(queryParts.join(' '));
-            if (searchQuery) {
-                window.open(`https://www.google.com/search?q=${searchQuery}`, '_blank', 'noopener');
+            if (!searchQuery) return;
+
+            const url = `https://www.google.com/search?igu=1&q=${searchQuery}`;
+            let modal = document.getElementById('googleSearchModal');
+
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'googleSearchModal';
+                modal.className = 'fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[125] flex flex-col p-2 sm:p-4';
+                modal.innerHTML = `
+                    <div class="bg-white dark:bg-slate-900 w-full h-full max-w-5xl mx-auto rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
+                        <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0">
+                            <span class="text-sm font-bold truncate" id="googleSearchTitle">Ricerca Google</span>
+                            <button type="button" onclick="document.getElementById('googleSearchModal').classList.add('hidden')" class="w-9 h-9 rounded-full bg-slate-200/70 dark:bg-slate-800 flex items-center justify-center">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <iframe id="googleSearchFrame" class="w-full flex-1 border-0 bg-white" referrerpolicy="no-referrer"></iframe>
+                    </div>
+                `;
+                document.body.appendChild(modal);
             }
+
+            document.getElementById('googleSearchTitle').textContent = `Google: ${queryParts.join(' ')}`;
+            document.getElementById('googleSearchFrame').src = url;
+            modal.classList.remove('hidden');
         }
         window.searchGoogleProduct = searchGoogleProduct;
 
