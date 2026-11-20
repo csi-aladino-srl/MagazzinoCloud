@@ -3763,11 +3763,11 @@ toast: (msg, type='info') => {
                     overlay.className = 'fixed inset-0 z-[60] hidden flex flex-col justify-end';
                     overlay.innerHTML = `
                         <div onclick="ui.closeAllQuickEdits()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-[2px] transition-opacity"></div>
-                        <div class="relative z-[70] w-full bg-white dark:bg-slate-900 rounded-t-3xl border-t border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden animate-sheet-up" style="padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));">
+                        <div class="relative z-[70] w-full sm:max-w-lg sm:mx-auto sm:rounded-3xl sm:border sm:mb-4 bg-white dark:bg-slate-900 rounded-t-3xl border-t border-slate-200 dark:border-slate-700 shadow-2xl overflow-hidden animate-sheet-up" style="padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));">
                             
                             <!-- M3 App Bar Header -->
                             <div class="bg-slate-100/90 dark:bg-slate-800/85 border-b border-slate-200/80 dark:border-slate-700/80 px-4 pt-2.5 pb-3">
-                                <div class="w-10 h-1 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mb-2.5"></div>
+                                <div class="w-10 h-1 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto mb-2.5 sm:hidden"></div>
                                 <div class="flex items-start justify-between gap-3">
                                     <div class="min-w-0 flex-1">
                                         <div id="mobileQuickEditCode" class="text-base font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug break-words"></div>
@@ -3801,101 +3801,40 @@ toast: (msg, type='info') => {
                 return contentHost;
             },
 
-            openQuickEdit: (triggerEl, focusSelector = null, selectAll = false) => {
-                if (window.event) window.event.stopPropagation();
-                ui.closeAllQuickEdits();
-
-                const popup = triggerEl ? triggerEl.nextElementSibling : null;
-                if (!popup) return;
-
-                popup.setAttribute('data-quick-edit-active', 'true');
-                const isMobile = window.innerWidth < 640;
-
-                if (isMobile) {
-                    const idMatch = popup.innerHTML.match(/quickUpdate\w+\(\s*['"]([^'"]+)['"]/);
-                    const prodId = idMatch ? idMatch[1] : null;
-                    const product = (prodId && typeof products !== 'undefined')
-                        ? products.find(p => String(p.id) === String(prodId))
-                        : null;
-
-                    const row = triggerEl.closest('.product-item-row');
-                    const prodCode = product
-                        ? (product.code || '-')
-                        : (row?.querySelector('h3')?.textContent?.trim() || 'Prodotto');
-                    const prodDesc = product
-                        ? (product.description || 'Nessuna descrizione')
-                        : (row?.querySelector('p')?.textContent?.trim() || 'Nessuna descrizione');
-
-                    popup._origParent = popup.parentElement;
-                    popup._origNextSibling = popup.nextSibling;
-
-                    popup.classList.remove('hidden');
-                    ui._showMobileBottomSheet(prodCode, prodDesc, popup);
-                } else {
-                    popup.classList.remove('hidden');
-                    const rect = popup.getBoundingClientRect();
-                    if (rect.right > window.innerWidth - 16 && popup.classList.contains('left-0')) {
-                        popup.classList.remove('left-0');
-                        popup.classList.add('right-0');
-                        popup._shiftedRight = true;
-                    }
-                }
-
-                const field = focusSelector
-                    ? popup.querySelector(focusSelector)
-                    : popup.querySelector('input, textarea');
-
-                if (field) {
-                    setTimeout(() => {
-                        field.focus();
-                        if (selectAll && typeof field.select === 'function') {
-                            field.select();
-                        } else if (field.setSelectionRange && field.type !== 'number') {
-                            const len = field.value.length;
-                            field.setSelectionRange(len, len);
-                        }
-                    }, 50);
-                }
-            },
-
             openManualStockModal: (productId) => {
-                if (window.event) window.event.stopPropagation();
-                ui.closeAllQuickEdits();
+                const product = products.find(p => String(p.id) === String(productId));
+                if (!product) return;
 
-                const product = (typeof products !== 'undefined')
-                    ? products.find(p => String(p.id) === String(productId))
-                    : null;
-                if (!product || product.isInventoryLocked) return;
+                if (product.isInventoryLocked && isCurrentListInventory()) {
+                    ui.toast("Articolo bloccato/consolidato. Sbloccalo per modificarlo.", "error");
+                    return;
+                }
 
                 const currentStock = (product.stock !== undefined && product.stock !== '' && !isNaN(Number(product.stock)))
                     ? Number(product.stock)
                     : 0;
 
-                if (window.innerWidth < 640) {
+                if (window.innerWidth < 768) {
                     const safeId = String(product.id).replace(/'/g, "\\'");
                     const sheetHtml = `
-                        <div>
-                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Quantità Inventariata</div>
-                            <div class="flex items-center gap-2 mb-3">
-                                <button type="button" onclick="const inp = document.getElementById('mobileManualStockInput'); inp.value = Number(inp.value || 0) - 1;" class="w-11 h-11 bg-slate-100 dark:bg-slate-700 rounded-2xl font-bold text-xl flex items-center justify-center text-slate-700 dark:text-slate-200 active:scale-90 shrink-0">−</button>
-                                <input id="mobileManualStockInput" type="number" inputmode="numeric" value="${currentStock}"
-                                       onkeydown="if(event.key==='Enter'){ const v = this.value.trim(); dbLogic.quickUpdateStock('${safeId}', v === '' ? 0 : Number(v)); ui.closeAllQuickEdits(); }"
-                                       class="w-full bg-slate-50 dark:bg-slate-900 border rounded-2xl px-2 py-2.5 text-center text-xl font-bold text-blue-600 border-slate-200 dark:border-slate-700 focus:outline-none focus:border-blue-500">
-                                <button type="button" onclick="const inp = document.getElementById('mobileManualStockInput'); inp.value = Number(inp.value || 0) + 1;" class="w-11 h-11 bg-slate-100 dark:bg-slate-700 rounded-2xl font-bold text-xl flex items-center justify-center text-slate-700 dark:text-slate-200 active:scale-90 shrink-0">+</button>
+                        <div class="space-y-4">
+                            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">Inserisci Quantità Esatta</div>
+                            <div class="flex items-center gap-2.5">
+                                <button type="button" onclick="const inp = document.getElementById('mobileManualStockInput'); inp.value = Number(inp.value || 0) - 1;" class="w-14 h-14 bg-slate-100 dark:bg-slate-800 rounded-2xl font-black text-2xl flex items-center justify-center text-slate-700 dark:text-slate-200 active:scale-90 shrink-0">−</button>
+                                <input type="number" id="mobileManualStockInput" value="${currentStock}" class="w-full m3-input bg-slate-50 dark:bg-slate-800 font-black text-3xl text-center text-blue-600 h-14" onkeydown="if(event.key==='Enter'){ const v = this.value; if(v!=='' && !isNaN(Number(v))){ ui.closeAllQuickEdits(); dbLogic.quickUpdateStock('${safeId}', Number(v)); } }">
+                                <button type="button" onclick="const inp = document.getElementById('mobileManualStockInput'); inp.value = Number(inp.value || 0) + 1;" class="w-14 h-14 bg-blue-600 text-white rounded-2xl font-black text-2xl flex items-center justify-center active:scale-90 shrink-0">+</button>
                             </div>
-                            <div class="flex gap-2">
-                                <button type="button" onclick="const v = document.getElementById('mobileManualStockInput').value.trim(); dbLogic.quickUpdateStock('${safeId}', v === '' ? 0 : Number(v)); ui.closeAllQuickEdits();" class="flex-1 btn-theme text-white py-2.5 rounded-xl text-xs font-bold active:scale-95 transition-transform">Salva</button>
-                                <button type="button" onclick="ui.closeAllQuickEdits()" class="px-4 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 py-2.5 rounded-xl text-xs font-bold active:scale-95 transition-transform">Annulla</button>
+                            <div class="flex gap-2.5 pt-1">
+                                <button type="button" onclick="ui.closeAllQuickEdits()" class="flex-1 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 py-3.5 px-4 rounded-2xl font-bold text-sm">Annulla</button>
+                                <button type="button" onclick="const v = document.getElementById('mobileManualStockInput').value; if(v==='' || isNaN(Number(v))){ ui.toast('Inserisci un numero valido', 'error'); } else { ui.closeAllQuickEdits(); dbLogic.quickUpdateStock('${safeId}', Number(v)); }" class="flex-1 btn-theme py-3.5 px-4 rounded-2xl font-bold text-sm shadow-sm">Conferma</button>
                             </div>
                         </div>
                     `;
-
                     ui._showMobileBottomSheet(
                         product.code || '-',
                         product.description || 'Nessuna descrizione',
                         sheetHtml
                     );
-
                     const inputEl = document.getElementById('mobileManualStockInput');
                     if (inputEl) {
                         setTimeout(() => {
@@ -3917,6 +3856,127 @@ toast: (msg, type='info') => {
                     inputEl.focus();
                     inputEl.select();
                 }, 100);
+            },
+
+            openConsolidatedDetails: (productId) => {
+                const product = products.find(p => String(p.id) === String(productId));
+                if (!product) return;
+
+                const stockVal = (product.stock !== undefined && product.stock !== '' && !isNaN(Number(product.stock)))
+                    ? Number(product.stock)
+                    : 0;
+                const origStockVal = (product.originalStock !== undefined && product.originalStock !== null && product.originalStock !== '' && !isNaN(Number(product.originalStock)))
+                    ? Number(product.originalStock)
+                    : stockVal;
+                const delta = stockVal - origStockVal;
+                const deltaFormatted = delta > 0 ? `+${delta}` : `${delta}`;
+                const deltaColor = delta > 0
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : (delta < 0 ? 'text-red-600 dark:text-red-400' : 'text-slate-600 dark:text-slate-300');
+
+                let dateFormatted = 'Non disponibile';
+                if (product.consolidatedAt) {
+                    const d = new Date(product.consolidatedAt);
+                    if (!isNaN(d.getTime())) {
+                        dateFormatted = d.toLocaleString('it-IT', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                    }
+                }
+
+                const operatorName = product.consolidatedBy || 'Operatore sconosciuto';
+                const safeId = String(product.id).replace(/'/g, "\\'");
+
+                const sheetHtml = `
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-3 gap-2 text-center">
+                            <div class="bg-slate-50 dark:bg-slate-800/80 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-700">
+                                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Originale</div>
+                                <div class="text-lg font-extrabold text-slate-700 dark:text-slate-200 mt-0.5">${origStockVal}</div>
+                            </div>
+                            <div class="bg-emerald-50 dark:bg-emerald-950/40 p-3 rounded-2xl border border-emerald-200 dark:border-emerald-800">
+                                <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Conteggiata</div>
+                                <div class="text-lg font-black text-emerald-900 dark:text-white mt-0.5">${stockVal}</div>
+                            </div>
+                            <div class="bg-slate-50 dark:bg-slate-800/80 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-700">
+                                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Delta</div>
+                                <div class="text-lg font-extrabold ${deltaColor} mt-0.5">${deltaFormatted}</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700 space-y-2 text-xs">
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-500 dark:text-slate-400 font-medium"><i class="fa-solid fa-user-check mr-1.5 text-emerald-600"></i>Consolidato da</span>
+                                <span class="font-bold text-slate-900 dark:text-white">${ui.escapeHtml(operatorName)}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-500 dark:text-slate-400 font-medium"><i class="fa-regular fa-clock mr-1.5 text-blue-600"></i>Data e ora</span>
+                                <span class="font-mono font-bold text-slate-800 dark:text-slate-200">${ui.escapeHtml(dateFormatted)}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2.5 pt-1">
+                            <button type="button" onclick="ui.closeAllQuickEdits()" class="flex-1 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 py-3.5 px-4 rounded-2xl font-bold text-sm">
+                                Chiudi
+                            </button>
+                            ${isAdminUser() ? `
+                            <button type="button" onclick="ui.closeAllQuickEdits(); dbLogic.unlockStock('${safeId}');" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white py-3.5 px-4 rounded-2xl font-bold text-sm shadow-sm flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-lock-open"></i> Sblocca
+                            </button>` : ''}
+                        </div>
+                    </div>
+                `;
+
+                ui._showMobileBottomSheet(
+                    product.code || '-',
+                    product.description || 'Nessuna descrizione',
+                    sheetHtml
+                );
+            },
+
+            openQuickEdit: (triggerEl, explicitPopup = null, isLocation = false) => {
+                if (window.event) window.event.stopPropagation();
+                ui.closeAllQuickEdits();
+
+                const popup = explicitPopup || (triggerEl ? triggerEl.nextElementSibling : null);
+                if (!popup) return;
+
+                popup.classList.remove('hidden');
+                popup.setAttribute('data-quick-edit-active', 'true');
+
+                if (window.innerWidth < 768) {
+                    const row = triggerEl ? triggerEl.closest('.product-item-row') : null;
+                    const codeEl = row ? row.querySelector('h3, .text-blue-600.font-bold') : null;
+                    const descEl = row ? row.querySelector('p, .text-blue-700.font-semibold') : null;
+                    const codeText = codeEl ? codeEl.textContent.trim() : 'Modifica Rapida';
+                    const descText = descEl ? descEl.textContent.trim() : '';
+
+                    popup._origParent = popup.parentNode;
+                    popup._origNextSibling = popup.nextSibling;
+
+                    ui._showMobileBottomSheet(codeText, descText, popup);
+                } else {
+                    const rect = popup.getBoundingClientRect();
+                    if (rect.right > window.innerWidth - 16 && popup.classList.contains('left-0')) {
+                        popup.classList.remove('left-0');
+                        popup.classList.add('right-0');
+                        popup._shiftedRight = true;
+                    }
+                }
+
+                const field = popup.querySelector('input, textarea');
+                if (field) {
+                    setTimeout(() => {
+                        field.focus();
+                        if (typeof field.select === 'function' && field.tagName === 'INPUT') {
+                            field.select();
+                        }
+                    }, 50);
+                }
             },
 
             closeQuickEdit: (el) => {
@@ -4318,45 +4378,42 @@ toast: (msg, type='info') => {
 
                         let inventoryStepperWidget = '';
                         if (isLocked) {
+                            const adminUser = isAdminUser();
+                            const safeId = String(item.id).replace(/'/g, "\\'");
                             inventoryStepperWidget = `
-                                <div class="max-w-full sm:flex-initial">
-                                    <div class="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-500 sm:border-2 rounded-2xl px-2.5 py-1.5 sm:p-2.5 shadow-xs flex flex-row sm:flex-col items-center sm:items-stretch justify-between gap-2.5 sm:gap-1 w-fit max-w-full sm:w-60">
-                                        <div class="flex items-center justify-between gap-2.5 min-w-0">
-                                            <div class="flex items-center gap-2 min-w-0">
-                                                <div class="w-6 h-6 rounded-lg bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shrink-0">
-                                                    <i class="fa-solid fa-check"></i>
-                                                </div>
-                                                <div class="flex items-center sm:flex-col sm:items-start gap-1.5 sm:gap-0 min-w-0">
-                                                    <span class="hidden sm:inline text-[9px] font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider leading-none">CONSOLIDATO</span>
-                                                    <div class="flex items-center gap-1 sm:mt-0.5">
-                                                        <span class="text-base sm:text-sm font-black text-emerald-950 dark:text-white leading-none">${stockVal}</span>
-                                                        ${deltaBadge}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Operatore e Data compatti inline su mobile -->
-                                            ${(dateStr || opStr) ? `
-                                                <div class="flex sm:hidden flex-col justify-center min-w-0 leading-tight text-[10px] text-emerald-900 dark:text-emerald-300 border-l border-emerald-200 dark:border-emerald-800 pl-2">
-                                                    ${opStr ? `<span class="font-bold truncate">${ui.escapeHtml(opStr)}</span>` : ''}
-                                                    ${dateStr ? `<span class="opacity-80 whitespace-nowrap">${dateStr}</span>` : ''}
-                                                </div>
-                                            ` : ''}
-
-                                            <button onclick="dbLogic.unlockStock('${item.id}')" class="min-h-[36px] sm:min-h-0 px-3 py-1.5 sm:px-2.5 sm:py-1 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-xs sm:text-[11px] border border-emerald-300 dark:border-slate-700 flex items-center gap-1.5 shadow-2xs hover:bg-slate-50 active:scale-95 transition-all shrink-0">
-                                                <i class="fa-solid fa-pen text-blue-600 text-[10px]"></i>
-                                                <span class="hidden min-[370px]:inline">Modifica</span>
-                                            </button>
-                                        </div>
-
-                                        <!-- Pillola Operatore e Data estesa su Desktop -->
-                                        ${(dateStr || opStr) ? `
-                                            <div class="hidden sm:flex items-center justify-between gap-2 text-[10px] text-emerald-900 dark:text-emerald-300 font-medium bg-emerald-100/80 dark:bg-emerald-900/40 px-2 py-1 rounded-xl border border-emerald-200/60 dark:border-emerald-800/50">
-                                                ${opStr ? `<span class="truncate">Op: <b>${ui.escapeHtml(opStr)}</b></span>` : '<span></span>'}
-                                                ${dateStr ? `<span class="shrink-0 opacity-90">${dateStr}</span>` : ''}
-                                            </div>
-                                        ` : ''}
+                                <!-- MOBILE: Chip compatto che apre il Bottom Sheet -->
+                                <${adminUser ? `button type="button" onclick="ui.openConsolidatedDetails('${safeId}')"` : 'div'}
+                                    class="flex md:hidden inline-flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/35 border border-emerald-500/80 dark:border-emerald-700 rounded-2xl px-3 py-1.5 shadow-2xs shrink-0 ${adminUser ? 'cursor-pointer hover:bg-emerald-100/80 dark:hover:bg-emerald-900/40 active:scale-95 transition-all' : ''}"
+                                    ${adminUser ? 'title="Tocca per dettagli consolidamento e sblocco"' : ''}>
+                                    <div class="w-6 h-6 rounded-lg bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                                        <i class="fa-solid fa-check"></i>
                                     </div>
+                                    <span class="text-base font-black text-emerald-950 dark:text-white leading-none">${stockVal}</span>
+                                    ${deltaBadge}
+                                    ${adminUser ? `<i class="fa-solid fa-chevron-up text-[10px] text-emerald-700/80 dark:text-emerald-300/80 ml-0.5 shrink-0"></i>` : ''}
+                                </${adminUser ? 'button' : 'div'}>
+
+                                <!-- DESKTOP: Tutto in vista senza pannello -->
+                                <div class="hidden md:flex items-center gap-2.5 bg-emerald-50 dark:bg-emerald-950/35 border border-emerald-500/80 dark:border-emerald-700 rounded-2xl px-3 py-1.5 shadow-2xs shrink-0">
+                                    <div class="w-6 h-6 rounded-lg bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                                        <i class="fa-solid fa-check"></i>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-sm font-black text-emerald-950 dark:text-white leading-none">${stockVal}</span>
+                                        ${deltaBadge}
+                                    </div>
+                                    ${(opStr || dateStr) ? `
+                                    <div class="flex flex-col border-l border-emerald-300/80 dark:border-emerald-800 pl-2.5 text-[11px] leading-tight text-emerald-900 dark:text-emerald-200">
+                                        ${opStr ? `<span class="font-bold"><i class="fa-solid fa-user-check text-[9px] mr-1 opacity-75"></i>${ui.escapeHtml(opStr)}</span>` : ''}
+                                        ${dateStr ? `<span class="text-[10px] text-emerald-700 dark:text-emerald-300/80 font-mono">${ui.escapeHtml(dateStr)}</span>` : ''}
+                                    </div>` : ''}
+                                    ${adminUser ? `
+                                    <button type="button" onclick="dbLogic.unlockStock('${safeId}')"
+                                        class="ml-1 px-2.5 py-1.5 bg-white hover:bg-amber-50 dark:bg-slate-800 dark:hover:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700 rounded-xl text-[11px] font-bold flex items-center gap-1 shadow-2xs transition-all active:scale-95 cursor-pointer"
+                                        title="Sblocca articolo per modificare la quantità">
+                                        <i class="fa-solid fa-lock-open text-[10px]"></i>
+                                        <span>Sblocca</span>
+                                    </button>` : ''}
                                 </div>
                             `;
                         } else {
