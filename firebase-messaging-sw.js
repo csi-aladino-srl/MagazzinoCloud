@@ -49,7 +49,7 @@ self.addEventListener('notificationclick', (event) => {
     event.notification.close();
     
     // Usa l'URL nei dati o forza warehouse.html come percorso assoluto dell'host
-    const targetUrl = event.notification.data?.url || `${self.location.origin}/warehouse.html`;
+    const targetUrl = event.notification.data?.url || `${self.location.origin}/MagazzinoCloud/warehouse.html`;
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
