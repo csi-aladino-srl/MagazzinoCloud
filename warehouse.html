@@ -1764,10 +1764,13 @@ window.catalogLogic = {
             if (!modal) {
                 modal = document.createElement('div');
                 modal.id = 'googleSearchModal';
-                modal.className = 'fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-[125] flex flex-col p-2 sm:p-4';
+                modal.className = 'fixed inset-0 bg-slate-950/65 backdrop-blur-sm z-[125] flex items-end md:items-center justify-center p-0 md:p-4';
                 modal.innerHTML = `
-                    <div class="bg-white dark:bg-slate-900 w-full h-full max-w-5xl mx-auto rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800">
-                        <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0">
+                    <div class="bg-white dark:bg-slate-900 w-full h-[85vh] md:h-full md:max-w-5xl rounded-t-3xl md:rounded-3xl shadow-2xl flex flex-col overflow-hidden border-t md:border border-slate-200 dark:border-slate-800 animate-sheet-up md:animate-none" style="padding-bottom: env(safe-area-inset-bottom);">
+                        <div class="md:hidden pt-2.5 pb-1 flex justify-center shrink-0">
+                            <div class="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-700"></div>
+                        </div>
+                        <div class="px-4 py-2.5 md:py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0">
                             <span class="text-sm font-bold truncate" id="googleSearchTitle">Ricerca Google</span>
                             <button type="button" onclick="document.getElementById('googleSearchModal').classList.add('hidden')" class="w-9 h-9 rounded-full bg-slate-200/70 dark:bg-slate-800 flex items-center justify-center">
                                 <i class="fa-solid fa-xmark"></i>
