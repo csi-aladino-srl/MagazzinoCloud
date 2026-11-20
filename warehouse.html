@@ -3879,41 +3879,40 @@ toast: (msg, type='info') => {
                 if (announcements.length > 0) {
                     const gridColsClass = announcements.length > 1 ? 'md:grid-cols-2' : 'md:grid-cols-1';
                     
-                    html += `<section aria-label="Avvisi in evidenza" class="mb-3 md:mb-5 flex md:grid ${gridColsClass} gap-2.5 md:gap-3.5 overflow-x-auto snap-x snap-mandatory no-scrollbar">`;
+                    html += `<section aria-label="Avvisi in evidenza" class="mb-2.5 sm:mb-4 grid grid-cols-1 ${gridColsClass} gap-1.5 sm:gap-2.5">`;
                     
                     announcements.forEach((ann, idx) => {
                         const titleText = (typeof ann === 'object' && ann.title) ? ann.title : 'Comunicazione';
                         const bodyText = (typeof ann === 'object') ? (ann.text || '') : ann;
                         const iconClass = idx === 0 ? 'fa-bullhorn' : 'fa-circle-info';
-                        const mobileCardWidth = announcements.length > 1 ? 'min-w-[84%] sm:min-w-[65%] md:min-w-0' : 'w-full';
 
                         html += `
-                        <article class="m3e-notice-card ${mobileCardWidth} snap-start shrink-0 p-3 sm:p-5 !rounded-2xl sm:!rounded-[28px] flex items-start justify-between gap-2.5 sm:gap-4 relative overflow-hidden">
-                            <div class="pointer-events-none absolute -right-6 -bottom-6 w-24 h-24 sm:w-28 sm:h-28 rounded-full opacity-[0.07]" style="background-color: var(--md-sys-color-primary);"></div>
-
-                            <div class="flex items-start gap-2.5 sm:gap-4 min-w-0 flex-1 relative z-10">
-                                <div class="m3e-notice-icon-box w-9 h-9 sm:w-12 sm:h-12 !rounded-xl sm:!rounded-[18px] flex items-center justify-center shrink-0">
-                                    <i class="fa-solid ${iconClass} text-sm sm:text-lg"></i>
+                        <article onclick="const p = this.querySelector('.notice-body'); if (p) p.classList.toggle('line-clamp-2');"
+                                 class="m3e-notice-card px-3 py-2 sm:px-3.5 sm:py-2.5 !rounded-xl sm:!rounded-2xl flex items-center justify-between gap-2.5 cursor-pointer transition-all"
+                                 title="Tocca per espandere o ridurre il testo">
+                            
+                            <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                                <div class="m3e-notice-icon-box w-7 h-7 sm:w-8 sm:h-8 !rounded-lg flex items-center justify-center shrink-0">
+                                    <i class="fa-solid ${iconClass} text-xs sm:text-sm"></i>
                                 </div>
 
                                 <div class="min-w-0 flex-1">
-                                    <div class="flex items-center gap-2 flex-wrap mb-1 sm:mb-1.5">
-                                        <span class="m3e-notice-chip inline-flex items-center gap-1.5 px-2.5 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider leading-none">
-                                            <span class="w-1.5 h-1.5 rounded-full" style="background-color: var(--md-sys-color-primary);"></span>
+                                    <div class="flex items-center gap-1.5 leading-none mb-0.5">
+                                        <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background-color: var(--md-sys-color-primary);"></span>
+                                        <span class="text-[10px] font-extrabold uppercase tracking-wider truncate" style="color: var(--md-sys-color-primary);">
                                             ${ui.escapeHtml(titleText)}
                                         </span>
                                     </div>
 
-                                    <p class="text-xs sm:text-[15px] font-semibold leading-snug whitespace-pre-line break-words opacity-95">
+                                    <p class="notice-body text-xs sm:text-[13px] font-medium leading-snug line-clamp-2 break-words opacity-95">
                                         ${ui.escapeHtml(bodyText)}
                                     </p>
                                 </div>
                             </div>
 
                             ${isAdminUser() ? `
-                            <button onclick="ui.openAnnouncementModal()" class="m3e-notice-action-btn p-2 sm:px-3 sm:py-1.5 text-xs font-bold flex items-center gap-1.5 shrink-0 relative z-10 cursor-pointer" title="Modifica avvisi">
+                            <button onclick="event.stopPropagation(); ui.openAnnouncementModal();" class="m3e-notice-action-btn w-7 h-7 sm:w-8 sm:h-8 !p-0 !rounded-lg flex items-center justify-center shrink-0 cursor-pointer" title="Modifica avvisi">
                                 <i class="fa-solid fa-pen text-[10px]"></i>
-                                <span class="hidden sm:inline">Modifica</span>
                             </button>
                             ` : ''}
                         </article>`;
