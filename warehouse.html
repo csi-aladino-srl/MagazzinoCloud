@@ -1757,7 +1757,7 @@ window.catalogLogic = {
             if (code && code.trim()) queryParts.push(code.trim());
             const searchQuery = encodeURIComponent(queryParts.join(' '));
             if (searchQuery) {
-                window.open(`https://www.google.com/search?q=${searchQuery}`, '_blank');
+                window.open(`https://www.google.com/search?q=${searchQuery}`, '_blank', 'noopener');
             }
         }
         window.searchGoogleProduct = searchGoogleProduct;
