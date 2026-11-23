@@ -83,6 +83,68 @@
         }
 
         /* ================================================================= */
+/* ANIMAZIONE SPUNTA COMPLETAMENTO UBICAZIONE                        */
+/* ================================================================= */
+@keyframes locDonePopIn {
+    0% { opacity: 0; transform: scale(0.82) translateY(14px); }
+    65% { opacity: 1; transform: scale(1.03) translateY(0); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes locDonePopOut {
+    0% { opacity: 1; transform: scale(1) translateY(0); }
+    100% { opacity: 0; transform: scale(0.92) translateY(-10px); }
+}
+
+@keyframes locCheckCircleDraw {
+    0% { stroke-dashoffset: 166; }
+    100% { stroke-dashoffset: 0; }
+}
+
+@keyframes locCheckMarkDraw {
+    0% { stroke-dashoffset: 48; }
+    100% { stroke-dashoffset: 0; }
+}
+
+@keyframes locCheckBounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.12); }
+}
+
+@keyframes locProgressShrink {
+    0% { width: 100%; }
+    100% { width: 0%; }
+}
+
+.loc-done-card-in {
+    animation: locDonePopIn 0.35s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+}
+
+.loc-done-card-out {
+    animation: locDonePopOut 0.25s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+.loc-check-svg {
+    animation: locCheckBounce 0.45s cubic-bezier(0.2, 0.9, 0.3, 1) 0.42s both;
+}
+
+.loc-check-circle {
+    stroke-dasharray: 166;
+    stroke-dashoffset: 166;
+    animation: locCheckCircleDraw 0.45s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.loc-check-path {
+    stroke-dasharray: 48;
+    stroke-dashoffset: 48;
+    animation: locCheckMarkDraw 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.32s forwards;
+}
+
+.loc-done-timer-bar {
+    animation: locProgressShrink 2.2s linear forwards;
+}
+
+        /* ================================================================= */
 /* MATERIAL 3 EXPRESSIVE - BACHECA AVVISI IN EVIDENZA                */
 /* ================================================================= */
 .m3e-notice-card {
@@ -225,6 +287,62 @@
                 background-color: var(--md-sys-color-on-surface-variant);
                 opacity: 0.4;
             }
+        }
+
+        /* ================================================================= */
+        /* MOBILE COMPACT NOTICE BAR & INFINITE NEWS TICKER                  */
+        /* ================================================================= */
+        @keyframes m3eTickerScroll {
+            0% {
+                transform: translate3d(0, 0, 0);
+            }
+            100% {
+                transform: translate3d(-50%, 0, 0);
+            }
+        }
+
+        .m3e-ticker-viewport {
+            overflow: hidden;
+            position: relative;
+        }
+
+        .m3e-ticker-viewport.has-fade {
+            -webkit-mask-image: linear-gradient(to right, #000 0%, #000 92%, transparent 100%);
+            mask-image: linear-gradient(to right, #000 0%, #000 92%, transparent 100%);
+        }
+
+        .m3e-ticker-track {
+            display: inline-flex;
+            align-items: center;
+            white-space: nowrap;
+            will-change: transform;
+        }
+
+        .m3e-ticker-track.is-scrolling {
+            animation: m3eTickerScroll var(--ticker-duration, 14s) linear infinite;
+        }
+
+        .m3e-ticker-track.is-scrolling:hover,
+        .m3e-ticker-track.is-scrolling:active {
+            animation-play-state: paused;
+        }
+
+        .m3e-ticker-group {
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .m3e-ticker-track.is-scrolling .m3e-ticker-group {
+            padding-right: 2.5rem;
+        }
+
+        .m3e-ticker-clone {
+            display: none;
+        }
+
+        .m3e-ticker-track.is-scrolling .m3e-ticker-clone {
+            display: inline-flex;
         }
 
         /* Mobile Quick-Edit Bottom Sheet */
@@ -402,6 +520,57 @@
             border-color: var(--md-sys-color-primary);
             box-shadow: 0 0 0 2px var(--md-sys-color-primary-container);
         }
+
+        /* ================================================================= */
+/* MATERIAL 3 EXPRESSIVE - FLOATING TOOLBAR & SEARCH (MOBILE)        */
+/* ================================================================= */
+@keyframes m3FloatingSearchIn {
+    0% { opacity: 0; transform: translateY(12px) scale(0.96); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.m3-floating-search-enter {
+    animation: m3FloatingSearchIn 0.22s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+}
+
+.m3-expressive-toolbar {
+    background-color: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 24%, transparent);
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.08);
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+.dark .m3-expressive-toolbar {
+    background-color: color-mix(in srgb, var(--md-sys-color-primary) 22%, #13171d);
+    color: #f1f5f9;
+    border-color: color-mix(in srgb, var(--md-sys-color-primary) 38%, transparent);
+    box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.55);
+}
+
+.m3-expressive-fab {
+    background-color: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    border-radius: 1.15rem;
+    box-shadow: 0 8px 22px -4px color-mix(in srgb, var(--md-sys-color-primary) 48%, transparent), 0 2px 6px rgba(0, 0, 0, 0.12);
+    transition: transform 0.18s cubic-bezier(0.2, 0, 0, 1), background-color 0.25s ease;
+}
+
+.m3-expressive-fab:active {
+    transform: scale(0.92);
+}
+
+.m3-themed-select {
+    background-color: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+    border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent);
+}
+
+.dark .m3-themed-select {
+    background-color: color-mix(in srgb, var(--md-sys-color-primary) 24%, #1e293b);
+    color: #f8fafc;
+    border-color: color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent);
+}
     </style>
 </head>
 <body class="h-full w-full m-0 p-0 flex overflow-hidden text-slate-900 dark:bg-slate-950 dark:text-slate-100 relative">
@@ -757,40 +926,85 @@
 </div>
         </main>
 
-<!-- Mobile Floating Action Buttons (FABs) -->
-<div class="md:hidden fixed bottom-24 right-4 z-50 flex flex-col gap-3.5 items-center">
 
-    <!-- Tasto Libro Consultazione Ubicazioni (Mobile) -->
-    <button id="mobileCatalogBtn" onclick="catalogLogic.openModal()" class="hidden md:hidden m3-fab w-14 h-14 items-center justify-center text-xl shadow-2xl active:scale-90 transition-transform bg-blue-600 text-white">
-        <i class="fa-solid fa-book"></i>
-    </button>
-    
-    <!-- Tasto + Nuovo Prodotto -->
-    <button onclick="ui.openProductModal()" class="m3-fab w-14 h-14 flex items-center justify-center text-2xl shadow-2xl active:scale-90 transition-transform">
-        <i class="fa-solid fa-plus"></i>
-    </button>
-</div>
+<!-- ================================================================= -->
+<!-- MATERIAL 3 EXPRESSIVE FLOATING TOOLBAR + FAB (MOBILE UNIFICATO)   -->
+<!-- ================================================================= -->
+<div id="mobileFloatingWrapper"
+     class="md:hidden fixed left-3 right-3 z-50 flex flex-col items-center gap-2.5 pointer-events-none"
+     style="bottom: calc(1rem + env(safe-area-inset-bottom, 0px));">
 
-    <!-- Mobile Bottom Navigation Bar & Search -->
-    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 z-40 px-3 pt-2.5 pb-3" style="padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));">
-        <div class="flex items-center gap-2">
-            <select id="searchFieldMobile" class="bg-slate-100 dark:bg-slate-800 border-none rounded-2xl px-3.5 h-12 text-xs font-bold text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 cursor-pointer shrink-0" title="Parametro di ricerca">
-                <option value="code">Codice</option>
-                <option value="location">Ubicazione</option>
-                <option value="description">Descrizione</option>
-                <option value="brand">Marchio</option>
-                <option value="all">Tutti</option>
-            </select>
-            <div class="relative flex-1">
-                <i class="fa-solid fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" id="searchInputMobile" placeholder="Cerca codice..." 
-                       class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-2xl pl-10 pr-11 h-12 text-sm focus:ring-2 focus:ring-blue-500">
-                <button id="clearSearchMobile" class="absolute right-1 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 active:bg-slate-200/70 dark:active:bg-slate-700 rounded-full hidden w-10 h-10 flex items-center justify-center">
-                    <i class="fa-solid fa-xmark text-base"></i>
+    <!-- Barra di Ricerca Material a comparsa (si apre premendo la lente) -->
+    <div id="mobileSearchPanel"
+         class="hidden pointer-events-auto w-full max-w-md bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-3xl p-2 shadow-2xl border border-slate-200 dark:border-slate-700 m3-floating-search-enter">
+        <div class="flex items-center gap-1.5">
+            <!-- Tendina Parametro di Ricerca -->
+            <div class="relative shrink-0">
+                <select id="searchFieldMobile"
+                        class="m3-themed-select h-11 rounded-2xl pl-3 pr-7 text-xs font-extrabold focus:outline-none cursor-pointer appearance-none"
+                        title="Parametro di ricerca">
+                    <option value="code">Codice</option>
+                    <option value="location">Ubicazione</option>
+                    <option value="description">Descrizione</option>
+                    <option value="brand">Marchio</option>
+                    <option value="all">Tutti</option>
+                </select>
+                <i class="fa-solid fa-chevron-down text-[9px] opacity-80 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+            </div>
+
+            <!-- Campo Ricerca Material -->
+            <div class="relative flex-1 min-w-0">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                <input type="text" id="searchInputMobile" placeholder="Cerca codice prodotto..."
+                       class="w-full h-11 bg-slate-100/90 dark:bg-slate-800 border-none rounded-2xl pl-8 pr-9 text-sm font-medium text-slate-900 dark:text-white focus:ring-2 focus:ring-slate-400">
+                <button type="button" id="clearSearchMobile"
+                        class="hidden absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-sm"></i>
                 </button>
             </div>
+
+            <!-- Tasto Chiudi Barra Ricerca -->
+            <button type="button" onclick="ui.toggleMobileSearch(false)"
+                    class="w-10 h-11 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-300 flex items-center justify-center shrink-0 active:scale-90 transition-transform"
+                    title="Chiudi ricerca">
+                <i class="fa-solid fa-chevron-down text-xs"></i>
+            </button>
         </div>
     </div>
+
+    <!-- Riga Toolbar Pillola + FAB (+) adiacente -->
+    <div class="pointer-events-auto flex items-center justify-center gap-2.5">
+        <!-- Pillola Toolbar M3 -->
+        <div class="m3-expressive-toolbar h-14 px-2 rounded-full flex items-center gap-1.5 backdrop-blur-md">
+            <!-- Pulsante Lente (sempre visibile: apre/chiude la ricerca) -->
+            <button type="button" id="btnToggleMobileSearch" onclick="ui.toggleMobileSearch()"
+                    class="relative w-11 h-11 rounded-full flex items-center justify-center text-lg hover:bg-black/10 dark:hover:bg-white/10 active:scale-90 transition-all cursor-pointer"
+                    title="Cerca prodotto">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <!-- Pallino attivo se c'è un filtro di ricerca inserito -->
+                <span id="mobileSearchActiveDot"
+                      class="hidden absolute top-2 right-2 w-2.5 h-2.5 rounded-full ring-2 ring-white dark:ring-slate-900"
+                      style="background-color: var(--md-sys-color-primary);"></span>
+            </button>
+
+            <!-- Divisore + Pulsante Libro (visibili SOLO in modalità Inventario) -->
+            <div id="mobileCatalogDivider" class="hidden w-px h-6 bg-current opacity-20"></div>
+
+            <button type="button" id="mobileCatalogBtn" onclick="catalogLogic.openModal()"
+                    class="hidden w-11 h-11 rounded-full items-center justify-center text-lg hover:bg-black/10 dark:hover:bg-white/10 active:scale-90 transition-all cursor-pointer"
+                    title="Consulta Ubicazioni">
+                <i class="fa-solid fa-book"></i>
+            </button>
+        </div>
+
+        <!-- FAB Adiacente (+) Nuovo Prodotto -->
+        <button type="button" onclick="ui.openProductModal()"
+                class="m3-expressive-fab w-14 h-14 flex items-center justify-center text-2xl cursor-pointer shrink-0"
+                title="Nuovo Prodotto">
+            <i class="fa-solid fa-plus"></i>
+        </button>
+    </div>
+</div>
 
     <!-- Modale Inserimento Manuale Quantità (Inventario) -->
     <div id="manualStockModal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[95] hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-200">
@@ -1977,6 +2191,9 @@ function switchList(listId, updateUrl = true) {
                     const filterConsolidatedBtn = document.getElementById('filterConsolidated');
                     const shelfToggle = document.getElementById('shelfViewToggleContainer');
                     const selectAllLabel = document.getElementById('selectAllCheckbox')?.parentElement;
+                    const mainContainer = document.getElementById('mainContainer');
+const mobileCatalogBtn = document.getElementById('mobileCatalogBtn');
+                    const mobileCatalogDivider = document.getElementById('mobileCatalogDivider');
 
                     if (list.isInventory) {
                         document.body.classList.add('is-inventory');
@@ -1984,12 +2201,15 @@ function switchList(listId, updateUrl = true) {
                         if (filterConsolidatedBtn) filterConsolidatedBtn.classList.remove('hidden');
                         if (invBadge) invBadge.classList.remove('hidden');
                         if (expDesc) expDesc.innerText = "Esporta inventario con colonna DELTA";
-                        
-                        // Mostra SOLO su mobile (flex su mobile, hidden su desktop)
+
+                        // Mostra Libro e divisore nella toolbar mobile
                         if (mobileCatalogBtn) {
-                            mobileCatalogBtn.className = "flex md:hidden m3-fab w-14 h-14 items-center justify-center text-xl shadow-2xl active:scale-90 transition-transform bg-blue-600 text-white";
+                            mobileCatalogBtn.classList.remove('hidden');
+                            mobileCatalogBtn.classList.add('flex');
                         }
-                        // Mostra SOLO su desktop (hidden su mobile, flex su desktop)
+                        if (mobileCatalogDivider) mobileCatalogDivider.classList.remove('hidden');
+
+                        // Mostra Libro su desktop
                         if (desktopCatalogBtn) {
                             desktopCatalogBtn.className = "hidden md:flex items-center justify-center w-11 h-11 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl transition-colors";
                         }
@@ -2022,10 +2242,13 @@ function switchList(listId, updateUrl = true) {
                         if (invBadge) invBadge.classList.add('hidden');
                         if (expDesc) expDesc.innerText = "Scarica la lista corrente";
 
-                        // Nascondi entrambi ovunque se non si è in inventario
+                        // Nasconde Libro e divisore nella toolbar mobile (resta solo Lente + FAB)
                         if (mobileCatalogBtn) {
-                            mobileCatalogBtn.className = "hidden md:hidden m3-fab w-14 h-14 items-center justify-center text-xl shadow-2xl active:scale-90 transition-transform bg-blue-600 text-white";
+                            mobileCatalogBtn.classList.add('hidden');
+                            mobileCatalogBtn.classList.remove('flex');
                         }
+                        if (mobileCatalogDivider) mobileCatalogDivider.classList.add('hidden');
+
                         if (desktopCatalogBtn) {
                             desktopCatalogBtn.className = "hidden md:hidden items-center justify-center w-11 h-11 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl transition-colors";
                         }
@@ -2460,11 +2683,17 @@ saveProduct: async () => {
                     return ui.toast("Nessun prodotto non inventariato rimasto in questa ubicazione.", "info");
                 }
 
+                const previewCodes = itemsToMark
+                    .slice(0, 5)
+                    .map(i => `• ${i.code || 'Senza codice'}`)
+                    .join('\n');
+                const extraCount = itemsToMark.length > 5 ? `\n...e altri ${itemsToMark.length - 5} articoli.` : '';
+
                 ui.showConfirm(
-                    "Contrassegna Non Inventariati come NQ",
-                    `Vuoi impostare l'ubicazione "NQ" per tutti i ${itemsToMark.length} prodotti rimasti NON INVENTARIATI nell'ubicazione "${targetLoc}"?`,
+                    `Sposta in NQ (Non Qui) — ${itemsToMark.length} art.`,
+                    `Stai per spostare da "${targetLoc}" all'ubicazione "NQ" (Non Qui) i seguenti articoli non ancora conteggiati:\n\n${previewCodes}${extraCount}\n\nVuoi confermare?`,
                     async () => {
-                        ui.toast(`Aggiornamento a NQ per ${targetLoc} in corso...`, "info");
+                        ui.toast(`Spostamento in NQ per ${targetLoc} in corso...`, "info");
                         try {
                             const BATCH_LIMIT = 450;
                             for (let i = 0; i < itemsToMark.length; i += BATCH_LIMIT) {
@@ -2490,8 +2719,8 @@ saveProduct: async () => {
                                 }
                             }
 
-                            auditLogic.logAction("Ubicazione NQ Massiva", `Contrassegnati come 'NQ' ${itemsToMark.length} prodotti non inventariati da '${targetLoc}'`);
-                            ui.toast(`${itemsToMark.length} prodotti di "${targetLoc}" contrassegnati come NQ`, "success");
+                            auditLogic.logAction("Ubicazione NQ Massiva", `Spostati in 'NQ' ${itemsToMark.length} prodotti non inventariati da '${targetLoc}'`);
+                            ui.toast(`${itemsToMark.length} prodotti di "${targetLoc}" spostati in NQ (Non Qui)`, "success");
                         } catch (e) {
                             console.error(e);
                             ui.toast("Errore durante l'aggiornamento a NQ", "error");
@@ -2792,6 +3021,50 @@ saveProduct: async () => {
                 item.consolidatedBy = operator;
                 ui.closeAllQuickEdits();
                 ui.refreshProductRowDOM(id);
+
+        
+
+                try {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), {
+                        stock: stockNum,
+                        originalStock: finalOrigStock,
+                        isInventoryLocked: true,
+                        consolidatedAt: nowIso,
+                        consolidatedBy: operator
+                    });
+                    auditLogic.logAction("Consolida Inventario", `Consolidato prodotto [${item.code}]: Conteggiato ${stockNum} da ${operator}`);
+                    ui.toast("Quantità confermata e salvata", "success");
+                } catch (e) {
+                    console.error(e);
+                    ui.toast("Errore di salvataggio (offline/connessione)", "error");
+                }
+            },
+
+            confirmAndLockStock: async (id) => {
+                const item = products.find(p => p.id === id);
+                if (!item) return;
+
+                const stockNum = Number(item.stock !== undefined ? item.stock : 0);
+                let finalOrigStock = item.originalStock !== undefined && item.originalStock !== null ? item.originalStock : stockNum;
+                const nowIso = new Date().toISOString();
+                const operator = currentUserOperator || 'Operatore';
+
+                item.isInventoryLocked = true;
+                item.consolidatedAt = nowIso;
+                item.consolidatedBy = operator;
+                ui.closeAllQuickEdits();
+                ui.refreshProductRowDOM(id);
+
+                // Controlla se tutti i prodotti di questa ubicazione sono ora inventariati
+                if (isCurrentListInventory()) {
+                    const itemLoc = item.location ? item.location.toUpperCase().trim() : 'SENZA UBICAZIONE';
+                    if (itemLoc && itemLoc !== 'SENZA UBICAZIONE' && itemLoc !== 'NQ') {
+                        const locItems = products.filter(p => (p.location ? p.location.toUpperCase().trim() : 'SENZA UBICAZIONE') === itemLoc);
+                        if (locItems.length > 0 && locItems.every(p => p.isInventoryLocked === true)) {
+                            ui.showLocationCompletedCelebration(itemLoc, locItems.length);
+                        }
+                    }
+                }
 
                 try {
                     await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), {
@@ -3397,6 +3670,93 @@ exportExcel: () => {
 
         window.ui = {
 
+            showLocationCompletedCelebration: (locationName, totalItems = 1) => {
+                const existing = document.getElementById('locationCompletedOverlay');
+                if (existing) existing.remove();
+
+                // Vibrazione tattile leggera su dispositivi mobile supportati
+                try {
+                    if (navigator.vibrate) navigator.vibrate([35, 30, 55]);
+                } catch (e) {}
+
+                const countText = totalItems === 1
+                    ? '1 articolo inventariato'
+                    : `Tutti i ${totalItems} articoli inventariati`;
+
+                const overlay = document.createElement('div');
+                overlay.id = 'locationCompletedOverlay';
+                overlay.className = 'fixed inset-0 z-[140] flex items-center justify-center p-4 pointer-events-none';
+                overlay.innerHTML = `
+                    <div id="locationCompletedCard"
+                         onclick="this.parentElement.remove()"
+                         class="loc-done-card-in pointer-events-auto relative overflow-hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-2 border-emerald-500 rounded-4xl shadow-2xl px-7 py-6 flex flex-col items-center text-center max-w-xs w-full cursor-pointer">
+                        
+                        <!-- Cerchio + Spunta SVG Animata -->
+                        <div class="relative w-16 h-16 mb-3 flex items-center justify-center">
+                            <span class="absolute inset-0 rounded-full bg-emerald-400/25 animate-ping"></span>
+                            <svg class="loc-check-svg w-16 h-16 relative z-10" viewBox="0 0 52 52" fill="none">
+                                <circle class="loc-check-circle" cx="26" cy="26" r="24" fill="#10b981" fill-opacity="0.14" stroke="#10b981" stroke-width="3.2" />
+                                <path class="loc-check-path" d="M15.5 26.8L22.6 33.8L36.8 19.2" stroke="#059669" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </div>
+
+                        <span class="text-[10px] font-extrabold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+                            Ubicazione Completata
+                        </span>
+
+                        <p class="text-sm font-bold text-slate-700 dark:text-slate-200 mt-1">
+                            Hai finito con l'ubicazione
+                        </p>
+
+                        <div class="mt-1.5 px-4 py-1 rounded-2xl bg-emerald-100 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-700 font-mono font-black text-2xl text-emerald-900 dark:text-emerald-300 tracking-wider">
+                            ${ui.escapeHtml(locationName)}
+                        </div>
+
+                        <span class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-2">
+                            ${countText}
+                        </span>
+
+                        <!-- Barra avanzamento chiusura automatica -->
+                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-emerald-100 dark:bg-emerald-950">
+                            <div class="loc-done-timer-bar h-full bg-emerald-500"></div>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(overlay);
+
+                setTimeout(() => {
+                    const card = document.getElementById('locationCompletedCard');
+                    if (card) {
+                        card.classList.remove('loc-done-card-in');
+                        card.classList.add('loc-done-card-out');
+                        setTimeout(() => {
+                            if (overlay && overlay.parentNode) overlay.remove();
+                        }, 250);
+                    }
+                }, 2200);
+            },
+
+            updateMobileNoticeTicker: () => {
+                const viewport = document.getElementById('mobileNoticeViewport');
+                const track = document.getElementById('mobileNoticeTrack');
+                const group = document.getElementById('mobileNoticeGroup');
+                if (!viewport || !track || !group) return;
+
+                track.classList.remove('is-scrolling');
+                viewport.classList.remove('has-fade');
+
+                const viewportWidth = viewport.clientWidth;
+                const contentWidth = group.scrollWidth;
+
+                if (viewportWidth > 0 && contentWidth > viewportWidth) {
+                    const durationSec = Math.max(8, Math.round((contentWidth / 45) * 10) / 10);
+                    track.style.setProperty('--ticker-duration', `${durationSec}s`);
+                    track.classList.add('is-scrolling');
+                    viewport.classList.add('has-fade');
+                }
+            },
+
             openModal: (id) => {
                 const el = document.getElementById(id);
                 if (!el) return;
@@ -3467,6 +3827,28 @@ exportExcel: () => {
                 }, 260);
             },
 
+            toggleMobileSearch: (forceState = null) => {
+                const panel = document.getElementById('mobileSearchPanel');
+                const btn = document.getElementById('btnToggleMobileSearch');
+                const input = document.getElementById('searchInputMobile');
+                if (!panel || !btn) return;
+
+                const shouldOpen = forceState !== null ? forceState : panel.classList.contains('hidden');
+
+                if (shouldOpen) {
+                    panel.classList.remove('hidden');
+                    btn.classList.add('btn-theme');
+                    btn.classList.remove('hover:bg-black/10', 'dark:hover:bg-white/10');
+                    setTimeout(() => {
+                        if (input) input.focus();
+                    }, 60);
+                } else {
+                    panel.classList.add('hidden');
+                    btn.classList.remove('btn-theme');
+                    btn.classList.add('hover:bg-black/10', 'dark:hover:bg-white/10');
+                }
+            },
+
             switchMainView: (viewMode) => {
                 const listContainer = document.getElementById('productsList');
                 const shelfContainer = document.getElementById('shelfViewContainer');
@@ -3474,8 +3856,7 @@ exportExcel: () => {
                 const btnShelf = document.getElementById('btnViewShelf');
                 
                 // Elementi da disattivare nella visualizzazione scaffale (Filtri, Chip, Checkbox, Barre di Ricerca, Nuovo Prodotto e Impostazioni)
-                const disabledElements = document.querySelectorAll('.filter-btn, #locationChipsContainer button, #selectAllCheckbox, #searchFieldPC, #searchInputPC, #clearSearchPC, #searchFieldMobile, #searchInputMobile, #clearSearchMobile, button[onclick="ui.openProductModal()"], button[onclick="ui.openSettingsModal()"]');
-
+                const disabledElements = document.querySelectorAll('.filter-btn, #locationChipsContainer button, #selectAllCheckbox, #searchFieldPC, #searchInputPC, #clearSearchPC, #searchFieldMobile, #searchInputMobile, #clearSearchMobile, #mobileFloatingWrapper, button[onclick="ui.openProductModal()"], button[onclick="ui.openSettingsModal()"]');
                 if (viewMode === 'shelf') {
                     if (listContainer) listContainer.classList.add('hidden');
                     if (shelfContainer) shelfContainer.classList.remove('hidden');
@@ -4336,8 +4717,48 @@ toast: (msg, type='info') => {
 
                 if (showAnnouncements && announcements.length > 0) {
                     const gridColsClass = announcements.length > 1 ? 'md:grid-cols-2' : 'md:grid-cols-1';
-                    
-                    html += `<section aria-label="Avvisi in evidenza" class="mb-2.5 sm:mb-4 grid grid-cols-1 ${gridColsClass} gap-1.5 sm:gap-2.5">`;
+
+                    // Elementi della barra compatta Mobile: puntino lampeggiante + titolo in grassetto + testo normale
+                    const mobileTickerItemsHtml = announcements.map((ann) => {
+                        const titleText = (typeof ann === 'object' && ann.title) ? ann.title : 'Comunicazione';
+                        const bodyText = (typeof ann === 'object') ? (ann.text || '') : ann;
+
+                        return `
+                            <span class="inline-flex items-center gap-1.5 shrink-0">
+                                <span class="relative flex h-2.5 w-2.5 shrink-0">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style="background-color: var(--md-sys-color-primary);"></span>
+                                    <span class="relative inline-flex rounded-full h-2.5 w-2.5" style="background-color: var(--md-sys-color-primary);"></span>
+                                </span>
+                                <span class="text-xs font-extrabold tracking-tight" style="color: var(--md-sys-color-primary);">${ui.escapeHtml(titleText)}</span>
+                                <span class="text-xs font-normal text-slate-800 dark:text-slate-100">${ui.escapeHtml(bodyText)}</span>
+                            </span>
+                        `;
+                    }).join(`<span class="text-slate-300 dark:text-slate-600 text-xs select-none">•</span>`);
+
+                    // 1) BARRA COMPATTA MOBILE (< 768px)
+                    html += `
+                    <section aria-label="Avvisi in evidenza mobile" class="md:hidden mb-2.5">
+                        <div class="px-1 py-1 flex items-center justify-between gap-2">
+                            <div id="mobileNoticeViewport" class="m3e-ticker-viewport flex-1 min-w-0 flex items-center">
+                                <div id="mobileNoticeTrack" class="m3e-ticker-track">
+                                    <div id="mobileNoticeGroup" class="m3e-ticker-group">
+                                        ${mobileTickerItemsHtml}
+                                    </div>
+                                    <div class="m3e-ticker-group m3e-ticker-clone" aria-hidden="true">
+                                        ${mobileTickerItemsHtml}
+                                    </div>
+                                </div>
+                            </div>
+                            ${isAdminUser() ? `
+                            <button onclick="event.stopPropagation(); ui.openAnnouncementModal();" class="w-7 h-7 rounded-full text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-slate-200 flex items-center justify-center shrink-0 cursor-pointer" title="Modifica avvisi">
+                                <i class="fa-solid fa-pen text-[10px]"></i>
+                            </button>
+                            ` : ''}
+                        </div>
+                    </section>`;
+
+                    // 2) CARD DESKTOP (>= 768px)
+                    html += `<section aria-label="Avvisi in evidenza" class="hidden md:grid mb-4 ${gridColsClass} gap-2.5">`;
                     
                     announcements.forEach((ann, idx) => {
                         const titleText = (typeof ann === 'object' && ann.title) ? ann.title : 'Comunicazione';
@@ -4346,12 +4767,12 @@ toast: (msg, type='info') => {
 
                         html += `
                         <article onclick="const p = this.querySelector('.notice-body'); if (p) p.classList.toggle('line-clamp-2');"
-                                 class="m3e-notice-card px-3 py-2 sm:px-3.5 sm:py-2.5 !rounded-xl sm:!rounded-2xl flex items-center justify-between gap-2.5 cursor-pointer transition-all"
+                                 class="m3e-notice-card px-3.5 py-2.5 !rounded-2xl flex items-center justify-between gap-2.5 cursor-pointer transition-all"
                                  title="Tocca per espandere o ridurre il testo">
                             
                             <div class="flex items-center gap-2.5 min-w-0 flex-1">
-                                <div class="m3e-notice-icon-box w-7 h-7 sm:w-8 sm:h-8 !rounded-lg flex items-center justify-center shrink-0">
-                                    <i class="fa-solid ${iconClass} text-xs sm:text-sm"></i>
+                                <div class="m3e-notice-icon-box w-8 h-8 !rounded-lg flex items-center justify-center shrink-0">
+                                    <i class="fa-solid ${iconClass} text-sm"></i>
                                 </div>
 
                                 <div class="min-w-0 flex-1">
@@ -4362,14 +4783,14 @@ toast: (msg, type='info') => {
                                         </span>
                                     </div>
 
-                                    <p class="notice-body text-xs sm:text-[13px] font-medium leading-snug line-clamp-2 break-words opacity-95">
+                                    <p class="notice-body text-[13px] font-medium leading-snug line-clamp-2 break-words opacity-95">
                                         ${ui.escapeHtml(bodyText)}
                                     </p>
                                 </div>
                             </div>
 
                             ${isAdminUser() ? `
-                            <button onclick="event.stopPropagation(); ui.openAnnouncementModal();" class="m3e-notice-action-btn w-7 h-7 sm:w-8 sm:h-8 !p-0 !rounded-lg flex items-center justify-center shrink-0 cursor-pointer" title="Modifica avvisi">
+                            <button onclick="event.stopPropagation(); ui.openAnnouncementModal();" class="m3e-notice-action-btn w-8 h-8 !p-0 !rounded-lg flex items-center justify-center shrink-0 cursor-pointer" title="Modifica avvisi">
                                 <i class="fa-solid fa-pen text-[10px]"></i>
                             </button>
                             ` : ''}
@@ -4526,7 +4947,7 @@ toast: (msg, type='info') => {
                     const zoneBadgeHtml = getZoneBadge(loc);
                     
                     let locProgressHtml = '';
-                    let markNqBtnHtml = '';
+                    let markNqBannerHtml = '';
                     if (isInv) {
                         const allLocItems = products.filter(p => (p.location ? p.location.toUpperCase() : 'SENZA UBICAZIONE') === loc);
                         const lockedLocItems = allLocItems.filter(p => p.isInventoryLocked === true).length;
@@ -4535,33 +4956,51 @@ toast: (msg, type='info') => {
                         locProgressHtml = `<span class="bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 text-[10px] sm:text-[11px] font-bold px-2 py-0.5 sm:px-3 sm:py-1 rounded-full border border-blue-200 dark:border-blue-800 shrink-0">${lockedLocItems}/${allLocItems.length} (${locPercent}%)</span>`;
 
                         if (uninventoriedCount > 0 && loc !== 'NQ' && loc !== 'SENZA UBICAZIONE') {
-                            markNqBtnHtml = `
-                                <button type="button"
-                                        onclick="dbLogic.markUninventoriedLocationAsNQ('${ui.escapeHtml(loc)}')"
-                                        class="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/70 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700 rounded-full text-[10px] sm:text-[11px] font-bold flex items-center gap-1 shadow-2xs transition-all active:scale-95 shrink-0 cursor-pointer"
-                                        title="Contrassegna con NQ tutti i ${uninventoriedCount} prodotti non inventariati di questa ubicazione">
-                                    <i class="fa-solid fa-tag text-[9px]"></i>
-                                    <span class="sm:hidden">→ NQ (${uninventoriedCount})</span>
-                                    <span class="hidden sm:inline">Non inv. → NQ (${uninventoriedCount})</span>
-                                </button>
+                            const missingLabelDesktop = uninventoriedCount === 1
+                                ? '1 articolo non ancora conteggiato'
+                                : `${uninventoriedCount} articoli non ancora conteggiati`;
+                            const missingLabelMobile = uninventoriedCount === 1
+                                ? '1 articolo non ancora conteggiato'
+                                : `${uninventoriedCount} articoli non ancora conteggiati`;
+
+                            markNqBannerHtml = `
+                                <div class="bg-amber-50/90 dark:bg-amber-950/35 border-b border-amber-200/80 dark:border-amber-800/50 px-3.5 py-2 sm:px-5 sm:py-2 flex items-center justify-between gap-2">
+                                    <div class="flex items-center gap-2 text-amber-900 dark:text-amber-200 min-w-0">
+                                        <span class="w-6 h-6 rounded-lg bg-amber-200/80 dark:bg-amber-900/70 text-amber-800 dark:text-amber-300 flex items-center justify-center shrink-0">
+                                            <i class="fa-solid fa-box-open text-[11px]"></i>
+                                        </span>
+                                        <span class="text-[11px] sm:text-xs font-semibold leading-tight truncate">
+                                            <span class="sm:hidden">${missingLabelMobile}</span>
+                                            <span class="hidden sm:inline">${missingLabelDesktop}</span>
+                                        </span>
+                                    </div>
+                                    <button type="button"
+                                            onclick="dbLogic.markUninventoriedLocationAsNQ('${ui.escapeHtml(loc)}')"
+                                            class="min-h-[34px] px-2.5 sm:px-3 py-1.5 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white rounded-xl text-[11px] sm:text-xs font-bold inline-flex items-center gap-1.5 shadow-xs transition-all active:scale-95 shrink-0 cursor-pointer"
+                                            title="Sposta in NQ (Non Qui) tutti gli articoli non ancora inventariati di questa ubicazione">
+                                        <i class="fa-solid fa-right-from-bracket text-[10px] sm:text-[11px]"></i>
+                                        <span>Sposta in NQ <span class="hidden sm:inline font-normal opacity-90">(Non Qui)</span></span>
+                                        <span class="bg-black/20 px-1.5 py-0.5 rounded-md text-[10px] font-extrabold leading-none">${uninventoriedCount}</span>
+                                    </button>
+                                </div>
                             `;
                         }
                     }
                     
                     html += `
                     <div class="location-card-container mb-3 sm:mb-6 m3-card !rounded-2xl sm:!rounded-3xl overflow-visible relative">
-                        <div class="${isInv ? 'bg-blue-50/70 dark:bg-blue-950/30 border-b border-blue-100 dark:border-blue-900/40' : 'bg-slate-50 dark:bg-slate-900/60 border-b border-slate-100 dark:border-slate-800'} px-3.5 py-2 sm:px-5 sm:py-3.5 flex items-center justify-between rounded-t-2xl sm:rounded-t-3xl gap-2 sm:gap-3">
+                        <div class="${isInv ? 'bg-blue-50/70 dark:bg-blue-950/30 border-b border-blue-100 dark:border-blue-900/40' : 'bg-slate-50 dark:bg-slate-900/60 border-b border-slate-100 dark:border-slate-800'} px-3.5 py-2.5 sm:px-5 sm:py-3.5 flex items-center justify-between rounded-t-2xl sm:rounded-t-3xl gap-2 sm:gap-3">
                             <div class="flex items-center gap-2 sm:gap-3 flex-wrap min-w-0">
                                 <i class="fa-solid fa-location-dot ${isInv ? 'text-blue-600' : 'text-emerald-600'} text-base sm:text-xl shrink-0"></i>
                                 <h2 class="text-base sm:text-lg font-bold font-mono tracking-wider text-slate-900 dark:text-white">${ui.escapeHtml(loc)}</h2>
                                 ${zoneBadgeHtml}
                             </div>
-                            <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-wrap justify-end">
-                                ${markNqBtnHtml}
+                            <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
                                 ${locProgressHtml}
                                 <span class="bg-white dark:bg-slate-800 text-slate-500 text-[11px] sm:text-xs font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full shadow-xs border border-slate-200 dark:border-slate-700">${items.length} Art.</span>
                             </div>
                         </div>
+                        ${markNqBannerHtml}
                         <div class="overflow-visible">
                     `;
 
@@ -4742,7 +5181,7 @@ toast: (msg, type='info') => {
                                     
                                     ${canEditLocation ? `
                                     <div class="hidden absolute top-0 left-0 z-50 bg-white dark:bg-slate-800 p-3.5 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 animate-fade-in w-64 max-w-[calc(100vw-2rem)]">
-                                        <div class="flex items-center gap-2 mb-4 sm:mb-2.5">
+                                        <div class="flex items-center gap-2 mb-3 sm:mb-2.5">
                                             <input type="text" class="w-full h-12 sm:h-10 m3-input bg-slate-50 dark:bg-slate-900 uppercase font-mono text-lg sm:text-base font-extrabold text-center sm:text-left tracking-wider text-blue-600" value="${ui.escapeHtml(item.location)}" onkeydown="if(event.key==='Enter') { dbLogic.quickUpdateLocation('${item.id}', this.value); ui.closeQuickEdit(this); }">
                                             <button type="button" onclick="dbLogic.quickUpdateLocation('${item.id}', this.previousElementSibling.value); ui.closeQuickEdit(this);" class="h-12 px-4 sm:h-10 sm:px-3 shrink-0 btn-theme rounded-2xl sm:rounded-xl font-bold text-sm sm:text-xs flex items-center justify-center gap-1.5 shadow-xs active:scale-95" title="Salva ubicazione">
                                                 <i class="fa-solid fa-check"></i>
@@ -4750,6 +5189,16 @@ toast: (msg, type='info') => {
                                             </button>
                                             <button type="button" onclick="ui.closeQuickEdit(this)" class="hidden sm:flex w-10 h-10 shrink-0 bg-slate-100 dark:bg-slate-700 text-slate-500 rounded-full hover:bg-slate-200 items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
                                         </div>
+
+                                        <!-- PULSANTE RAPIDO NQ (SOLO IN MODALITÀ INVENTARIO) -->
+                                        ${isInv && (item.location || '').toUpperCase().trim() !== 'NQ' ? `
+                                        <button type="button"
+                                                onclick="dbLogic.quickUpdateLocation('${item.id}', 'NQ'); ui.closeQuickEdit(this);"
+                                                class="w-full min-h-[44px] sm:min-h-[36px] mb-3 px-3.5 py-2.5 sm:py-2 rounded-2xl sm:rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 active:scale-[0.98] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer">
+                                            <i class="fa-solid fa-right-from-bracket"></i>
+                                            <span>Segna come NQ <span class="font-normal opacity-90">(Non Qui)</span></span>
+                                        </button>` : ''}
+
                                         <div class="text-[11px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 sm:mb-1.5 ml-1 flex items-center gap-1.5">
                                             <i class="fa-solid fa-clock-rotate-left text-[10px]"></i>
                                             <span>Ubicazioni Recenti</span>
@@ -4912,21 +5361,27 @@ toast: (msg, type='info') => {
                 }
 
                 container.innerHTML = html;
+                ui.updateMobileNoticeTicker();
             }
         };
 
         function setupSearchListeners() {
             const pcSelect = document.getElementById('searchFieldPC');
             const mobSelect = document.getElementById('searchFieldMobile');
+            const invMobSelect = document.getElementById('searchFieldInvMobile');
+
             if (pcSelect) pcSelect.value = searchField;
             if (mobSelect) mobSelect.value = searchField;
+            if (invMobSelect) invMobSelect.value = searchField;
 
             const updatePlaceholders = () => {
                 const ph = getPlaceholderForField(searchField);
                 const pcInput = document.getElementById('searchInputPC');
                 const mobInput = document.getElementById('searchInputMobile');
+                const invMobInput = document.getElementById('searchInputInvMobile');
                 if (pcInput) pcInput.placeholder = ph;
                 if (mobInput) mobInput.placeholder = ph;
+                if (invMobInput) invMobInput.placeholder = ph;
             };
             updatePlaceholders();
 
@@ -4937,31 +5392,41 @@ toast: (msg, type='info') => {
                 } catch (err) { console.warn(err); }
                 if (pcSelect) pcSelect.value = searchField;
                 if (mobSelect) mobSelect.value = searchField;
+                if (invMobSelect) invMobSelect.value = searchField;
                 updatePlaceholders();
                 ui.renderProducts();
             };
 
             if (pcSelect) pcSelect.addEventListener('change', handleFieldChange);
             if (mobSelect) mobSelect.addEventListener('change', handleFieldChange);
+            if (invMobSelect) invMobSelect.addEventListener('change', handleFieldChange);
 
             const handleSearch = (e) => {
                 searchTerm = e.target.value;
                 currentPage = 1;
                 const pcInput = document.getElementById('searchInputPC');
                 const mobInput = document.getElementById('searchInputMobile');
-                if(pcInput && pcInput.value !== searchTerm) pcInput.value = searchTerm;
-                if(mobInput && mobInput.value !== searchTerm) mobInput.value = searchTerm;
-                
+                const invMobInput = document.getElementById('searchInputInvMobile');
+
+                if (pcInput && pcInput.value !== searchTerm) pcInput.value = searchTerm;
+                if (mobInput && mobInput.value !== searchTerm) mobInput.value = searchTerm;
+                if (invMobInput && invMobInput.value !== searchTerm) invMobInput.value = searchTerm;
+
                 const btnPC = document.getElementById('clearSearchPC');
                 const btnMobile = document.getElementById('clearSearchMobile');
-                
+                const btnInvMobile = document.getElementById('clearSearchInvMobile');
+                // Dentro handleSearch:
+                const activeDot = document.getElementById('mobileSearchActiveDot');
                 if (searchTerm) {
-                    if(btnPC) btnPC.classList.remove('hidden');
-                    if(btnMobile) btnMobile.classList.remove('hidden');
+                    if (btnPC) btnPC.classList.remove('hidden');
+                    if (btnMobile) btnMobile.classList.remove('hidden');
+                    if (activeDot) activeDot.classList.remove('hidden');
                 } else {
-                    if(btnPC) btnPC.classList.add('hidden');
-                    if(btnMobile) btnMobile.classList.add('hidden');
+                    if (btnPC) btnPC.classList.add('hidden');
+                    if (btnMobile) btnMobile.classList.add('hidden');
+                    if (activeDot) activeDot.classList.add('hidden');
                 }
+
                 ui.renderProducts();
             };
 
@@ -4970,19 +5435,31 @@ toast: (msg, type='info') => {
                 currentPage = 1;
                 const pcInput = document.getElementById('searchInputPC');
                 const mobInput = document.getElementById('searchInputMobile');
-                if(pcInput) pcInput.value = '';
-                if(mobInput) mobInput.value = '';
-                document.getElementById('clearSearchPC').classList.add('hidden');
-                document.getElementById('clearSearchMobile').classList.add('hidden');
+                const invMobInput = document.getElementById('searchInputInvMobile');
+
+                if (pcInput) pcInput.value = '';
+                if (mobInput) mobInput.value = '';
+                if (invMobInput) invMobInput.value = '';
+
+                document.getElementById('clearSearchPC')?.classList.add('hidden');
+                document.getElementById('clearSearchMobile')?.classList.add('hidden');
+                document.getElementById('clearSearchInvMobile')?.classList.add('hidden');
+                document.getElementById('invSearchActiveDot')?.classList.add('hidden');
+                document.getElementById('mobileSearchActiveDot')?.classList.add('hidden');
                 ui.renderProducts();
             };
 
             const pcInput = document.getElementById('searchInputPC');
             const mobInput = document.getElementById('searchInputMobile');
+            const invMobInput = document.getElementById('searchInputInvMobile');
+
             if (pcInput) pcInput.addEventListener('input', handleSearch);
             if (mobInput) mobInput.addEventListener('input', handleSearch);
-            document.getElementById('clearSearchPC').addEventListener('click', clearSearch);
-            document.getElementById('clearSearchMobile').addEventListener('click', clearSearch);
+            if (invMobInput) invMobInput.addEventListener('input', handleSearch);
+
+            document.getElementById('clearSearchPC')?.addEventListener('click', clearSearch);
+            document.getElementById('clearSearchMobile')?.addEventListener('click', clearSearch);
+            document.getElementById('clearSearchInvMobile')?.addEventListener('click', clearSearch);
         }
 
         function getPlaceholderForField(field) {
