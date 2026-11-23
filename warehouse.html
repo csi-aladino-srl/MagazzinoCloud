@@ -2439,6 +2439,64 @@ saveProduct: async () => {
                 });
             },
 
+            markUninventoriedLocationAsNQ: (locationName) => {
+                if (!isCurrentListInventory()) return;
+                if (!locationName || locationName === 'Tutte') return;
+
+                const targetLoc = locationName.toUpperCase().trim();
+                if (targetLoc === 'NQ') {
+                    return ui.toast("Questi prodotti sono già contrassegnati come NQ.", "info");
+                }
+
+                const itemsToMark = products.filter(p => {
+                    const pLoc = p.location ? p.location.toUpperCase().trim() : 'SENZA UBICAZIONE';
+                    return pLoc === targetLoc && p.isInventoryLocked !== true;
+                });
+
+                if (itemsToMark.length === 0) {
+                    return ui.toast("Nessun prodotto non inventariato rimasto in questa ubicazione.", "info");
+                }
+
+                ui.showConfirm(
+                    "Contrassegna Non Inventariati come NQ",
+                    `Vuoi impostare l'ubicazione "NQ" per tutti i ${itemsToMark.length} prodotti rimasti NON INVENTARIATI nell'ubicazione "${targetLoc}"?`,
+                    async () => {
+                        ui.toast(`Aggiornamento a NQ per ${targetLoc} in corso...`, "info");
+                        try {
+                            const BATCH_LIMIT = 450;
+                            for (let i = 0; i < itemsToMark.length; i += BATCH_LIMIT) {
+                                const batch = writeBatch(db);
+                                const chunk = itemsToMark.slice(i, i + BATCH_LIMIT);
+                                chunk.forEach(item => {
+                                    const finalOrigLocation = item.originalLocation || item.location || targetLoc;
+                                    batch.update(doc(db, 'artifacts', appId, 'public', 'data', 'products', item.id), {
+                                        location: 'NQ',
+                                        originalLocation: finalOrigLocation
+                                    });
+                                });
+                                await batch.commit();
+                            }
+
+                            if (selectedLocationFilter === targetLoc) {
+                                const remainingInLoc = products.filter(p => {
+                                    const pLoc = p.location ? p.location.toUpperCase().trim() : 'SENZA UBICAZIONE';
+                                    return pLoc === targetLoc && p.isInventoryLocked === true;
+                                });
+                                if (remainingInLoc.length === 0) {
+                                    selectedLocationFilter = null;
+                                }
+                            }
+
+                            auditLogic.logAction("Ubicazione NQ Massiva", `Contrassegnati come 'NQ' ${itemsToMark.length} prodotti non inventariati da '${targetLoc}'`);
+                            ui.toast(`${itemsToMark.length} prodotti di "${targetLoc}" contrassegnati come NQ`, "success");
+                        } catch (e) {
+                            console.error(e);
+                            ui.toast("Errore durante l'aggiornamento a NQ", "error");
+                        }
+                    }
+                );
+            },
+
             deleteLocationProducts: (locationName) => {
                 if (!isCurrentListInventory() || !isAdminUser()) return;
                 if (!locationName || locationName === 'Tutte') return;
@@ -4446,22 +4504,38 @@ toast: (msg, type='info') => {
                     const zoneBadgeHtml = getZoneBadge(loc);
                     
                     let locProgressHtml = '';
+                    let markNqBtnHtml = '';
                     if (isInv) {
                         const allLocItems = products.filter(p => (p.location ? p.location.toUpperCase() : 'SENZA UBICAZIONE') === loc);
                         const lockedLocItems = allLocItems.filter(p => p.isInventoryLocked === true).length;
+                        const uninventoriedCount = allLocItems.length - lockedLocItems;
                         const locPercent = allLocItems.length > 0 ? Math.round((lockedLocItems / allLocItems.length) * 100) : 0;
                         locProgressHtml = `<span class="bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 text-[10px] sm:text-[11px] font-bold px-2 py-0.5 sm:px-3 sm:py-1 rounded-full border border-blue-200 dark:border-blue-800 shrink-0">${lockedLocItems}/${allLocItems.length} (${locPercent}%)</span>`;
+
+                        if (uninventoriedCount > 0 && loc !== 'NQ' && loc !== 'SENZA UBICAZIONE') {
+                            markNqBtnHtml = `
+                                <button type="button"
+                                        onclick="dbLogic.markUninventoriedLocationAsNQ('${ui.escapeHtml(loc)}')"
+                                        class="px-2.5 py-1 sm:px-3 sm:py-1.5 bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:hover:bg-amber-900/70 text-amber-900 dark:text-amber-300 border border-amber-300 dark:border-amber-700 rounded-full text-[10px] sm:text-[11px] font-bold flex items-center gap-1 shadow-2xs transition-all active:scale-95 shrink-0 cursor-pointer"
+                                        title="Contrassegna con NQ tutti i ${uninventoriedCount} prodotti non inventariati di questa ubicazione">
+                                    <i class="fa-solid fa-tag text-[9px]"></i>
+                                    <span class="sm:hidden">→ NQ (${uninventoriedCount})</span>
+                                    <span class="hidden sm:inline">Non inv. → NQ (${uninventoriedCount})</span>
+                                </button>
+                            `;
+                        }
                     }
                     
                     html += `
                     <div class="location-card-container mb-3 sm:mb-6 m3-card !rounded-2xl sm:!rounded-3xl overflow-visible relative">
-                        <div ${(isInv && isAdminUser()) ? `oncontextmenu="ui.openLocationContextMenu(event, '${ui.escapeHtml(loc)}')"` : ''} class="${isInv ? 'bg-blue-50/70 dark:bg-blue-950/30 border-b border-blue-100 dark:border-blue-900/40' : 'bg-slate-50 dark:bg-slate-900/60 border-b border-slate-100 dark:border-slate-800'} px-3.5 py-2 sm:px-5 sm:py-3.5 flex items-center justify-between rounded-t-2xl sm:rounded-t-3xl gap-2 sm:gap-3">
+                        <div class="${isInv ? 'bg-blue-50/70 dark:bg-blue-950/30 border-b border-blue-100 dark:border-blue-900/40' : 'bg-slate-50 dark:bg-slate-900/60 border-b border-slate-100 dark:border-slate-800'} px-3.5 py-2 sm:px-5 sm:py-3.5 flex items-center justify-between rounded-t-2xl sm:rounded-t-3xl gap-2 sm:gap-3">
                             <div class="flex items-center gap-2 sm:gap-3 flex-wrap min-w-0">
                                 <i class="fa-solid fa-location-dot ${isInv ? 'text-blue-600' : 'text-emerald-600'} text-base sm:text-xl shrink-0"></i>
                                 <h2 class="text-base sm:text-lg font-bold font-mono tracking-wider text-slate-900 dark:text-white">${ui.escapeHtml(loc)}</h2>
                                 ${zoneBadgeHtml}
                             </div>
-                            <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                            <div class="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-wrap justify-end">
+                                ${markNqBtnHtml}
                                 ${locProgressHtml}
                                 <span class="bg-white dark:bg-slate-800 text-slate-500 text-[11px] sm:text-xs font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full shadow-xs border border-slate-200 dark:border-slate-700">${items.length} Art.</span>
                             </div>
@@ -4495,7 +4569,11 @@ toast: (msg, type='info') => {
                         }
 
                         const pillsHtml = recentLocations.map(rLoc => 
-                            `<button onclick="dbLogic.quickUpdateLocation('${item.id}', '${ui.escapeHtml(rLoc)}'); ui.closeQuickEdit(this);" class="px-3 py-1.5 sm:px-2.5 sm:py-1 bg-slate-100 dark:bg-slate-800 hover:bg-blue-100 active:scale-95 text-slate-700 dark:text-slate-200 hover:text-blue-700 text-xs rounded-xl font-mono shrink-0 border border-slate-200 dark:border-slate-700">${ui.escapeHtml(rLoc)}</button>`
+                            `<button type="button" onclick="dbLogic.quickUpdateLocation('${item.id}', '${ui.escapeHtml(rLoc)}'); ui.closeQuickEdit(this);" 
+                                     class="min-h-[48px] sm:min-h-0 px-3.5 py-2.5 sm:px-2.5 sm:py-1.5 rounded-2xl sm:rounded-xl font-mono font-extrabold text-sm sm:text-xs tracking-wider border transition-all active:scale-95 flex items-center justify-center sm:justify-start gap-2 shadow-2xs sm:shadow-none ${isInv ? 'bg-blue-50/90 hover:bg-blue-100 text-blue-900 border-blue-200 dark:bg-blue-950/50 dark:text-blue-200 dark:border-blue-800' : 'bg-emerald-50/90 hover:bg-emerald-100 text-emerald-900 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-200 dark:border-emerald-800'}">
+                                <i class="fa-solid fa-location-dot text-xs opacity-70"></i>
+                                <span>${ui.escapeHtml(rLoc)}</span>
+                            </button>`
                         ).join('');
 
                         const delta = stockVal - origStockVal;
@@ -4638,13 +4716,21 @@ toast: (msg, type='info') => {
                                     `}
                                     
                                     <div class="hidden absolute top-0 left-0 z-50 bg-white dark:bg-slate-800 p-3.5 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 animate-fade-in w-64 max-w-[calc(100vw-2rem)]">
-                                        <div class="flex items-center gap-2 mb-2.5">
-                                            <input type="text" class="w-full m3-input bg-slate-50 dark:bg-slate-900 uppercase font-mono text-base font-bold text-blue-600" value="${ui.escapeHtml(item.location)}" onkeydown="if(event.key==='Enter') { dbLogic.quickUpdateLocation('${item.id}', this.value); ui.closeQuickEdit(this); }">
-                                            <button onclick="ui.closeQuickEdit(this)" class="w-10 h-10 shrink-0 bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                                        <div class="text-[11px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Nuova Ubicazione</div>
+                                        <div class="flex items-center gap-2 mb-4 sm:mb-2.5">
+                                            <input type="text" class="w-full h-12 sm:h-10 m3-input bg-slate-50 dark:bg-slate-900 uppercase font-mono text-lg sm:text-base font-extrabold text-center sm:text-left tracking-wider text-blue-600" value="${ui.escapeHtml(item.location)}" onkeydown="if(event.key==='Enter') { dbLogic.quickUpdateLocation('${item.id}', this.value); ui.closeQuickEdit(this); }">
+                                            <button type="button" onclick="dbLogic.quickUpdateLocation('${item.id}', this.previousElementSibling.value); ui.closeQuickEdit(this);" class="h-12 px-4 sm:h-10 sm:px-3 shrink-0 btn-theme rounded-2xl sm:rounded-xl font-bold text-sm sm:text-xs flex items-center justify-center gap-1.5 shadow-xs active:scale-95" title="Salva ubicazione">
+                                                <i class="fa-solid fa-check"></i>
+                                                <span class="sm:hidden">Salva</span>
+                                            </button>
+                                            <button type="button" onclick="ui.closeQuickEdit(this)" class="hidden sm:flex w-10 h-10 shrink-0 bg-slate-100 dark:bg-slate-700 text-slate-500 rounded-full hover:bg-slate-200 items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
                                         </div>
-                                        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Recenti</div>
-                                        <div class="flex flex-wrap gap-1.5">
-                                            ${pillsHtml || '<span class="text-xs text-slate-400 italic">Nessuna recente</span>'}
+                                        <div class="text-[11px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 sm:mb-1.5 ml-1 flex items-center gap-1.5">
+                                            <i class="fa-solid fa-clock-rotate-left text-[10px]"></i>
+                                            <span>Ubicazioni Recenti</span>
+                                        </div>
+                                        <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2.5 sm:gap-1.5">
+                                            ${pillsHtml || '<span class="col-span-2 text-xs text-slate-400 italic py-2 ml-1">Nessuna ubicazione recente</span>'}
                                         </div>
                                     </div>
                                 </div>
