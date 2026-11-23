@@ -37,7 +37,7 @@ messaging.onBackgroundMessage((payload) => {
             tag: 'magazzino-notifica-unica',
             // Cattura dinamicamente l'URL passato da Firebase (con un fallback di sicurezza)
             data: {
-                url: payload.data.url || '/'
+                url: 'https://csi-aladino-srl.github.io/MagazzinoCloud/warehouse.html'
             }
         };
         self.registration.showNotification(title, options);
@@ -49,7 +49,7 @@ self.addEventListener('notificationclick', (event) => {
     event.notification.close();
     
     // Usa l'URL nei dati o forza warehouse.html come percorso assoluto dell'host
-    const targetUrl = event.notification.data?.url || `${self.location.origin}/MagazzinoCloud/warehouse.html`;
+    const targetUrl = 'https://csi-aladino-srl.github.io/MagazzinoCloud/warehouse.html';
 
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
