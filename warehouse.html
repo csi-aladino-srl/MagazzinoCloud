@@ -2324,14 +2324,16 @@ saveProduct: async () => {
                     }
                 } else {
                     finalOrigCode = origCodeInput || code;
-                    finalOrigLocation = origLocationInput || location;
                     finalOrigDesc = origDescInput;
                     finalOrigBrand = origBrandInput;
                     finalOrigStock = origStockInput !== null ? origStockInput : stock;
                     finalOrigNote = origNoteInput;
-                    // Se stiamo creando un nuovo prodotto in modalità inventario, marchiamo la flag
+                    // Se stiamo creando un nuovo prodotto in modalità inventario, marchiamo la flag e impostiamo ubicazione originale a NQ
                     if (isCurrentListInventory()) {
                         isCreatedDuringInv = true;
+                        finalOrigLocation = origLocationInput || 'NQ';
+                    } else {
+                        finalOrigLocation = origLocationInput || location;
                     }
                 }
 
@@ -2435,6 +2437,53 @@ saveProduct: async () => {
                         ui.toast("Prodotti eliminati con successo", "success");
                     } catch (e) { console.error(e); }
                 });
+            },
+
+            deleteLocationProducts: (locationName) => {
+                if (!isCurrentListInventory() || !isAdminUser()) return;
+                if (!locationName || locationName === 'Tutte') return;
+
+                const targetLoc = locationName.toUpperCase();
+                const itemsToDelete = products.filter(p => {
+                    const pLoc = p.location ? p.location.toUpperCase() : 'SENZA UBICAZIONE';
+                    return pLoc === targetLoc;
+                });
+
+                if (itemsToDelete.length === 0) {
+                    return ui.toast("Nessun prodotto trovato in questa ubicazione.", "error");
+                }
+
+                ui.showConfirm(
+                    "Conferma Definitiva Eliminazione Ubicazione",
+                    `ATTENZIONE: stai per eliminare definitivamente l'ubicazione "${targetLoc}" e tutti i suoi ${itemsToDelete.length} articoli dall'inventario. Questa azione è irreversibile. Confermi?`,
+                    async () => {
+                        ui.toast(`Eliminazione ubicazione ${targetLoc} in corso...`, "info");
+                        try {
+                            const BATCH_LIMIT = 450;
+                            for (let i = 0; i < itemsToDelete.length; i += BATCH_LIMIT) {
+                                const batch = writeBatch(db);
+                                const chunk = itemsToDelete.slice(i, i + BATCH_LIMIT);
+                                chunk.forEach(item => {
+                                    batch.delete(doc(db, 'artifacts', appId, 'public', 'data', 'products', item.id));
+                                });
+                                await batch.commit();
+                            }
+
+                            if (selectedLocationFilter === targetLoc) {
+                                selectedLocationFilter = null;
+                            }
+
+                            auditLogic.logAction(
+                                "Eliminazione Ubicazione",
+                                `Eliminata ubicazione '${targetLoc}' (${itemsToDelete.length} articoli rimossi)`
+                            );
+                            ui.toast(`Ubicazione "${targetLoc}" eliminata definitivamente`, "success");
+                        } catch (e) {
+                            console.error(e);
+                            ui.toast("Errore durante l'eliminazione dell'ubicazione", "error");
+                        }
+                    }
+                );
             },
 
             bulkUpdateLocation: async () => {
@@ -3724,6 +3773,45 @@ toast: (msg, type='info') => {
                 ui.renderProducts();
             },
 
+            openLocationContextMenu: (event, locationName) => {
+                if (!isCurrentListInventory() || !isAdminUser()) return;
+                if (!locationName || locationName === 'Tutte') return;
+
+                event.preventDefault();
+                event.stopPropagation();
+
+                const existingMenu = document.getElementById('locationContextMenu');
+                if (existingMenu) existingMenu.remove();
+
+                const menu = document.createElement('div');
+                menu.id = 'locationContextMenu';
+                menu.className = 'fixed z-[130] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl p-1.5 min-w-[210px] animate-fade-in';
+
+                const posX = Math.min(event.clientX, window.innerWidth - 225);
+                const posY = Math.min(event.clientY, window.innerHeight - 65);
+                menu.style.left = `${Math.max(8, posX)}px`;
+                menu.style.top = `${Math.max(8, posY)}px`;
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'w-full px-3.5 py-2.5 rounded-xl text-left text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 flex items-center gap-2.5 transition-colors cursor-pointer';
+                btn.innerHTML = `<i class="fa-solid fa-trash-can"></i><span>Cancella ubicazione ${ui.escapeHtml(locationName)}</span>`;
+                btn.onclick = () => {
+                    menu.remove();
+                    dbLogic.deleteLocationProducts(locationName);
+                };
+
+                menu.appendChild(btn);
+                document.body.appendChild(menu);
+
+                const closeMenu = () => {
+                    const m = document.getElementById('locationContextMenu');
+                    if (m) m.remove();
+                    document.removeEventListener('click', closeMenu);
+                };
+                setTimeout(() => document.addEventListener('click', closeMenu), 0);
+            },
+
             changePage: (newPage) => {
                 currentPage = newPage;
                 ui.renderProducts();
@@ -4122,10 +4210,11 @@ toast: (msg, type='info') => {
 
                     allLocations.forEach((loc) => {
                         const isActive = selectedLocationFilter === loc;
+                        const ctxAttr = (isInv && isAdminUser()) ? `oncontextmenu="ui.openLocationContextMenu(event, '${ui.escapeHtml(loc)}')"` : '';
 
                         if (isActive && isInv) {
                             chipsHtml += `
-                                <div class="shrink-0 text-xs font-mono transition-all inline-flex items-center rounded-full overflow-hidden bg-blue-600 text-white font-bold shadow-md min-h-[38px] sm:min-h-0">
+                                <div ${ctxAttr} class="shrink-0 text-xs font-mono transition-all inline-flex items-center rounded-full overflow-hidden bg-blue-600 text-white font-bold shadow-md min-h-[38px] sm:min-h-0">
                                     <button onclick="window.exportLocationExcel('${ui.escapeHtml(loc)}')" class="pl-3.5 pr-2.5 py-2.5 sm:py-2 hover:bg-blue-700 active:bg-blue-800 flex items-center gap-1.5" title="Scarica Excel dell'ubicazione">
                                         <i class="fa-solid fa-file-excel animate-pulse"></i>
                                         <span>EXCEL ${ui.escapeHtml(loc)}</span>
@@ -4137,7 +4226,7 @@ toast: (msg, type='info') => {
                             `;
                         } else {
                             chipsHtml += `
-                                <button onclick="ui.setLocationFilter('${ui.escapeHtml(loc)}')" 
+                                <button onclick="ui.setLocationFilter('${ui.escapeHtml(loc)}')" ${ctxAttr}
                                         class="shrink-0 px-4 py-2.5 sm:py-2 min-h-[38px] sm:min-h-0 text-xs font-mono transition-all flex items-center gap-1.5 rounded-full ${isActive ? activeBtnClass : inactiveBtnClass}">
                                     ${isActive ? '<i class="fa-solid fa-check text-[11px]"></i>' : ''}
                                     <span>${ui.escapeHtml(loc)}</span>
@@ -4366,7 +4455,7 @@ toast: (msg, type='info') => {
                     
                     html += `
                     <div class="location-card-container mb-3 sm:mb-6 m3-card !rounded-2xl sm:!rounded-3xl overflow-visible relative">
-                        <div class="${isInv ? 'bg-blue-50/70 dark:bg-blue-950/30 border-b border-blue-100 dark:border-blue-900/40' : 'bg-slate-50 dark:bg-slate-900/60 border-b border-slate-100 dark:border-slate-800'} px-3.5 py-2 sm:px-5 sm:py-3.5 flex items-center justify-between rounded-t-2xl sm:rounded-t-3xl gap-2 sm:gap-3">
+                        <div ${(isInv && isAdminUser()) ? `oncontextmenu="ui.openLocationContextMenu(event, '${ui.escapeHtml(loc)}')"` : ''} class="${isInv ? 'bg-blue-50/70 dark:bg-blue-950/30 border-b border-blue-100 dark:border-blue-900/40' : 'bg-slate-50 dark:bg-slate-900/60 border-b border-slate-100 dark:border-slate-800'} px-3.5 py-2 sm:px-5 sm:py-3.5 flex items-center justify-between rounded-t-2xl sm:rounded-t-3xl gap-2 sm:gap-3">
                             <div class="flex items-center gap-2 sm:gap-3 flex-wrap min-w-0">
                                 <i class="fa-solid fa-location-dot ${isInv ? 'text-blue-600' : 'text-emerald-600'} text-base sm:text-xl shrink-0"></i>
                                 <h2 class="text-base sm:text-lg font-bold font-mono tracking-wider text-slate-900 dark:text-white">${ui.escapeHtml(loc)}</h2>
