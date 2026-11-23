@@ -1,6 +1,44 @@
 importScripts('https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/11.6.1/firebase-messaging-compat.js');
 
+const TARGET_URL = 'https://csi-aladino-srl.github.io/MagazzinoCloud/warehouse.html';
+const APP_SCOPE = 'https://csi-aladino-srl.github.io/MagazzinoCloud/';
+
+// 1. REGISTRA PRIMA DI firebase.messaging() per avere priorità assoluta sul click
+self.addEventListener('notificationclick', (event) => {
+    event.stopImmediatePropagation();
+    event.notification.close();
+
+    event.waitUntil((async () => {
+        const windowClients = await clients.matchAll({
+            type: 'window',
+            includeUncontrolled: true
+        });
+
+        // Caso A: warehouse.html è già aperta (anche con query ?... o #...) -> portala in primo piano
+        for (const client of windowClients) {
+            if (client.url.startsWith(TARGET_URL) && 'focus' in client) {
+                return client.focus();
+            }
+        }
+
+        // Caso B: La PWA è aperta su un'altra pagina (es. index.html / login) -> focus + redirect
+        for (const client of windowClients) {
+            if (client.url.startsWith(APP_SCOPE) && 'focus' in client) {
+                await client.focus();
+                if ('navigate' in client) {
+                    return client.navigate(TARGET_URL);
+                }
+            }
+        }
+
+        // Caso C: La PWA è chiusa -> aprila direttamente su warehouse.html
+        if (clients.openWindow) {
+            return clients.openWindow(TARGET_URL);
+        }
+    })());
+});
+
 firebase.initializeApp({
     apiKey: "AIzaSyCbyma9BDUgpG5KUMyLJxbFjuPsuLpYyMA",
     authDomain: "warehouse-manager-462a0.firebaseapp.com",
@@ -11,7 +49,7 @@ firebase.initializeApp({
     measurementId: "G-KM84BW8EPH"
 });
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', () => {
     self.skipWaiting();
 });
 
@@ -22,10 +60,10 @@ self.addEventListener('activate', (event) => {
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-    console.log('[firebase-messaging-sw.js] Messaggio ricevuto in background: ', payload);
-
+    // Se il payload ha già "notification", il browser la mostra da solo
+    // e il listener notificationclick qui sopra gestirà comunque il redirect.
     if (payload.notification) {
-        return; 
+        return;
     }
 
     if (payload.data) {
@@ -35,32 +73,8 @@ messaging.onBackgroundMessage((payload) => {
             icon: 'icon-192.png',
             badge: 'icon-192.png',
             tag: 'magazzino-notifica-unica',
-            // Cattura dinamicamente l'URL passato da Firebase (con un fallback di sicurezza)
-            data: {
-                url: 'https://csi-aladino-srl.github.io/MagazzinoCloud/warehouse.html'
-            }
+            data: { url: TARGET_URL }
         };
         self.registration.showNotification(title, options);
     }
-});
-
-// Gestisce il click aprendo esattamente l'URL ricevuto nei dati
-self.addEventListener('notificationclick', (event) => {
-    event.notification.close();
-    
-    // Usa l'URL nei dati o forza warehouse.html come percorso assoluto dell'host
-    const targetUrl = 'https://csi-aladino-srl.github.io/MagazzinoCloud/warehouse.html';
-
-    event.waitUntil(
-        clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-            for (let client of windowClients) {
-                if (client.url === targetUrl && 'focus' in client) {
-                    return client.focus();
-                }
-            }
-            if (clients.openWindow) {
-                return clients.openWindow(targetUrl);
-            }
-        })
-    );
 });
