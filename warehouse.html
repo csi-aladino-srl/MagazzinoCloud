@@ -2405,6 +2405,9 @@ saveProduct: async () => {
 
             deleteProduct: async (id) => {
                 const item = products.find(p => p.id === id);
+                if (item && isCurrentListInventory() && !isAdminUser() && item.isInventoryLocked) {
+                    return ui.toast("Prodotto inventariato: sblocco amministratore richiesto.", "error");
+                }
                 ui.showConfirm("Elimina Prodotto", "Vuoi davvero eliminare questo prodotto?", async () => {
                     try {
                         await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id));
@@ -2725,6 +2728,9 @@ saveProduct: async () => {
                     ui.saveRecentLocation(newLocation);
                     const item = products.find(p => p.id === id);
                     if (!item) return;
+                    if (isCurrentListInventory() && !isAdminUser() && item.isInventoryLocked) {
+                        return ui.toast("Prodotto inventariato: sblocco amministratore richiesto.", "error");
+                    }
                     if (newLocation === item.location) return;
 
                     let finalOrigLocation = item.originalLocation || item.location;
@@ -2773,36 +2779,37 @@ saveProduct: async () => {
             },
 
             confirmAndLockStock: async (id) => {
-    const item = products.find(p => p.id === id);
-    if (!item) return;
+                const item = products.find(p => p.id === id);
+                if (!item) return;
 
-    const stockNum = Number(item.stock !== undefined ? item.stock : 0);
-    let finalOrigStock = item.originalStock !== undefined && item.originalStock !== null ? item.originalStock : stockNum;
-    const nowIso = new Date().toISOString();
-    const operator = currentUserOperator || 'Operatore';
+                const stockNum = Number(item.stock !== undefined ? item.stock : 0);
+                let finalOrigStock = item.originalStock !== undefined && item.originalStock !== null ? item.originalStock : stockNum;
+                const nowIso = new Date().toISOString();
+                const operator = currentUserOperator || 'Operatore';
 
-    item.isInventoryLocked = true;
-    item.consolidatedAt = nowIso;
-    item.consolidatedBy = operator;
-    ui.refreshProductRowDOM(id);
+                item.isInventoryLocked = true;
+                item.consolidatedAt = nowIso;
+                item.consolidatedBy = operator;
+                ui.closeAllQuickEdits();
+                ui.refreshProductRowDOM(id);
 
-    try {
-        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), {
-            stock: stockNum,
-            originalStock: finalOrigStock,
-            isInventoryLocked: true,
-            consolidatedAt: nowIso,
-            consolidatedBy: operator
-        });
-        auditLogic.logAction("Consolida Inventario", `Consolidato prodotto [${item.code}]: Conteggiato ${stockNum} da ${operator}`);
-        ui.toast("Quantità confermata e salvata", "success");
-    } catch (e) {
-        console.error(e);
-        ui.toast("Errore di salvataggio (offline/connessione)", "error");
-    }
-},
+                try {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), {
+                        stock: stockNum,
+                        originalStock: finalOrigStock,
+                        isInventoryLocked: true,
+                        consolidatedAt: nowIso,
+                        consolidatedBy: operator
+                    });
+                    auditLogic.logAction("Consolida Inventario", `Consolidato prodotto [${item.code}]: Conteggiato ${stockNum} da ${operator}`);
+                    ui.toast("Quantità confermata e salvata", "success");
+                } catch (e) {
+                    console.error(e);
+                    ui.toast("Errore di salvataggio (offline/connessione)", "error");
+                }
+            },
 
-unlockStock: (id) => {
+            unlockStock: (id) => {
                 const performUnlock = async () => {
                     ui.showConfirm("Sblocca per modifica", "Vuoi sbloccare questo articolo per modificarne nuovamente la quantità?", async () => {
                         const item = products.find(p => p.id === id);
@@ -2831,6 +2838,9 @@ unlockStock: (id) => {
                 try {
                     const item = products.find(p => p.id === id);
                     if (!item) return;
+                    if (isCurrentListInventory() && !isAdminUser() && item.isInventoryLocked) {
+                        return ui.toast("Prodotto inventariato: sblocco amministratore richiesto.", "error");
+                    }
                     if (brandStr === (item.brand || '')) return;
 
                     let finalOrigBrand = item.originalBrand !== undefined ? item.originalBrand : (item.brand || '');
@@ -2849,6 +2859,9 @@ unlockStock: (id) => {
                 try {
                     const item = products.find(p => p.id === id);
                     if (!item) return;
+                    if (isCurrentListInventory() && !isAdminUser() && item.isInventoryLocked) {
+                        return ui.toast("Prodotto inventariato: sblocco amministratore richiesto.", "error");
+                    }
                     if (codeStr === item.code) return;
                     let finalOrigCode = item.originalCode || item.code;
                     await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), { 
@@ -2865,6 +2878,9 @@ unlockStock: (id) => {
                 try {
                     const item = products.find(p => p.id === id);
                     if (!item) return;
+                    if (isCurrentListInventory() && !isAdminUser() && item.isInventoryLocked) {
+                        return ui.toast("Prodotto inventariato: sblocco amministratore richiesto.", "error");
+                    }
                     if (descStr === (item.description || '')) return;
                     let finalOrigDesc = item.originalDescription !== undefined ? item.originalDescription : (item.description || '');
                     await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), { 
@@ -2881,6 +2897,9 @@ unlockStock: (id) => {
                 try {
                     const item = products.find(p => p.id === id);
                     if (!item) return;
+                    if (isCurrentListInventory() && !isAdminUser() && item.isInventoryLocked) {
+                        return ui.toast("Prodotto inventariato: sblocco amministratore richiesto.", "error");
+                    }
                     if (noteStr === (item.note || '')) return;
                     let finalOrigNote = item.originalNote !== undefined ? item.originalNote : (item.note || '');
                     await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), { 
@@ -3758,6 +3777,9 @@ toast: (msg, type='info') => {
                     const item = products.find(p => p.id === id);
                     if (item) {
                         if (isCurrentListInventory() && !isAdminUser()) {
+                            if (item.isInventoryLocked) {
+                                return ui.toast("Prodotto già inventariato: solo un amministratore può sbloccarlo e modificarlo.", "error");
+                            }
                             if (!item.createdDuringInventory) {
                                 return ui.toast("In modalità Inventario puoi modificare solo i prodotti creati durante l'inventario.", "error");
                             }
@@ -4545,7 +4567,11 @@ toast: (msg, type='info') => {
 
                     items.forEach((item, itemIndex) => {
                         const isChecked = selectedProductIds.has(item.id);
-                        const canEdit = !isInv || isAdminUser();
+                        const isLocked = item.isInventoryLocked === true;
+                        const isReadOnlyForUser = isInv && isLocked && !isAdminUser();
+                        const canEdit = (!isInv || isAdminUser() || (item.createdDuringInventory && !isLocked)) && !isReadOnlyForUser;
+                        const canEditLocation = !isReadOnlyForUser;
+                        const canFullEdit = (!isInv || isAdminUser() || item.createdDuringInventory) && !isReadOnlyForUser;
                         
                         const itemIsCodeMod = isCodeModified(item);
                         const itemIsLocMod = isLocModified(item);
@@ -4557,7 +4583,6 @@ toast: (msg, type='info') => {
                         const stockVal = (item.stock !== undefined && item.stock !== '' && !isNaN(Number(item.stock))) ? Number(item.stock) : 0;
                         const origStockVal = (item.originalStock !== undefined && item.originalStock !== null && item.originalStock !== '' && !isNaN(Number(item.originalStock))) ? Number(item.originalStock) : stockVal;
                         const hasNote = item.note && item.note.trim() !== '';
-                        const isLocked = item.isInventoryLocked === true;
 
                         let stockBadgeClass = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-300 dark:border-slate-600';
                         if (itemIsStockMod) {
@@ -4706,17 +4731,17 @@ toast: (msg, type='info') => {
                                         <span class="text-[9px] sm:text-[10px] line-through text-red-500 font-bold font-mono leading-none mb-0.5" title="Ubicazione originale">
                                             ${ui.escapeHtml(item.originalLocation)}
                                         </span>
-                                        <div class="cursor-pointer bg-blue-100 dark:bg-blue-950/50 border-2 border-blue-400 text-blue-800 dark:text-blue-300 font-bold font-mono min-h-[38px] min-w-[54px] sm:min-h-0 sm:min-w-0 px-3 py-2 sm:px-3 sm:py-1.5 rounded-2xl shadow-xs flex items-center justify-center text-xs hover:border-blue-600 active:scale-95 transition-all" onclick="ui.openQuickEdit(this, null, true)">
+                                        <div class="${canEditLocation ? 'cursor-pointer hover:border-blue-600 active:scale-95' : 'cursor-default'} bg-blue-100 dark:bg-blue-950/50 border-2 border-blue-400 text-blue-800 dark:text-blue-300 font-bold font-mono min-h-[38px] min-w-[54px] sm:min-h-0 sm:min-w-0 px-3 py-2 sm:px-3 sm:py-1.5 rounded-2xl shadow-xs flex items-center justify-center text-xs transition-all" ${canEditLocation ? 'onclick="ui.openQuickEdit(this, null, true)"' : ''}>
                                             ${ui.escapeHtml(item.location)}
                                         </div>
                                     ` : `
-                                        <div class="cursor-pointer hover:border-slate-400 dark:hover:border-slate-600 bg-slate-100 dark:bg-slate-800/80 border border-transparent sm:border-2 text-slate-800 dark:text-slate-200 font-bold font-mono min-h-[38px] min-w-[54px] sm:min-h-0 sm:min-w-0 px-3 py-2 sm:px-3 sm:py-2 rounded-2xl flex items-center justify-center text-xs active:scale-95 transition-all" onclick="ui.openQuickEdit(this, null, true)">
+                                        <div class="${canEditLocation ? 'cursor-pointer hover:border-slate-400 dark:hover:border-slate-600 active:scale-95' : 'cursor-default'} bg-slate-100 dark:bg-slate-800/80 border border-transparent sm:border-2 text-slate-800 dark:text-slate-200 font-bold font-mono min-h-[38px] min-w-[54px] sm:min-h-0 sm:min-w-0 px-3 py-2 sm:px-3 sm:py-2 rounded-2xl flex items-center justify-center text-xs transition-all" ${canEditLocation ? 'onclick="ui.openQuickEdit(this, null, true)"' : ''}>
                                             ${ui.escapeHtml(item.location)}
                                         </div>
                                     `}
                                     
+                                    ${canEditLocation ? `
                                     <div class="hidden absolute top-0 left-0 z-50 bg-white dark:bg-slate-800 p-3.5 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 animate-fade-in w-64 max-w-[calc(100vw-2rem)]">
-                                        <div class="text-[11px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 ml-1">Nuova Ubicazione</div>
                                         <div class="flex items-center gap-2 mb-4 sm:mb-2.5">
                                             <input type="text" class="w-full h-12 sm:h-10 m3-input bg-slate-50 dark:bg-slate-900 uppercase font-mono text-lg sm:text-base font-extrabold text-center sm:text-left tracking-wider text-blue-600" value="${ui.escapeHtml(item.location)}" onkeydown="if(event.key==='Enter') { dbLogic.quickUpdateLocation('${item.id}', this.value); ui.closeQuickEdit(this); }">
                                             <button type="button" onclick="dbLogic.quickUpdateLocation('${item.id}', this.previousElementSibling.value); ui.closeQuickEdit(this);" class="h-12 px-4 sm:h-10 sm:px-3 shrink-0 btn-theme rounded-2xl sm:rounded-xl font-bold text-sm sm:text-xs flex items-center justify-center gap-1.5 shadow-xs active:scale-95" title="Salva ubicazione">
@@ -4732,7 +4757,7 @@ toast: (msg, type='info') => {
                                         <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-2.5 sm:gap-1.5">
                                             ${pillsHtml || '<span class="col-span-2 text-xs text-slate-400 italic py-2 ml-1">Nessuna ubicazione recente</span>'}
                                         </div>
-                                    </div>
+                                    </div>` : ''}
                                 </div>
 
                                 <!-- Dettagli Testuali (Codice, Brand, +Nota inline, Descrizione) -->
@@ -4855,11 +4880,11 @@ toast: (msg, type='info') => {
                                 <div class="flex items-center gap-1.5 sm:gap-1 shrink-0">
                                     <button onclick="searchGoogleProduct('${ui.escapeHtml(item.brand || '')}', '${ui.escapeHtml(item.code || '')}')" class="w-10 h-10 sm:w-8 sm:h-8 rounded-full bg-slate-100/80 sm:bg-transparent dark:bg-slate-800/70 sm:dark:bg-transparent text-slate-500 sm:text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 active:scale-90 transition-all flex items-center justify-center" title="Cerca su Google"><i class="fa-solid fa-earth-americas text-sm"></i></button>
                                     
-                                    ${(!isInv || isAdminUser() || item.createdDuringInventory) ? `
+                                    ${canFullEdit ? `
                                     <button onclick="ui.openProductModal('${item.id}')" class="w-10 h-10 sm:w-8 sm:h-8 rounded-full bg-slate-100/80 sm:bg-transparent dark:bg-slate-800/70 sm:dark:bg-transparent text-slate-500 sm:text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 active:scale-90 transition-all flex items-center justify-center" title="Modifica completa"><i class="fa-solid fa-pen text-sm"></i></button>
                                     ` : ''}
 
-                                    ${(!isInv || isAdminUser() || item.createdDuringInventory) ? `
+                                    ${canFullEdit ? `
                                     <button onclick="dbLogic.deleteProduct('${item.id}')" class="w-10 h-10 sm:w-8 sm:h-8 rounded-full bg-slate-100/80 sm:bg-transparent dark:bg-slate-800/70 sm:dark:bg-transparent text-slate-500 sm:text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800 active:scale-90 transition-all flex items-center justify-center" title="Elimina"><i class="fa-solid fa-trash-can text-sm"></i></button>
                                     ` : ''}
                                 </div>
