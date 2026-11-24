@@ -2216,7 +2216,7 @@
             }
         }
 
-function loadListsAndListen() {
+        function loadListsAndListen() {
             if (!userId) return;
             const listsRef = collection(db, 'artifacts', appId, 'public', 'data', 'lists');
             
@@ -3246,28 +3246,45 @@ saveProduct: async () => {
             },
 
             unlockStock: (id) => {
-                const performUnlock = async () => {
-                    ui.showConfirm("Sblocca per modifica", "Vuoi sbloccare questo articolo per modificarne nuovamente la quantità?", async () => {
-                        const item = products.find(p => p.id === id);
-                        if (!item) return;
-                        item.isInventoryLocked = false;
-                        ui.renderProducts();
-                        try {
-                            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), {
-                                isInventoryLocked: false
-                            });
-                            auditLogic.logAction("Sblocco Inventario", `Sbloccato prodotto [${item.code}] per nuova modifica da ${currentUserOperator}`);
-                            ui.toast("Articolo sbloccato", "info");
-                        } catch(e) { console.error(e); }
-                    });
-                };
+    const targetItem = products.find(p => p.id === id);
+    if (!targetItem) return;
 
-                if (currentUserOperator === 'Leonardo C.' || currentUserOperator === 'Alberto A.') {
-                    performUnlock();
-                } else {
-                    ui.requestAdminPassword(performUnlock);
+    const adminUser = isAdminUser();
+    const withinWindow = canUserReopenItem(targetItem);
+
+    const performUnlock = async () => {
+            ui.showConfirm("Sblocca per modifica", "Vuoi riaprire questo articolo per modificarne nuovamente la quantità?", async () => {
+                const item = products.find(p => p.id === id);
+                if (!item) return;
+
+                // Ricontrollo al momento della conferma effettiva (se nel frattempo sono scadute le 5 ore)
+                if (!isAdminUser() && !canUserReopenItem(item)) {
+                    ui.renderProducts();
+                    return ui.toast("Tempo massimo di 5 ore scaduto: solo un amministratore può riaprire questo articolo.", "error");
                 }
-            },
+
+                const reopenedWithin5h = !isAdminUser();
+                item.isInventoryLocked = false;
+                ui.renderProducts();
+                try {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), {
+                        isInventoryLocked: false
+                    });
+                    const extraNote = reopenedWithin5h ? ' (riapertura operatore entro 5 ore)' : '';
+                    auditLogic.logAction("Sblocco Inventario", `Sbloccato prodotto [${item.code}] per nuova modifica da ${currentUserOperator}${extraNote}`);
+                    ui.toast("Articolo riaperto per la modifica", "info");
+                } catch(e) { console.error(e); }
+            });
+        };
+
+        if (adminUser || withinWindow) {
+            performUnlock();
+        } else {
+            ui.renderProducts();
+            ui.toast("Sono trascorse più di 5 ore dall'inventario: richiesta password amministratore.", "error");
+            ui.requestAdminPassword(performUnlock);
+        }
+    },
 
             quickUpdateBrand: async (id, newBrandVal) => {
                 const brandStr = (newBrandVal || '').trim();
@@ -3829,6 +3846,34 @@ exportExcel: () => {
 
         function isAdminUser() {
             return currentUserOperator === 'Leonardo C.' || currentUserOperator === 'Alberto A.';
+        }
+
+        const NON_ADMIN_REOPEN_WINDOW_MS = 5 * 60 * 60 * 1000; // 5 ore in millisecondi
+
+        function getRemainingReopenMs(item) {
+            if (!item || !item.isInventoryLocked || !item.consolidatedAt) return 0;
+            const consolidatedTime = new Date(item.consolidatedAt).getTime();
+            if (isNaN(consolidatedTime)) return 0;
+            const elapsed = Date.now() - consolidatedTime;
+            return NON_ADMIN_REOPEN_WINDOW_MS - elapsed;
+        }
+
+        function canUserReopenItem(item) {
+            if (!item || !item.isInventoryLocked) return false;
+            if (isAdminUser()) return true;
+            const remainingMs = getRemainingReopenMs(item);
+            // +1 minuto di tolleranza per eventuali piccole differenze d'orologio tra dispositivi
+            return remainingMs > 0 && remainingMs <= NON_ADMIN_REOPEN_WINDOW_MS + 60000;
+        }
+
+        function formatRemainingReopenTime(ms) {
+            if (ms <= 0) return 'scaduto';
+            const totalMinutes = Math.ceil(ms / 60000);
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+            if (hours > 0 && minutes > 0) return `${hours}h ${minutes}m`;
+            if (hours > 0) return `${hours}h`;
+            return `${minutes}m`;
         }
 
         window.ui = {
@@ -4651,47 +4696,62 @@ toast: (msg, type='info') => {
                 }
 
                 const operatorName = product.consolidatedBy || 'Operatore sconosciuto';
-                const safeId = String(product.id).replace(/'/g, "\\'");
+const safeId = String(product.id).replace(/'/g, "\\'");
+const canReopen = canUserReopenItem(product);
+const remainingMs = getRemainingReopenMs(product);
 
-                const sheetHtml = `
-                    <div class="space-y-4">
-                        <div class="grid grid-cols-3 gap-2 text-center">
-                            <div class="bg-slate-50 dark:bg-slate-800/80 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-700">
-                                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Originale</div>
-                                <div class="text-lg font-extrabold text-slate-700 dark:text-slate-200 mt-0.5">${origStockVal}</div>
-                            </div>
-                            <div class="bg-emerald-50 dark:bg-emerald-950/40 p-3 rounded-2xl border border-emerald-200 dark:border-emerald-800">
-                                <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Conteggiata</div>
-                                <div class="text-lg font-black text-emerald-900 dark:text-white mt-0.5">${stockVal}</div>
-                            </div>
-                            <div class="bg-slate-50 dark:bg-slate-800/80 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-700">
-                                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Delta</div>
-                                <div class="text-lg font-extrabold ${deltaColor} mt-0.5">${deltaFormatted}</div>
-                            </div>
-                        </div>
+const reopenWindowInfo = !isAdminUser()
+    ? (canReopen
+        ? `<div class="flex items-center justify-between pt-1.5 border-t border-slate-200/70 dark:border-slate-700/70">
+               <span class="text-slate-500 dark:text-slate-400 font-medium"><i class="fa-solid fa-hourglass-half mr-1.5 text-amber-500"></i>Riapertura (max 5h)</span>
+               <span class="font-bold text-amber-700 dark:text-amber-300">ancora ${formatRemainingReopenTime(remainingMs)}</span>
+           </div>`
+        : `<div class="flex items-center justify-between pt-1.5 border-t border-slate-200/70 dark:border-slate-700/70">
+               <span class="text-slate-500 dark:text-slate-400 font-medium"><i class="fa-solid fa-lock mr-1.5 text-red-500"></i>Riapertura (max 5h)</span>
+               <span class="font-bold text-red-600 dark:text-red-400">Tempo scaduto</span>
+           </div>`)
+    : '';
 
-                        <div class="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700 space-y-2 text-xs">
-                            <div class="flex items-center justify-between">
-                                <span class="text-slate-500 dark:text-slate-400 font-medium"><i class="fa-solid fa-user-check mr-1.5 text-emerald-600"></i>Consolidato da</span>
-                                <span class="font-bold text-slate-900 dark:text-white">${ui.escapeHtml(operatorName)}</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-slate-500 dark:text-slate-400 font-medium"><i class="fa-regular fa-clock mr-1.5 text-blue-600"></i>Data e ora</span>
-                                <span class="font-mono font-bold text-slate-800 dark:text-slate-200">${ui.escapeHtml(dateFormatted)}</span>
-                            </div>
-                        </div>
+    const sheetHtml = `
+        <div class="space-y-4">
+            <div class="grid grid-cols-3 gap-2 text-center">
+                <div class="bg-slate-50 dark:bg-slate-800/80 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-700">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Originale</div>
+                    <div class="text-lg font-extrabold text-slate-700 dark:text-slate-200 mt-0.5">${origStockVal}</div>
+                </div>
+                <div class="bg-emerald-50 dark:bg-emerald-950/40 p-3 rounded-2xl border border-emerald-200 dark:border-emerald-800">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Conteggiata</div>
+                    <div class="text-lg font-black text-emerald-900 dark:text-white mt-0.5">${stockVal}</div>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-800/80 p-3 rounded-2xl border border-slate-200/80 dark:border-slate-700">
+                    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Delta</div>
+                    <div class="text-lg font-extrabold ${deltaColor} mt-0.5">${deltaFormatted}</div>
+                </div>
+            </div>
 
-                        <div class="flex gap-2.5 pt-1">
-                            <button type="button" onclick="ui.closeAllQuickEdits()" class="flex-1 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 py-3.5 px-4 rounded-2xl font-bold text-sm">
-                                Chiudi
-                            </button>
-                            ${isAdminUser() ? `
-                            <button type="button" onclick="ui.closeAllQuickEdits(); dbLogic.unlockStock('${safeId}');" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white py-3.5 px-4 rounded-2xl font-bold text-sm shadow-sm flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-lock-open"></i> Sblocca
-                            </button>` : ''}
-                        </div>
-                    </div>
-                `;
+            <div class="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700 space-y-2 text-xs">
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-500 dark:text-slate-400 font-medium"><i class="fa-solid fa-user-check mr-1.5 text-emerald-600"></i>Consolidato da</span>
+                    <span class="font-bold text-slate-900 dark:text-white">${ui.escapeHtml(operatorName)}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-500 dark:text-slate-400 font-medium"><i class="fa-regular fa-clock mr-1.5 text-blue-600"></i>Data e ora</span>
+                    <span class="font-mono font-bold text-slate-800 dark:text-slate-200">${ui.escapeHtml(dateFormatted)}</span>
+                </div>
+                ${reopenWindowInfo}
+            </div>
+
+            <div class="flex gap-2.5 pt-1">
+                <button type="button" onclick="ui.closeAllQuickEdits()" class="flex-1 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 py-3.5 px-4 rounded-2xl font-bold text-sm">
+                    Chiudi
+                </button>
+                ${canReopen ? `
+                <button type="button" onclick="ui.closeAllQuickEdits(); dbLogic.unlockStock('${safeId}');" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white py-3.5 px-4 rounded-2xl font-bold text-sm shadow-sm flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-lock-open"></i> Riapri
+                </button>` : ''}
+            </div>
+        </div>
+    `;
 
                 ui._showMobileBottomSheet(
                     product.code || '-',
@@ -5257,20 +5317,23 @@ toast: (msg, type='info') => {
 
                         let inventoryStepperWidget = '';
                         if (isLocked) {
-                            const adminUser = isAdminUser();
+                            const canReopen = canUserReopenItem(item);
+                            const remainingText = (!isAdminUser() && canReopen)
+                                ? ` (${formatRemainingReopenTime(getRemainingReopenMs(item))})`
+                                : '';
                             const safeId = String(item.id).replace(/'/g, "\\'");
                             inventoryStepperWidget = `
                                 <!-- MOBILE: Chip compatto che apre il Bottom Sheet -->
-                                <${adminUser ? `button type="button" onclick="ui.openConsolidatedDetails('${safeId}')"` : 'div'}
-                                    class="flex md:hidden inline-flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/35 border border-emerald-500/80 dark:border-emerald-700 rounded-2xl px-3 py-1.5 shadow-2xs shrink-0 ${adminUser ? 'cursor-pointer hover:bg-emerald-100/80 dark:hover:bg-emerald-900/40 active:scale-95 transition-all' : ''}"
-                                    ${adminUser ? 'title="Tocca per dettagli consolidamento e sblocco"' : ''}>
+                                <${canReopen ? `button type="button" onclick="ui.openConsolidatedDetails('${safeId}')"` : 'div'}
+                                    class="flex md:hidden inline-flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/35 border border-emerald-500/80 dark:border-emerald-700 rounded-2xl px-3 py-1.5 shadow-2xs shrink-0 ${canReopen ? 'cursor-pointer hover:bg-emerald-100/80 dark:hover:bg-emerald-900/40 active:scale-95 transition-all' : ''}"
+                                    ${canReopen ? `title="Tocca per dettagli consolidamento e riapertura${remainingText}"` : ''}>
                                     <div class="w-6 h-6 rounded-lg bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shrink-0">
                                         <i class="fa-solid fa-check"></i>
                                     </div>
                                     <span class="text-base font-black text-emerald-950 dark:text-white leading-none">${stockVal}</span>
                                     ${deltaBadge}
-                                    ${adminUser ? `<i class="fa-solid fa-chevron-up text-[10px] text-emerald-700/80 dark:text-emerald-300/80 ml-0.5 shrink-0"></i>` : ''}
-                                </${adminUser ? 'button' : 'div'}>
+                                    ${canReopen ? `<i class="fa-solid fa-chevron-up text-[10px] text-emerald-700/80 dark:text-emerald-300/80 ml-0.5 shrink-0"></i>` : ''}
+                                </${canReopen ? 'button' : 'div'}>
 
                                 <!-- DESKTOP: Tutto in vista senza pannello -->
                                 <div class="hidden md:flex items-center gap-2.5 bg-emerald-50 dark:bg-emerald-950/35 border border-emerald-500/80 dark:border-emerald-700 rounded-2xl px-3 py-1.5 shadow-2xs shrink-0">
@@ -5286,12 +5349,12 @@ toast: (msg, type='info') => {
                                         ${opStr ? `<span class="font-bold"><i class="fa-solid fa-user-check text-[9px] mr-1 opacity-75"></i>${ui.escapeHtml(opStr)}</span>` : ''}
                                         ${dateStr ? `<span class="text-[10px] text-emerald-700 dark:text-emerald-300/80 font-mono">${ui.escapeHtml(dateStr)}</span>` : ''}
                                     </div>` : ''}
-                                    ${adminUser ? `
+                                    ${canReopen ? `
                                     <button type="button" onclick="dbLogic.unlockStock('${safeId}')"
                                         class="ml-1 px-2.5 py-1.5 bg-white hover:bg-amber-50 dark:bg-slate-800 dark:hover:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700 rounded-xl text-[11px] font-bold flex items-center gap-1 shadow-2xs transition-all active:scale-95 cursor-pointer"
-                                        title="Sblocca articolo per modificare la quantità">
+                                        title="Riapri articolo per modificare la quantità${remainingText}">
                                         <i class="fa-solid fa-lock-open text-[10px]"></i>
-                                        <span>Sblocca</span>
+                                        <span>Riapri${remainingText}</span>
                                     </button>` : ''}
                                 </div>
                             `;
@@ -5656,6 +5719,12 @@ toast: (msg, type='info') => {
             document.getElementById('clearSearchMobile')?.addEventListener('click', clearSearch);
             document.getElementById('clearSearchInvMobile')?.addEventListener('click', clearSearch);
         }
+
+        setInterval(() => {
+            if (isCurrentListInventory() && !isAdminUser() && !document.querySelector('[data-quick-edit-active="true"]')) {
+                ui.renderProducts();
+            }
+        }, 60000);
 
         function getPlaceholderForField(field) {
             switch(field) {
