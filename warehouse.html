@@ -144,6 +144,93 @@
     animation: locProgressShrink 2.2s linear forwards;
 }
 
+/* ================================================================= */
+/* NUOVO LAYOUT HEADER & PROGRESSO (DESKTOP + MOBILE)                */
+/* ================================================================= */
+
+#headerLiveProgressLine {
+    display: none;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    width: 0%;
+    background: linear-gradient(90deg, #1d4ed8, #3b82f6);
+    transition: width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+    pointer-events: none;
+}
+
+@media (max-width: 767px) {
+    body.is-inventory #headerLiveProgressLine {
+        display: block;
+    }
+
+    body.is-inventory #inventoryProgressBarContainer {
+        display: none !important;
+    }
+
+    body.is-inventory #mobileQuickEditContent #inventoryProgressBarContainer {
+        display: flex !important;
+    }
+}
+
+/* ================================================================= */
+/* LAYOUT HEADER & PROGRESSO UNIFICATO (DESKTOP + MOBILE)            */
+/* ================================================================= */
+#headerLiveProgressLine {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    width: 0%;
+    background: linear-gradient(90deg, #1d4ed8, #3b82f6);
+    transition: width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+    pointer-events: none;
+}
+
+/* Su Mobile (< 768px): l'avanzamento esteso si apre dal pulsante Info in basso */
+@media (max-width: 767px) {
+    body.is-inventory #inventoryProgressBarContainer {
+        display: none !important;
+    }
+
+    body.is-inventory #mobileQuickEditContent #inventoryProgressBarContainer {
+        display: flex !important;
+    }
+}
+
+  body.is-inventory #headerMoreBtn {
+    display: none !important;
+  }
+
+/* Su Desktop (lg+): trasforma #inventoryProgressBarContainer in una pillola compatta da header */
+@media (min-width: 1024px) {
+  body.is-inventory #inventoryProgressBarContainer {
+    margin: 0 !important;
+    padding: 6px 10px 6px 14px !important;
+    border-radius: 9999px !important;
+    width: auto !important;
+    flex-shrink: 0;
+  }
+}
+
+/* ================================================================= */
+/* MOBILE INVENTARIO: NASCONDI BARRA PROGRESSO E TASTO ⋮ IN ALTO     */
+/* ================================================================= */
+@media (max-width: 767px) {
+  body.is-inventory #inventoryProgressBarContainer {
+    display: none !important;
+  }
+
+  body.is-inventory #inventory-progress-modal-slot #inventoryProgressBarContainer {
+    display: flex !important;
+  }
+
+  body.is-inventory #headerMoreBtn {
+    display: none !important;
+  }
+}
+
         /* ================================================================= */
 /* MATERIAL 3 EXPRESSIVE - BACHECA AVVISI IN EVIDENZA                */
 /* ================================================================= */
@@ -661,71 +748,105 @@
     <!-- Contenuto Principale Layout Android -->
     <div id="appContent" class="flex flex-col h-full w-full flex-1 overflow-hidden relative">
         
-<!-- Top App Bar Material 3 -->
-        <header class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 z-40 shrink-0" style="padding-top: env(safe-area-inset-top);">
-            <div class="max-w-7xl mx-auto px-3 md:px-4 h-14 md:h-16 flex items-center justify-between gap-2 md:gap-3">
-                
-                <div class="flex items-center gap-2.5 md:gap-3 shrink-0">
-                    <div id="headerIcon" class="w-9 h-9 md:w-11 md:h-11 icon-theme rounded-xl md:rounded-2xl flex items-center justify-center text-base md:text-xl shadow-xs transition-colors">
-                        <i class="fa-solid fa-warehouse"></i>
-                    </div>
-                    <div class="flex flex-col">
-                        <div class="flex items-center gap-2">
-                            <h1 class="text-base font-bold leading-tight hidden sm:block tracking-tight">Magazzino</h1>
-                            <span id="inventoryBadge" class="hidden px-2.5 py-0.5 text-[11px] font-bold uppercase rounded-full bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-300/80">Inventario</span>
-                            <!-- Badge Operatore M3 Chip Style -->
-                            <button onclick="authLogic.openUserChangeModal()" class="px-3 py-1 text-xs font-bold rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-300/60 dark:border-slate-700 flex items-center gap-1.5 transition-colors">
-                                <i class="fa-solid fa-user text-[10px] text-blue-600"></i>
-                                <span id="currentOperatorBadge">Operatore</span>
-                            </button>
-                        </div>
-                        <button onclick="ui.openListManager()" class="flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 active:bg-slate-100 dark:active:bg-slate-800 px-2 py-1 -ml-2 rounded-xl transition-colors">
-                            <span id="currentListName" class="truncate max-w-[170px] sm:max-w-none">Caricamento...</span>
-                            <i class="fa-solid fa-chevron-down text-[10px] opacity-70 shrink-0"></i>
-                        </button>
-                    </div>
+    <!-- Top App Bar Material 3 con maggiore respiro su Mobile -->
+    <header class="relative bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 z-40 shrink-0" style="padding-top: env(safe-area-inset-top);">
+        <div class="max-w-7xl mx-auto px-4 md:px-6 py-3 md:py-0 md:h-[74px] flex items-center justify-between gap-3 md:gap-4">
+
+            <!-- ZONA SINISTRA: Contesto + Selettore Lista Principale -->
+            <div class="flex items-center gap-3 md:gap-3.5 min-w-0">
+                <div id="headerIcon" class="w-11 h-11 icon-theme rounded-2xl flex items-center justify-center text-xl shadow-xs shrink-0 transition-colors">
+                    <i class="fa-solid fa-warehouse"></i>
                 </div>
 
-                <!-- Desktop Search Bar & Param -->
-                <div class="hidden md:flex flex-1 items-center max-w-xl mx-auto gap-2">
-                    <select id="searchFieldPC" class="bg-slate-100 dark:bg-slate-800 border-none rounded-2xl px-3.5 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 cursor-pointer shrink-0" title="Parametro di ricerca">
-                        <option value="code">Codice</option>
-                        <option value="location">Ubicazione</option>
-                        <option value="description">Descrizione</option>
-                        <option value="brand">Marchio</option>
-                        <option value="all">Tutti</option>
-                    </select>
-                    <div class="relative flex-1">
-                        <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input type="text" id="searchInputPC" placeholder="Cerca codice prodotto..." 
-                               class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-2xl pl-11 pr-10 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 transition-shadow">
-                        <button id="clearSearchPC" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 hidden w-7 h-7 flex items-center justify-center">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
+                <div class="flex flex-col min-w-0">
+                    <!-- Riga superiore: Contesto + Badge Modalità -->
+                    <div class="flex items-center gap-2 leading-none mb-1.5">
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500">Magazzino</span>
+                        <span id="inventoryBadge" class="hidden px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider rounded-full bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border border-blue-300/70">
+                            Inventario
+                        </span>
                     </div>
+
+                    <!-- Riga principale: Selettore Lista ben evidente -->
+                    <button onclick="ui.openListManager()"
+                            title="Cambia lista o inventario"
+                            class="group inline-flex items-center gap-2 text-left text-sm md:text-base font-extrabold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 bg-slate-100/80 hover:bg-slate-200/80 dark:bg-slate-800/80 dark:hover:bg-slate-800 px-3 py-1.5 -ml-1 rounded-xl transition-all min-w-0">
+                        <span id="currentListName" class="truncate max-w-[155px] sm:max-w-[230px] md:max-w-[260px]">Caricamento...</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 group-hover:text-blue-600 transition-transform shrink-0"></i>
+                    </button>
                 </div>
-
-<!-- Header Right Actions -->
-<div class="flex items-center gap-2 shrink-0">
-
-    <!-- Pulsante Catalogo Ubicazioni (Desktop Quadrato) -->
-    <button id="desktopCatalogBtn" onclick="catalogLogic.openModal()" class="hidden md:hidden items-center justify-center w-11 h-11 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl transition-colors" title="Consulta Ubicazioni">
-        <i class="fa-solid fa-book text-lg"></i>
-    </button>
-
-    <!-- Pulsante Nuovo Prodotto (Desktop) -->
-    <button onclick="ui.openProductModal()" class="hidden md:flex items-center gap-2 btn-theme px-4 py-2.5 rounded-2xl font-bold shadow-sm transition-transform active:scale-95 text-sm">
-        <i class="fa-solid fa-plus"></i> Nuovo Prodotto
-    </button>
-
-    <!-- Pulsante Impostazioni (Tre Puntini) -->
-    <button onclick="ui.openSettingsModal()" class="flex items-center justify-center w-11 h-11 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl transition-colors" title="Impostazioni">
-        <i class="fa-solid fa-ellipsis-vertical"></i>
-    </button>
-</div>
-
             </div>
-        </header>
+
+            <!-- ZONA CENTRO (Desktop): Barra di Ricerca Unificata -->
+            <div class="hidden md:flex flex-1 max-w-xl mx-auto">
+                <div class="flex items-center w-full bg-slate-100 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl focus-within:bg-white dark:focus-within:bg-slate-900 focus-within:ring-2 focus-within:ring-blue-500/40 focus-within:border-blue-500 transition-all shadow-2xs">
+                    <div class="relative shrink-0">
+                        <select id="searchFieldPC"
+                                class="appearance-none bg-transparent pl-3.5 pr-7 py-2.5 text-xs font-extrabold text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
+                                title="Parametro di ricerca">
+                            <option value="code">Codice</option>
+                            <option value="location">Ubicazione</option>
+                            <option value="description">Descrizione</option>
+                            <option value="brand">Marchio</option>
+                            <option value="all">Tutti</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down text-[9px] text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+                    </div>
+
+                    <div class="w-px h-5 bg-slate-300 dark:bg-slate-700 shrink-0"></div>
+
+                    <div class="relative flex-1 min-w-0">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="searchInputPC" placeholder="Cerca codice prodotto..."
+                            class="w-full bg-transparent border-none pl-9 pr-9 py-2.5 text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-0">
+                        <button id="clearSearchPC"
+                                class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 w-7 h-7 rounded-full hover:bg-slate-200/70 dark:hover:bg-slate-700 flex items-center justify-center transition-colors">
+                            <i class="fa-solid fa-xmark text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ZONA DESTRA: Azioni Rapide + Profilo Operatore -->
+            <div class="flex items-center gap-2.5 shrink-0">
+
+                <!-- Consulta Ubicazioni (Desktop) -->
+                <button id="desktopCatalogBtn" onclick="catalogLogic.openModal()"
+                        class="hidden md:hidden items-center gap-2 px-4 h-11 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl text-sm font-bold transition-colors"
+                        title="Consulta Ubicazioni">
+                    <i class="fa-solid fa-book"></i>
+                    <span class="hidden lg:inline">Ubicazioni</span>
+                </button>
+
+                <!-- CTA Primaria: Nuovo Prodotto (Desktop) -->
+                <button onclick="ui.openProductModal()"
+                        class="hidden md:flex items-center gap-2 btn-theme px-4 h-11 rounded-2xl text-sm font-bold shadow-xs transition-transform active:scale-95">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Nuovo Prodotto</span>
+                </button>
+
+                <!-- Chip Operatore -->
+                <button onclick="authLogic.openUserChangeModal()"
+                        title="Cambia operatore"
+                        class="h-10 md:h-11 px-3 md:px-3.5 rounded-full md:rounded-2xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200/90 dark:border-slate-700 flex items-center gap-2 transition-colors active:scale-95">
+                    <span class="w-5 h-5 md:w-6 md:h-6 rounded-full bg-blue-600/15 text-blue-600 dark:text-blue-400 flex items-center justify-center text-[10px] md:text-xs shrink-0">
+                        <i class="fa-solid fa-user"></i>
+                    </span>
+                    <span id="currentOperatorBadge" class="text-xs font-bold truncate max-w-[82px] sm:max-w-[110px]">Operatore</span>
+                </button>
+
+                <!-- Impostazioni / Strumenti (Solo Desktop) -->
+                <button id="headerMoreBtn" onclick="ui.openSettingsModal()"
+                        class="hidden md:flex items-center justify-center w-11 h-11 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl transition-colors"
+                        title="Strumenti & Impostazioni">
+                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Micro-barra progresso visibile SOLO su Mobile e SOLO in modalità Inventario -->
+        <div id="headerLiveProgressLine" class="md:hidden"></div>
+    </header>
 
         <!-- Filtri Principali e Barra Azioni di Massa Permanente -->
         <div class="bg-slate-50/80 dark:bg-slate-900/40 border-b border-slate-200/80 dark:border-slate-800/80 z-30 shrink-0">
@@ -994,6 +1115,27 @@
                     class="hidden w-11 h-11 rounded-full items-center justify-center text-lg hover:bg-black/10 dark:hover:bg-white/10 active:scale-90 transition-all cursor-pointer"
                     title="Consulta Ubicazioni">
                 <i class="fa-solid fa-book"></i>
+            </button>
+
+            <!-- Divisore + Bottone INFO Progresso -->
+            <div id="mobileInfoDivider" class="hidden w-px h-6 bg-current opacity-20"></div>
+
+            <button type="button" id="btn-bottom-info" onclick="ui.openInventoryProgressSheet()"
+                    class="hidden w-11 h-11 rounded-full items-center justify-center text-lg hover:bg-black/10 dark:hover:bg-white/10 active:scale-90 transition-all cursor-pointer"
+                    aria-label="Progresso inventario"
+                    title="Progresso Inventario">
+                <i class="fa-solid fa-circle-info"></i>
+            </button>
+
+            <!-- Divisore discreto prima del Menu -->
+            <div id="mobileMoreDivider" class="w-px h-6 bg-current opacity-20 shrink-0"></div>
+
+            <!-- Pulsante Strumenti & Impostazioni (unico per tutte le modalità) -->
+            <button type="button" id="mobileMoreBtn" onclick="ui.openSettingsModal()"
+                    class="w-11 h-11 rounded-full flex items-center justify-center text-lg hover:bg-black/10 dark:hover:bg-white/10 active:scale-90 transition-all cursor-pointer shrink-0"
+                    aria-label="Strumenti & Impostazioni"
+                    title="Strumenti & Impostazioni">
+                <i class="fa-solid fa-ellipsis-vertical"></i>
             </button>
         </div>
 
@@ -1531,7 +1673,8 @@
             if (locStr) recentLocations = JSON.parse(locStr);
         } catch (e) { console.warn(e); }
 
-window.catalogLogic = {
+
+        window.catalogLogic = {
             sourceProducts: [],
             filteredProducts: [],
             currentPage: 1,
@@ -2192,7 +2335,7 @@ function switchList(listId, updateUrl = true) {
                     const shelfToggle = document.getElementById('shelfViewToggleContainer');
                     const selectAllLabel = document.getElementById('selectAllCheckbox')?.parentElement;
                     const mainContainer = document.getElementById('mainContainer');
-const mobileCatalogBtn = document.getElementById('mobileCatalogBtn');
+                    const mobileCatalogBtn = document.getElementById('mobileCatalogBtn');
                     const mobileCatalogDivider = document.getElementById('mobileCatalogDivider');
 
                     if (list.isInventory) {
@@ -2201,6 +2344,11 @@ const mobileCatalogBtn = document.getElementById('mobileCatalogBtn');
                         if (filterConsolidatedBtn) filterConsolidatedBtn.classList.remove('hidden');
                         if (invBadge) invBadge.classList.remove('hidden');
                         if (expDesc) expDesc.innerText = "Esporta inventario con colonna DELTA";
+                        const headerLine = document.getElementById('headerLiveProgressLine');
+                        if (headerLine) {
+                            // Azzera subito al cambio lista: se è normale resta nascosta, se è un altro inventario si aggiornerà al render
+                            headerLine.style.width = '0%';
+                        }
 
                         // Mostra Libro e divisore nella toolbar mobile
                         if (mobileCatalogBtn) {
@@ -2209,9 +2357,16 @@ const mobileCatalogBtn = document.getElementById('mobileCatalogBtn');
                         }
                         if (mobileCatalogDivider) mobileCatalogDivider.classList.remove('hidden');
 
+                        const infoBtn = document.getElementById('btn-bottom-info');
+                        if (infoBtn) {
+                            infoBtn.classList.remove('hidden');
+                            infoBtn.classList.add('flex');
+                        }
+                        document.getElementById('mobileInfoDivider')?.classList.remove('hidden');
+
                         // Mostra Libro su desktop
                         if (desktopCatalogBtn) {
-                            desktopCatalogBtn.className = "hidden md:flex items-center justify-center w-11 h-11 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl transition-colors";
+                            desktopCatalogBtn.className = "hidden md:flex items-center gap-2 px-4 h-11 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl text-sm font-bold transition-colors";
                         }
 
                         if (progContainer) {
@@ -2234,6 +2389,11 @@ const mobileCatalogBtn = document.getElementById('mobileCatalogBtn');
                         if (selectAllLabel) selectAllLabel.classList.add('hidden');
                         ui.clearSelection();
                     } else {
+                        const headerLine = document.getElementById('headerLiveProgressLine');
+                        if (headerLine) {
+                            // Azzera subito al cambio lista: se è normale resta nascosta, se è un altro inventario si aggiornerà al render
+                            headerLine.style.width = '0%';
+                        }
                         document.body.classList.remove('is-inventory');
                         if (filterNewItemsBtn) {
                             filterNewItemsBtn.classList.add('hidden');
@@ -2248,6 +2408,13 @@ const mobileCatalogBtn = document.getElementById('mobileCatalogBtn');
                             mobileCatalogBtn.classList.remove('flex');
                         }
                         if (mobileCatalogDivider) mobileCatalogDivider.classList.add('hidden');
+
+                        const infoBtn = document.getElementById('btn-bottom-info');
+                        if (infoBtn) {
+                            infoBtn.classList.add('hidden');
+                            infoBtn.classList.remove('flex');
+                        }
+                        document.getElementById('mobileInfoDivider')?.classList.add('hidden');
 
                         if (desktopCatalogBtn) {
                             desktopCatalogBtn.className = "hidden md:hidden items-center justify-center w-11 h-11 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl transition-colors";
@@ -4376,6 +4543,30 @@ toast: (msg, type='info') => {
                 return contentHost;
             },
 
+            openInventoryProgressSheet: () => {
+                const topBanner = document.getElementById('inventoryProgressBarContainer');
+                if (!topBanner) return;
+
+                ui.closeAllQuickEdits();
+
+                const list = getCurrentList();
+                const subtitle = list ? list.name : 'Avanzamento generale';
+
+                // Forza la visibilità del box anche su mobile
+                topBanner.classList.remove('hidden');
+                topBanner.style.setProperty('display', 'flex', 'important');
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'w-full pb-1';
+                wrapper.setAttribute('data-quick-edit-active', 'true');
+                wrapper._origParent = topBanner.parentNode;
+                wrapper._origNextSibling = topBanner.nextSibling;
+                wrapper._unwrapChild = topBanner;
+
+                wrapper.appendChild(topBanner);
+                ui._showMobileBottomSheet('Progresso Inventario', subtitle, wrapper);
+            },
+
             openManualStockModal: (productId) => {
                 const product = products.find(p => String(p.id) === String(productId));
                 if (!product) return;
@@ -4596,12 +4787,16 @@ toast: (msg, type='info') => {
 
                     if (popup._origParent) {
                         if (document.body.contains(popup._origParent)) {
-                            popup._origParent.insertBefore(popup, popup._origNextSibling || null);
+                            const nodeToRestore = popup._unwrapChild || popup;
+                            nodeToRestore.style.removeProperty('display');
+                            popup._origParent.insertBefore(nodeToRestore, popup._origNextSibling || null);
+                            if (popup._unwrapChild) popup.remove();
                         } else {
                             popup.remove();
                         }
                         delete popup._origParent;
                         delete popup._origNextSibling;
+                        delete popup._unwrapChild;
                     }
                 }
 
@@ -4894,6 +5089,10 @@ toast: (msg, type='info') => {
                     if (progText) progText.innerText = `${lockedCount} di ${products.length} articoli consolidati (${percent}%)`;
                     if (progTextMob) progTextMob.innerText = `${lockedCount}/${products.length} (${percent}%)`;
                     if (progFill) progFill.style.width = `${percent}%`;
+                    const headerLine = document.getElementById('headerLiveProgressLine');
+                    if (headerLine) {
+                        headerLine.style.width = document.body.classList.contains('is-inventory') ? `${percent}%` : '0%';
+                    }
                 }
 
                 if (filtered.length === 0) {
