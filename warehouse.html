@@ -1616,26 +1616,70 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, addDoc, getDocs, writeBatch, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, addDoc, getDocs, writeBatch, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-messaging.js";
 
-        const appId = 'warehouse-manager-cloud-shared';
+const appId = 'warehouse-manager-cloud-shared';
 
-        const firebaseConfig = {
-    		apiKey: "AIzaSyCbyma9BDUgpG5KUMyLJxbFjuPsuLpYyMA",
-    		authDomain: "warehouse-manager-462a0.firebaseapp.com",
-    		projectId: "warehouse-manager-462a0",
-    		storageBucket: "warehouse-manager-462a0.firebasestorage.app",
-    		messagingSenderId: "234467047556",
-    		appId: "1:234467047556:web:50c352780b476574b86ad1",
-    		measurementId: "G-KM84BW8EPH"
-  	};
+const firebaseConfig = {
+    apiKey: "AIzaSyCbyma9BDUgpG5KUMyLJxbFjuPsuLpYyMA",
+    authDomain: "warehouse-manager-462a0.firebaseapp.com",
+    projectId: "warehouse-manager-462a0",
+    storageBucket: "warehouse-manager-462a0.firebasestorage.app",
+    messagingSenderId: "234467047556",
+    appId: "1:234467047556:web:50c352780b476574b86ad1",
+    measurementId: "G-KM84BW8EPH"
+};
 
-  	const initialToken = null;
+const initialToken = null;
 
-  	const app = Object.keys(firebaseConfig).length > 0 ? initializeApp(firebaseConfig) : null;
-  	const db = app ? getFirestore(app) : null;
-  	const auth = app ? getAuth(app) : null;
+const app = Object.keys(firebaseConfig).length > 0 ? initializeApp(firebaseConfig) : null;
+const db = app ? getFirestore(app) : null;
+const auth = app ? getAuth(app) : null;
+const messaging = app ? getMessaging(app) : null;
+
+const VAPID_KEY = "BFiPE5viverzVuCBidehPLPuHmIhfIl7XbO2nLe4PIkNxeBYg_GoRdHZ2698ugpp4eexwCH30mEkPOi3TyWQH7w";
+
+window.notificationLogic = {
+    swRegistration: null,
+
+    initForOperator: async (operatorName) => {
+        if (!messaging || !db || !('Notification' in window) || !('serviceWorker' in navigator)) return;
+
+        try {
+            const reg = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+            notificationLogic.swRegistration = reg;
+
+            onMessage(messaging, (payload) => {
+                if (currentUserOperator !== 'Leonardo C.') return;
+                const title = payload.data?.title || 'Magazzino Cloud';
+                const body = payload.data?.body || 'Nuovo aggiornamento';
+                ui.toast(`${title}: ${body}`, 'info');
+            });
+
+            if (operatorName !== 'Leonardo C.') return;
+
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') return;
+
+            const fcmToken = await getToken(messaging, {
+                vapidKey: VAPID_KEY,
+                serviceWorkerRegistration: reg
+            });
+
+            if (fcmToken) {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'fcm_tokens', fcmToken), {
+                    token: fcmToken,
+                    operator: 'Leonardo C.',
+                    updatedAt: new Date().toISOString()
+                });
+            }
+        } catch (err) {
+            console.error("Errore configurazione notifiche:", err);
+        }
+    }
+};
         
         let userId = null;
         let currentUserOperator = null;
@@ -1956,6 +2000,7 @@
                             currentUserOperator = savedOp;
                             document.getElementById('currentOperatorBadge').innerText = savedOp;
                             document.getElementById('userSelectModal').classList.add('hidden');
+                            notificationLogic.initForOperator(savedOp);
                         } else {
                             // Se la sessione è scaduta, cancella i dati
                             localStorage.removeItem('whm_saved_operator');
@@ -1979,6 +2024,7 @@
                 }
 
                 currentUserOperator = selected;
+                notificationLogic.initForOperator(selected);
                 document.getElementById('currentOperatorBadge').innerText = selected;
                 document.getElementById('userSelectModal').classList.add('hidden');
                 
