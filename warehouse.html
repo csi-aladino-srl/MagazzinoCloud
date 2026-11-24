@@ -199,10 +199,6 @@
     }
 }
 
-  body.is-inventory #headerMoreBtn {
-    display: none !important;
-  }
-
 /* Su Desktop (lg+): trasforma #inventoryProgressBarContainer in una pillola compatta da header */
 @media (min-width: 1024px) {
   body.is-inventory #inventoryProgressBarContainer {
@@ -812,7 +808,7 @@
 
                 <!-- Consulta Ubicazioni (Desktop) -->
                 <button id="desktopCatalogBtn" onclick="catalogLogic.openModal()"
-                        class="hidden md:hidden items-center gap-2 px-4 h-11 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl text-sm font-bold transition-colors"
+                        class="hidden md:hidden items-center gap-2 px-4 h-11 bg-[#d1e4ff] hover:bg-[#bfd8fc] dark:bg-[#172f4a] dark:hover:bg-[#1f3d5e] text-[#001d36] dark:text-[#d1e4ff] border border-[#0061a4]/25 dark:border-[#9ecaff]/30 rounded-2xl text-sm font-bold shadow-2xs transition-colors"
                         title="Consulta Ubicazioni">
                     <i class="fa-solid fa-book"></i>
                     <span class="hidden lg:inline">Ubicazioni</span>
@@ -2366,7 +2362,7 @@ function switchList(listId, updateUrl = true) {
 
                         // Mostra Libro su desktop
                         if (desktopCatalogBtn) {
-                            desktopCatalogBtn.className = "hidden md:flex items-center gap-2 px-4 h-11 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl text-sm font-bold transition-colors";
+                            desktopCatalogBtn.className = "hidden md:flex items-center gap-2 px-4 h-11 bg-[#d1e4ff] hover:bg-[#bfd8fc] dark:bg-[#172f4a] dark:hover:bg-[#1f3d5e] text-[#001d36] dark:text-[#d1e4ff] border border-[#0061a4]/25 dark:border-[#9ecaff]/30 rounded-2xl text-sm font-bold shadow-2xs transition-colors";
                         }
 
                         if (progContainer) {
@@ -2417,8 +2413,8 @@ function switchList(listId, updateUrl = true) {
                         document.getElementById('mobileInfoDivider')?.classList.add('hidden');
 
                         if (desktopCatalogBtn) {
-                            desktopCatalogBtn.className = "hidden md:hidden items-center justify-center w-11 h-11 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl transition-colors";
-                        }
+                            desktopCatalogBtn.className = "hidden md:hidden items-center justify-center w-11 h-11 bg-[#d1e4ff] hover:bg-[#bfd8fc] dark:bg-[#172f4a] dark:hover:bg-[#1f3d5e] text-[#001d36] dark:text-[#d1e4ff] border border-[#0061a4]/25 dark:border-[#9ecaff]/30 rounded-2xl transition-colors";
+                        }   
 
                         if (progContainer) {
                             progContainer.classList.add('hidden');
