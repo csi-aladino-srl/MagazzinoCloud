@@ -3819,14 +3819,48 @@ exportExcel: () => {
                         await batch.commit();
                     }
 
+                    const listName = currentList ? currentList.name : 'Lista Sconosciuta';
                     const linkedMsg = linkedUpdatedCount > 0
                         ? ` (${linkedUpdatedCount} aggiornati anche in "${linkedNormalList.name}")`
                         : '';
 
                     auditLogic.logAction(
                         "Importazione Excel",
-                        `Importati ${addedCount} nuovi prodotti e aggiornati ${updatedCount}${linkedMsg}`
+                        `[${listName}] Importati ${addedCount} nuovi prodotti e aggiornati ${updatedCount}${linkedMsg}`
                     );
+
+                    // Invio notifica push agli altri operatori se sono stati importati/aggiornati codici
+                    if (addedCount + updatedCount > 0) {
+                        const operatorName = currentUserOperator || 'Un operatore';
+                        const notifTitle = `📥 Importazione in "${listName}"`;
+                        const notifBody = `${operatorName} ha importato ${addedCount} nuovi codici e ne ha aggiornati ${updatedCount} nella lista "${listName}"${linkedMsg}.`;
+
+                        try {
+                            // Recupera i token FCM registrati escludendo chi ha appena fatto l'import
+                            const tokensSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'fcm_tokens'));
+                            const targetTokens = [];
+                            tokensSnap.forEach(tDoc => {
+                                const tData = tDoc.data();
+                                if (tData.token && tData.operator !== currentUserOperator && !targetTokens.includes(tData.token)) {
+                                    targetTokens.push(tData.token);
+                                }
+                            });
+
+                            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'notifications_queue'), {
+                                title: notifTitle,
+                                body: notifBody,
+                                listId: currentListId,
+                                listName: listName,
+                                sender: operatorName,
+                                tokens: targetTokens,
+                                targetUrl: `https://csi-aladino-srl.github.io/MagazzinoCloud/warehouse.html?list=${encodeURIComponent(currentListId)}`,
+                                timestamp: new Date().toISOString(),
+                                status: 'pending'
+                            });
+                        } catch (notifErr) {
+                            console.warn("Errore accodamento notifica import:", notifErr);
+                        }
+                    }
 
                     document.getElementById('fullLoader').classList.add('opacity-0');
                     setTimeout(() => document.getElementById('fullLoader').classList.add('hidden'), 300);
