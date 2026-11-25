@@ -1636,6 +1636,73 @@
   	const app = Object.keys(firebaseConfig).length > 0 ? initializeApp(firebaseConfig) : null;
   	const db = app ? getFirestore(app) : null;
   	const auth = app ? getAuth(app) : null;
+
+    const GAS_NOTIFICATIONS_URL = "https://script.google.com/macros/s/AKfycbzcapYAz64dyHQgMtW4e2NpsTMIaccO8sd5KbvDafIuY8ZB9Bpo3mL4emDfO6gWuk9s/exec";
+
+    async function sendPushNotification({ title, body, targetOperators = null, excludeSender = true }) {
+        if (!db) return;
+
+        const senderName = currentUserOperator || 'Un operatore';
+        const currentList = getCurrentList();
+        const listName = currentList ? currentList.name : 'Magazzino';
+        const targetUrl = `https://csi-aladino-srl.github.io/MagazzinoCloud/warehouse.html?list=${encodeURIComponent(currentListId || '')}`;
+
+        try {
+            // 1. Recupera i token FCM registrati filtrando i destinatari
+            const tokensSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'fcm_tokens'));
+            const targetTokens = [];
+
+            tokensSnap.forEach(tDoc => {
+                const tData = tDoc.data();
+                if (!tData.token) return;
+
+                // Esclude chi sta eseguendo l'azione (se richiesto)
+                if (excludeSender && currentUserOperator && tData.operator === currentUserOperator) return;
+
+                // Se sono specificati destinatari precisi (es. ['Leonardo C.']), filtra solo quelli
+                if (Array.isArray(targetOperators) && targetOperators.length > 0) {
+                    if (!targetOperators.includes(tData.operator)) return;
+                }
+
+                if (!targetTokens.includes(tData.token)) {
+                    targetTokens.push(tData.token);
+                }
+            });
+
+            const payload = {
+                title,
+                body,
+                listId: currentListId || '',
+                listName,
+                sender: senderName,
+                tokens: targetTokens,
+                targetUrl,
+                timestamp: new Date().toISOString(),
+                status: 'pending'
+            };
+
+            // 2. Salva la notifica nella coda Firestore
+            const queueRef = await addDoc(
+                collection(db, 'artifacts', appId, 'public', 'data', 'notifications_queue'),
+                payload
+            );
+
+            // 3. Chiama subito la Web App Google Apps Script per spedire la push
+            await fetch(GAS_NOTIFICATIONS_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8'
+                },
+                body: JSON.stringify({
+                    ...payload,
+                    queueDocId: queueRef.id
+                })
+            });
+        } catch (err) {
+            console.warn("Errore invio notifica push:", err);
+        }
+    }
         
         let userId = null;
         let currentUserOperator = null;
@@ -3185,39 +3252,6 @@ saveProduct: async () => {
                 ui.closeAllQuickEdits();
                 ui.refreshProductRowDOM(id);
 
-        
-
-                try {
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'products', id), {
-                        stock: stockNum,
-                        originalStock: finalOrigStock,
-                        isInventoryLocked: true,
-                        consolidatedAt: nowIso,
-                        consolidatedBy: operator
-                    });
-                    auditLogic.logAction("Consolida Inventario", `Consolidato prodotto [${item.code}]: Conteggiato ${stockNum} da ${operator}`);
-                    ui.toast("Quantità confermata e salvata", "success");
-                } catch (e) {
-                    console.error(e);
-                    ui.toast("Errore di salvataggio (offline/connessione)", "error");
-                }
-            },
-
-            confirmAndLockStock: async (id) => {
-                const item = products.find(p => p.id === id);
-                if (!item) return;
-
-                const stockNum = Number(item.stock !== undefined ? item.stock : 0);
-                let finalOrigStock = item.originalStock !== undefined && item.originalStock !== null ? item.originalStock : stockNum;
-                const nowIso = new Date().toISOString();
-                const operator = currentUserOperator || 'Operatore';
-
-                item.isInventoryLocked = true;
-                item.consolidatedAt = nowIso;
-                item.consolidatedBy = operator;
-                ui.closeAllQuickEdits();
-                ui.refreshProductRowDOM(id);
-
                 // Controlla se tutti i prodotti di questa ubicazione sono ora inventariati
                 if (isCurrentListInventory()) {
                     const itemLoc = item.location ? item.location.toUpperCase().trim() : 'SENZA UBICAZIONE';
@@ -3225,6 +3259,14 @@ saveProduct: async () => {
                         const locItems = products.filter(p => (p.location ? p.location.toUpperCase().trim() : 'SENZA UBICAZIONE') === itemLoc);
                         if (locItems.length > 0 && locItems.every(p => p.isInventoryLocked === true)) {
                             ui.showLocationCompletedCelebration(itemLoc, locItems.length);
+
+                            const listName = getCurrentList()?.name || 'Inventario';
+                            sendPushNotification({
+                                title: `✅ Ubicazione ${itemLoc} completata`,
+                                body: `${operator} ha completato l'inventario dell'ubicazione ${itemLoc} (${locItems.length} articoli) in "${listName}".`,
+                                targetOperators: ['Leonardo C.'],
+                                excludeSender: true
+                            });
                         }
                     }
                 }
@@ -3830,36 +3872,15 @@ exportExcel: () => {
                     );
 
                     // Invio notifica push agli altri operatori se sono stati importati/aggiornati codici
+                    // Invio notifica push agli altri operatori se sono stati importati/aggiornati codici
                     if (addedCount + updatedCount > 0) {
                         const operatorName = currentUserOperator || 'Un operatore';
-                        const notifTitle = `📥 Importazione in "${listName}"`;
-                        const notifBody = `${operatorName} ha importato ${addedCount} nuovi codici e ne ha aggiornati ${updatedCount} nella lista "${listName}"${linkedMsg}.`;
-
-                        try {
-                            // Recupera i token FCM registrati escludendo chi ha appena fatto l'import
-                            const tokensSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'fcm_tokens'));
-                            const targetTokens = [];
-                            tokensSnap.forEach(tDoc => {
-                                const tData = tDoc.data();
-                                if (tData.token && tData.operator !== currentUserOperator && !targetTokens.includes(tData.token)) {
-                                    targetTokens.push(tData.token);
-                                }
-                            });
-
-                            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'notifications_queue'), {
-                                title: notifTitle,
-                                body: notifBody,
-                                listId: currentListId,
-                                listName: listName,
-                                sender: operatorName,
-                                tokens: targetTokens,
-                                targetUrl: `https://csi-aladino-srl.github.io/MagazzinoCloud/warehouse.html?list=${encodeURIComponent(currentListId)}`,
-                                timestamp: new Date().toISOString(),
-                                status: 'pending'
-                            });
-                        } catch (notifErr) {
-                            console.warn("Errore accodamento notifica import:", notifErr);
-                        }
+                        await sendPushNotification({
+                            title: `📥 Importazione in "${listName}"`,
+                            body: `${operatorName} ha importato ${addedCount} nuovi codici e ne ha aggiornati ${updatedCount} nella lista "${listName}"${linkedMsg}.`,
+                            targetOperators: null, // Tutti gli operatori registrati tranne chi importa
+                            excludeSender: true
+                        });
                     }
 
                     document.getElementById('fullLoader').classList.add('opacity-0');
