@@ -198,18 +198,6 @@
         display: flex !important;
     }
 }
-
-/* Su Desktop (lg+): trasforma #inventoryProgressBarContainer in una pillola compatta da header */
-@media (min-width: 1024px) {
-  body.is-inventory #inventoryProgressBarContainer {
-    margin: 0 !important;
-    padding: 6px 10px 6px 14px !important;
-    border-radius: 9999px !important;
-    width: auto !important;
-    flex-shrink: 0;
-  }
-}
-
 /* ================================================================= */
 /* MOBILE INVENTARIO: NASCONDI BARRA PROGRESSO E TASTO ⋮ IN ALTO     */
 /* ================================================================= */
@@ -875,27 +863,92 @@
         <div class="bg-slate-50/80 dark:bg-slate-900/40 border-b border-slate-200/80 dark:border-slate-800/80 z-30 shrink-0">
             <div class="max-w-7xl mx-auto px-3 md:px-4 py-1.5 md:py-2.5 flex flex-col gap-1.5 md:gap-2.5">
                 
-                <!-- Chip Avanzamento Generale Inventario Compatto -->
-                <div id="inventoryProgressBarContainer" class="hidden items-center justify-between bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 px-3 py-1.5 md:px-4 md:py-2.5 rounded-xl md:rounded-2xl shadow-xs gap-2">
-                    <div class="flex items-center gap-2 md:gap-3 min-w-0">
-                        <div class="w-7 h-7 md:w-8 md:h-8 rounded-lg md:rounded-xl bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-xs shrink-0">
-                            <i class="fa-solid fa-chart-pie"></i>
+                <!-- Chip Avanzamento Generale Inventario Compatto + Dettagli Espandibili (Desktop) -->
+                <div id="inventoryProgressBarContainer" class="hidden flex-col bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-2xl shadow-xs overflow-hidden transition-all">
+                    
+                    <!-- Riga superiore sempre visibile (Barretta compatta cliccabile) -->
+                    <div onclick="ui.toggleDesktopInventoryDetails()"
+                         role="button"
+                         tabindex="0"
+                         onkeydown="if(event.key==='Enter' || event.key===' ') { event.preventDefault(); ui.toggleDesktopInventoryDetails(); }"
+                         title="Clicca per espandere o ridurre i dettagli dell'inventario"
+                         class="w-full px-4 py-2.5 flex items-center justify-between gap-3 cursor-pointer hover:bg-blue-100/60 dark:hover:bg-blue-900/30 transition-colors select-none">
+                        
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-xs shrink-0">
+                                <i class="fa-solid fa-chart-pie"></i>
+                            </div>
+                            <div class="flex flex-col min-w-0">
+                                <span class="block text-[11px] font-bold text-blue-950 dark:text-blue-200 uppercase tracking-wider leading-tight truncate">Progresso Inventario Generale</span>
+                                <span class="text-xs text-blue-800 dark:text-blue-300 font-semibold" id="inventoryProgressText">0 di 0 articoli consolidati (0%)</span>
+                            </div>
                         </div>
-                        <div class="flex flex-col min-w-0">
-                            <span class="block text-[9px] sm:text-[11px] font-bold text-blue-950 dark:text-blue-200 uppercase tracking-wider leading-tight truncate">Progresso Inventario Generale</span>
-                            <span class="hidden sm:inline text-xs text-blue-800 dark:text-blue-300 font-semibold" id="inventoryProgressText">0 di 0 articoli consolidati (0%)</span>
-                            <span class="sm:hidden text-xs text-blue-900 dark:text-blue-200 font-extrabold truncate" id="inventoryProgressTextMobile">0/0 (0%)</span>
+
+                        <div class="flex items-center gap-3 shrink-0 ml-auto">
+                            <div class="w-36 bg-blue-200/80 dark:bg-blue-900 rounded-full h-3 overflow-hidden shadow-inner p-0.5">
+                                <div id="inventoryProgressBarFill" class="bg-blue-600 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+
+                            <span id="desktopInventoryExpandBtn" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-blue-200 dark:border-blue-800 text-[11px] font-bold text-blue-800 dark:text-blue-200">
+                                <span id="desktopInventoryExpandLabel">Dettagli</span>
+                                <i id="desktopInventoryExpandIcon" class="fa-solid fa-chevron-down text-[10px] transition-transform duration-200"></i>
+                            </span>
+
+                            <button id="btnExportFullInventory"
+                                    onclick="event.stopPropagation(); inventoryExportLogic.openExportModal();"
+                                    class="hidden px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold items-center gap-1.5 shadow-xs transition-all active:scale-95 shrink-0"
+                                    title="Esporta l'intero inventario in Excel o PDF">
+                                <i class="fa-solid fa-file-export"></i>
+                                <span>Esporta Tutto</span>
+                            </button>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 md:gap-3 shrink-0 ml-auto">
-                        <div class="w-16 sm:w-36 bg-blue-200/80 dark:bg-blue-900 rounded-full h-2 md:h-3 overflow-hidden shadow-inner p-0.5">
-                            <div id="inventoryProgressBarFill" class="bg-blue-600 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+
+                    <!-- Pannello Dettagli Espandibile (Nascosto di default) -->
+                    <div id="desktopInventoryDetailsPanel" class="hidden border-t border-blue-200/80 dark:border-blue-800/60 bg-white/75 dark:bg-slate-900/60 px-4 py-3 animate-fade-in">
+                        <div class="grid grid-cols-2 lg:grid-cols-5 gap-2.5">
+                            <div class="bg-blue-50/90 dark:bg-blue-950/50 border border-blue-200/70 dark:border-blue-800/60 rounded-xl px-3.5 py-2.5 flex items-center justify-between">
+                                <div>
+                                    <div class="text-[10px] font-bold uppercase tracking-wider text-blue-900/70 dark:text-blue-200/70">Consolidati</div>
+                                    <div id="deskStatLocked" class="text-lg font-black text-blue-700 dark:text-blue-300 leading-tight mt-0.5">0</div>
+                                </div>
+                                <i class="fa-solid fa-circle-check text-blue-500/50 text-lg"></i>
+                            </div>
+
+                            <div class="bg-slate-100/90 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-xl px-3.5 py-2.5 flex items-center justify-between">
+                                <div>
+                                    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Da contare</div>
+                                    <div id="deskStatRemaining" class="text-lg font-black text-slate-800 dark:text-white leading-tight mt-0.5">0</div>
+                                </div>
+                                <i class="fa-solid fa-hourglass-half text-slate-400/60 text-lg"></i>
+                            </div>
+
+                            <div class="bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200/70 dark:border-emerald-800/60 rounded-xl px-3.5 py-2.5 flex items-center justify-between">
+                                <div>
+                                    <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-900/70 dark:text-emerald-200/70">Ubicazioni</div>
+                                    <div id="deskStatLocations" class="text-lg font-black text-emerald-700 dark:text-emerald-300 leading-tight mt-0.5">0/0</div>
+                                </div>
+                                <i class="fa-solid fa-location-dot text-emerald-500/50 text-lg"></i>
+                            </div>
+
+                            <div class="bg-indigo-50/90 dark:bg-indigo-950/40 border border-indigo-200/70 dark:border-indigo-800/60 rounded-xl px-3.5 py-2.5 flex items-center justify-between">
+                                <div>
+                                    <div class="text-[10px] font-bold uppercase tracking-wider text-indigo-900/70 dark:text-indigo-200/70">Differenze (Δ ≠ 0)</div>
+                                    <div id="deskStatDelta" class="text-lg font-black text-indigo-700 dark:text-indigo-300 leading-tight mt-0.5">0</div>
+                                </div>
+                                <i class="fa-solid fa-scale-unbalanced text-indigo-500/50 text-lg"></i>
+                            </div>
+
+                            <div class="bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200/70 dark:border-amber-800/60 rounded-xl px-3.5 py-2.5 flex items-center justify-between">
+                                <div>
+                                    <div class="text-[10px] font-bold uppercase tracking-wider text-amber-900/70 dark:text-amber-200/70">Spostati in NQ</div>
+                                    <div id="deskStatNq" class="text-lg font-black text-amber-700 dark:text-amber-300 leading-tight mt-0.5">0</div>
+                                </div>
+                                <i class="fa-solid fa-right-from-bracket text-amber-500/60 text-lg"></i>
+                            </div>
                         </div>
-                        <button id="btnExportFullInventory" onclick="inventoryExportLogic.openExportModal()" class="hidden px-2.5 py-1.5 md:px-3.5 md:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg md:rounded-xl text-xs font-bold items-center gap-1.5 shadow-xs transition-all active:scale-95 shrink-0" title="Esporta l'intero inventario in Excel o PDF">
-                            <i class="fa-solid fa-file-export"></i>
-                            <span class="hidden sm:inline">Esporta Tutto</span>
-                        </button>
                     </div>
+
                 </div>
 
                 <div class="flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
@@ -2293,6 +2346,12 @@
         }
 
 function switchList(listId, updateUrl = true) {
+            const deskPanel = document.getElementById('desktopInventoryDetailsPanel');
+            const deskIcon = document.getElementById('desktopInventoryExpandIcon');
+            const deskLabel = document.getElementById('desktopInventoryExpandLabel');
+            if (deskPanel) deskPanel.classList.add('hidden');
+            if (deskIcon) deskIcon.classList.remove('rotate-180');
+            if (deskLabel) deskLabel.innerText = 'Dettagli';
             currentListId = listId;
             updateListUI();
             selectedProductIds.clear();
@@ -4638,28 +4697,104 @@ exportExcel: () => {
                 return contentHost;
             },
 
-            openInventoryProgressSheet: () => {
-                const topBanner = document.getElementById('inventoryProgressBarContainer');
-                if (!topBanner) return;
+            getInventoryStats: () => {
+                const total = products.length;
+                const locked = products.filter(p => p.isInventoryLocked === true).length;
+                const remaining = Math.max(0, total - locked);
+                const percent = total > 0 ? Math.round((locked / total) * 100) : 0;
 
+                const locMap = {};
+                let deltaCount = 0;
+                let nqCount = 0;
+
+                products.forEach(p => {
+                    const loc = p.location ? p.location.toUpperCase().trim() : 'SENZA UBICAZIONE';
+                    if (loc === 'NQ') {
+                        nqCount++;
+                    } else if (loc !== 'SENZA UBICAZIONE') {
+                        if (!locMap[loc]) locMap[loc] = { total: 0, locked: 0 };
+                        locMap[loc].total++;
+                        if (p.isInventoryLocked === true) locMap[loc].locked++;
+                    }
+
+                    const currStock = Number(p.stock ?? 0);
+                    const origStock = (p.originalStock !== undefined && p.originalStock !== null && p.originalStock !== '')
+                        ? Number(p.originalStock)
+                        : currStock;
+                    if (currStock !== origStock) deltaCount++;
+                });
+
+                const locKeys = Object.keys(locMap);
+                const totalLocs = locKeys.length;
+                const completedLocs = locKeys.filter(k => locMap[k].total > 0 && locMap[k].locked === locMap[k].total).length;
+
+                return { total, locked, remaining, percent, completedLocs, totalLocs, deltaCount, nqCount };
+            },
+
+            toggleDesktopInventoryDetails: () => {
+                const panel = document.getElementById('desktopInventoryDetailsPanel');
+                const icon = document.getElementById('desktopInventoryExpandIcon');
+                const label = document.getElementById('desktopInventoryExpandLabel');
+                if (!panel) return;
+
+                const isOpening = panel.classList.contains('hidden');
+                panel.classList.toggle('hidden', !isOpening);
+                if (icon) icon.classList.toggle('rotate-180', isOpening);
+                if (label) label.innerText = isOpening ? 'Riduci' : 'Dettagli';
+            },
+
+            openInventoryProgressSheet: () => {
                 ui.closeAllQuickEdits();
 
                 const list = getCurrentList();
                 const subtitle = list ? list.name : 'Avanzamento generale';
+                const stats = ui.getInventoryStats();
 
-                // Forza la visibilità del box anche su mobile
-                topBanner.classList.remove('hidden');
-                topBanner.style.setProperty('display', 'flex', 'important');
+                const sheetHtml = `
+                    <div class="space-y-4 pb-1">
+                        <div>
+                            <div class="flex items-baseline justify-between mb-2">
+                                <span class="text-3xl font-black text-blue-600 dark:text-blue-400 tracking-tight">${stats.percent}%</span>
+                                <span class="text-xs font-bold text-slate-600 dark:text-slate-300">
+                                    <b class="text-slate-900 dark:text-white">${stats.locked}</b> su <b>${stats.total}</b> articoli consolidati
+                                </span>
+                            </div>
+                            <div class="w-full h-3.5 bg-slate-200/80 dark:bg-slate-800 rounded-full overflow-hidden p-0.5">
+                                <div class="h-full rounded-full bg-gradient-to-r from-blue-600 to-blue-500 transition-all duration-500" style="width: ${stats.percent}%"></div>
+                            </div>
+                        </div>
 
-                const wrapper = document.createElement('div');
-                wrapper.className = 'w-full pb-1';
-                wrapper.setAttribute('data-quick-edit-active', 'true');
-                wrapper._origParent = topBanner.parentNode;
-                wrapper._origNextSibling = topBanner.nextSibling;
-                wrapper._unwrapChild = topBanner;
+                        <div class="grid grid-cols-3 gap-2 text-center">
+                            <div class="bg-blue-50/80 dark:bg-blue-950/40 rounded-2xl p-3">
+                                <div class="text-lg font-black text-blue-700 dark:text-blue-300 leading-none">${stats.locked}</div>
+                                <div class="text-[10px] font-bold uppercase tracking-wider text-blue-900/70 dark:text-blue-200/70 mt-1.5">Consolidati</div>
+                            </div>
+                            <div class="bg-slate-100/90 dark:bg-slate-800/80 rounded-2xl p-3">
+                                <div class="text-lg font-black text-slate-800 dark:text-white leading-none">${stats.remaining}</div>
+                                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mt-1.5">Da contare</div>
+                            </div>
+                            <div class="bg-emerald-50/80 dark:bg-emerald-950/40 rounded-2xl p-3">
+                                <div class="text-lg font-black text-emerald-700 dark:text-emerald-300 leading-none">${stats.completedLocs}<span class="text-xs font-bold opacity-60">/${stats.totalLocs}</span></div>
+                                <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-900/70 dark:text-emerald-200/70 mt-1.5">Ubicazioni</div>
+                            </div>
+                        </div>
 
-                wrapper.appendChild(topBanner);
-                ui._showMobileBottomSheet('Progresso Inventario', subtitle, wrapper);
+                        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 px-1">
+                            <span><i class="fa-solid fa-scale-unbalanced mr-1.5 text-blue-500"></i>Differenze (Delta ≠ 0): <b class="text-slate-800 dark:text-slate-200">${stats.deltaCount}</b></span>
+                            ${stats.nqCount > 0 ? `<span><i class="fa-solid fa-right-from-bracket mr-1 text-amber-500"></i>In NQ: <b class="text-amber-700 dark:text-amber-300">${stats.nqCount}</b></span>` : ''}
+                        </div>
+
+                        ${isAdminUser() ? `
+                        <button type="button"
+                                onclick="ui.closeAllQuickEdits(); inventoryExportLogic.openExportModal();"
+                                class="w-full py-3.5 px-4 rounded-2xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer">
+                            <i class="fa-solid fa-file-export"></i>
+                            <span>Esporta Report Completo (Excel / PDF)</span>
+                        </button>` : ''}
+                    </div>
+                `;
+
+                ui._showMobileBottomSheet('Progresso Inventario', subtitle, sheetHtml);
             },
 
             openManualStockModal: (productId) => {
@@ -5190,19 +5325,29 @@ const reopenWindowInfo = !isAdminUser()
                     countConsolidatedEl.innerText = products.filter(p => p.isInventoryLocked === true).length;
                 }
 
-                if (isInv && products.length > 0) {
-                    const lockedCount = products.filter(p => p.isInventoryLocked === true).length;
-                    const percent = Math.round((lockedCount / products.length) * 100);
+                if (isInv) {
+                    const stats = ui.getInventoryStats();
                     const progText = document.getElementById('inventoryProgressText');
-                    const progTextMob = document.getElementById('inventoryProgressTextMobile');
                     const progFill = document.getElementById('inventoryProgressBarFill');
-                    if (progText) progText.innerText = `${lockedCount} di ${products.length} articoli consolidati (${percent}%)`;
-                    if (progTextMob) progTextMob.innerText = `${lockedCount}/${products.length} (${percent}%)`;
-                    if (progFill) progFill.style.width = `${percent}%`;
+                    if (progText) progText.innerText = `${stats.locked} di ${stats.total} articoli consolidati (${stats.percent}%)`;
+                    if (progFill) progFill.style.width = `${stats.percent}%`;
+
                     const headerLine = document.getElementById('headerLiveProgressLine');
                     if (headerLine) {
-                        headerLine.style.width = document.body.classList.contains('is-inventory') ? `${percent}%` : '0%';
+                        headerLine.style.width = document.body.classList.contains('is-inventory') ? `${stats.percent}%` : '0%';
                     }
+
+                    // Aggiornamento live dettagli espandibili Desktop
+                    const elLocked = document.getElementById('deskStatLocked');
+                    const elRem = document.getElementById('deskStatRemaining');
+                    const elLocs = document.getElementById('deskStatLocations');
+                    const elDelta = document.getElementById('deskStatDelta');
+                    const elNq = document.getElementById('deskStatNq');
+                    if (elLocked) elLocked.innerText = stats.locked;
+                    if (elRem) elRem.innerText = stats.remaining;
+                    if (elLocs) elLocs.innerText = `${stats.completedLocs}/${stats.totalLocs}`;
+                    if (elDelta) elDelta.innerText = stats.deltaCount;
+                    if (elNq) elNq.innerText = stats.nqCount;
                 }
 
                 if (filtered.length === 0) {
