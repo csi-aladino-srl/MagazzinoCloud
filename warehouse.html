@@ -654,6 +654,33 @@
     color: #f8fafc;
     border-color: color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent);
 }
+
+/* ================================================================= */
+        /* SNACKBAR RESPONSIVE (MOBILE SOPRA TOOLBAR / DESKTOP BOTTOM CENTER)*/
+        /* ================================================================= */
+        #toastContainer {
+            position: fixed;
+            left: 0.75rem;
+            right: 0.75rem;
+            bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px));
+            z-index: 130;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: none;
+            transition: bottom 0.2s ease;
+        }
+
+        @media (min-width: 768px) {
+            #toastContainer {
+                left: 50%;
+                right: auto;
+                bottom: 1.5rem;
+                transform: translateX(-50%);
+                width: auto;
+                max-width: 32rem;
+            }
+        }
     </style>
 </head>
 <body class="h-full w-full m-0 p-0 flex overflow-hidden text-slate-900 dark:bg-slate-950 dark:text-slate-100 relative">
@@ -1612,7 +1639,7 @@
     </div>
 
     <!-- Toast Snackbar Material Design -->
-    <div id="toastContainer" class="fixed top-20 right-4 z-[130] flex flex-col gap-2 pointer-events-none"></div>
+    <div id="toastContainer"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -3897,18 +3924,18 @@ exportExcel: () => {
                 overlay.innerHTML = `
                     <div id="locationCompletedCard"
                          onclick="this.parentElement.remove()"
-                         class="loc-done-card-in pointer-events-auto relative overflow-hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-2 border-emerald-500 rounded-4xl shadow-2xl px-7 py-6 flex flex-col items-center text-center max-w-xs w-full cursor-pointer">
+                         class="loc-done-card-in pointer-events-auto relative overflow-hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-2 border-blue-600 dark:border-blue-500 rounded-4xl shadow-2xl px-7 py-6 flex flex-col items-center text-center max-w-xs w-full cursor-pointer">
                         
                         <!-- Cerchio + Spunta SVG Animata -->
                         <div class="relative w-16 h-16 mb-3 flex items-center justify-center">
-                            <span class="absolute inset-0 rounded-full bg-emerald-400/25 animate-ping"></span>
+                            <span class="absolute inset-0 rounded-full bg-blue-400/25 animate-ping"></span>
                             <svg class="loc-check-svg w-16 h-16 relative z-10" viewBox="0 0 52 52" fill="none">
-                                <circle class="loc-check-circle" cx="26" cy="26" r="24" fill="#10b981" fill-opacity="0.14" stroke="#10b981" stroke-width="3.2" />
-                                <path class="loc-check-path" d="M15.5 26.8L22.6 33.8L36.8 19.2" stroke="#059669" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+                                <circle class="loc-check-circle" cx="26" cy="26" r="24" fill="#2563eb" fill-opacity="0.14" stroke="#2563eb" stroke-width="3.2" />
+                                <path class="loc-check-path" d="M15.5 26.8L22.6 33.8L36.8 19.2" stroke="#1d4ed8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
                         </div>
 
-                        <span class="text-[10px] font-extrabold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+                        <span class="text-[10px] font-extrabold uppercase tracking-widest text-blue-600 dark:text-blue-400">
                             Ubicazione Completata
                         </span>
 
@@ -3916,18 +3943,13 @@ exportExcel: () => {
                             Hai finito con l'ubicazione
                         </p>
 
-                        <div class="mt-1.5 px-4 py-1 rounded-2xl bg-emerald-100 dark:bg-emerald-950/70 border border-emerald-300 dark:border-emerald-700 font-mono font-black text-2xl text-emerald-900 dark:text-emerald-300 tracking-wider">
+                        <div class="mt-1.5 px-4 py-1 rounded-2xl bg-blue-100 dark:bg-blue-950/70 border border-blue-300 dark:border-blue-700 font-mono font-black text-2xl text-blue-900 dark:text-blue-300 tracking-wider">
                             ${ui.escapeHtml(locationName)}
                         </div>
 
                         <span class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-2">
                             ${countText}
                         </span>
-
-                        <!-- Barra avanzamento chiusura automatica -->
-                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-emerald-100 dark:bg-emerald-950">
-                            <div class="loc-done-timer-bar h-full bg-emerald-500"></div>
-                        </div>
                     </div>
                 `;
 
@@ -4104,25 +4126,57 @@ exportExcel: () => {
                 }
             },        
 
-toast: (msg, type='info') => {
+            toast: (msg, type = 'info') => {
+                const container = document.getElementById('toastContainer');
+                if (!container) return;
+
+                // Su Mobile: se il pannello di ricerca flottante è aperto, alza la snackbar sopra di esso
+                if (window.innerWidth < 768) {
+                    const searchPanel = document.getElementById('mobileSearchPanel');
+                    const isSearchOpen = searchPanel && !searchPanel.classList.contains('hidden');
+                    container.style.bottom = isSearchOpen
+                        ? 'calc(9.5rem + env(safe-area-inset-bottom, 0px))'
+                        : 'calc(5.25rem + env(safe-area-inset-bottom, 0px))';
+                } else {
+                    container.style.bottom = '';
+                }
+
+                // Material 3 Snackbar: sostituisce subito la notifica precedente evitando pile sullo schermo
+                container.innerHTML = '';
+
                 const isInv = isCurrentListInventory();
-                const colors = { 
-                    success: isInv ? 'bg-blue-700 text-white' : 'bg-emerald-700 text-white', 
-                    error: 'bg-red-700 text-white', 
-                    info: 'bg-blue-700 text-white' 
+                const colors = {
+                    success: isInv ? 'bg-blue-700 text-white' : 'bg-emerald-700 text-white',
+                    error: 'bg-red-700 text-white',
+                    info: isInv ? 'bg-blue-700 text-white' : 'bg-emerald-700 text-white'
                 };
-                const icon = type === 'success' ? 'fa-check' : (type === 'error' ? 'fa-triangle-exclamation' : 'fa-info');
-                
+                const icon = type === 'success'
+                    ? 'fa-circle-check'
+                    : (type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-info');
+
                 const t = document.createElement('div');
-                t.className = `${colors[type]} px-4 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 animate-fade-in max-w-sm pointer-events-auto border border-white/10`;
-                t.innerHTML = `<i class="fa-solid ${icon}"></i><span class="font-medium text-xs tracking-wide">${msg}</span>`;
-                
-                document.getElementById('toastContainer').appendChild(t);
+                t.setAttribute('role', 'status');
+                t.onclick = () => t.remove();
+                t.title = 'Tocca per chiudere';
+                t.className = `${colors[type] || colors.info} px-4 py-2.5 md:px-5 md:py-3.5 rounded-full md:rounded-2xl shadow-2xl flex items-center justify-between gap-3 animate-fade-in max-w-[92vw] md:min-w-[320px] md:max-w-md pointer-events-auto border border-white/15 cursor-pointer select-none`;
+                t.innerHTML = `
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <i class="fa-solid ${icon} text-sm shrink-0"></i>
+                        <span class="font-semibold text-xs md:text-[13px] tracking-wide truncate md:whitespace-normal">${msg}</span>
+                    </div>
+                    <i class="fa-solid fa-xmark text-xs opacity-70 hover:opacity-100 shrink-0 ml-1"></i>
+                `;
+
+                container.appendChild(t);
+
+                // 2 secondi per azioni rapide, 3.5 secondi per eventuali errori
+                const duration = type === 'error' ? 3500 : 2000;
                 setTimeout(() => {
+                    if (!t.isConnected) return;
                     t.classList.replace('animate-fade-in', 'opacity-0');
                     t.style.transition = 'opacity 0.2s ease';
                     setTimeout(() => t.remove(), 200);
-                }, 3000);
+                }, duration);
             },
 
             requestAdminPassword: (callback) => {
